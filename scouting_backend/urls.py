@@ -29,7 +29,7 @@ urlpatterns = [
     path('scanner/', scanner_views.scanner, name='scanner'),
     path('teams/', team_views.display_teams, name='teams'),
     path('teams/<int:team_number>', team_views.team_page, name='team_page'),
-    path("teams/human-scout/ <int:team_number>", team_views.human_player_submit, name="human-scout"),
+    path("teams/human-scout/<int:team_number>", team_views.human_player_submit, name="human-scout"),
     path('get_events/', team_views.get_events),
     path('pit_scouting/<int:team_number>', team_views.pit_scouting, name='pit_scouting'),
     path('strategy/rankings', strategy_views.rankings, name='rankings'),

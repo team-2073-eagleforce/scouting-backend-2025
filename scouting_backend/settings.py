@@ -29,14 +29,14 @@ if not SECRET_KEY:
     SECRET_KEY = ''.join(random.choice(string.ascii_lowercase) for i in range(32))
 
 # Render Deployment Code
-DEBUG = 'RENDER' not in os.environ
+DEBUG = True
 
 # Docker HOST
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'vercel.app']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', "scouting-app-2024.vercel.app"]
 
 # Add here your deployment HOSTS
 CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://localhost:5085', 'http://127.0.0.1:8000',
-                        'http://127.0.0.1:5085', "https://localhost:8000"]
+                        'http://127.0.0.1:5085', "https://localhost:8000", "https://scouting-app-2024.vercel.app"]
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
@@ -96,21 +96,21 @@ WSGI_APPLICATION = 'scouting_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-if not DEBUG:
-    DATABASES = {
-        'default': dj_database_url.config(
+DATABASES = {
+    'default': dj_database_url.config(
             # Feel free to alter this value to suit your needs.
-            default=os.environ.get("DATABASE_URL"),
-            conn_max_age=600
-        )
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': 'db.sqlite3',
-        }
-    }
+        default=os.environ.get("DATABASE_URL"),
+        conn_max_age=600
+    )
+}
+
+# else:
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': 'db.sqlite3',
+#         }
+#     }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
