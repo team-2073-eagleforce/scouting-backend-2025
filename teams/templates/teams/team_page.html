@@ -1,0 +1,137 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block Title %} Team {{ team_number }}{% endblock %}
+
+{% block Styles %}
+    <style>
+        td:not(#comments_data) {
+            white-space: nowrap;
+        }
+
+        #comments_column {
+            padding-right: 200px;
+        }
+
+        th {
+            white-space: nowrap;
+        }
+
+        #match_data tr td:nth-child(n+2) {
+            background-color: lightcyan;
+        }
+
+        #match_data tr td:nth-child(n+5) {
+            background-color: lightpink;
+        }
+
+        #match_data tr td:nth-child(n+7) {
+            background-color: lightgoldenrodyellow;
+        }
+
+        #match_data tr td:nth-child(n+9) {
+            background-color: lavenderblush;
+        }
+
+        #match_data tr td:nth-child(12) {
+            background-color: white;
+        }
+
+    </style>
+{% endblock %}
+
+{% block Content %}
+    <h2>Team {{ team_number }}</h2>
+    {% if team.pit_scout_status == True %}
+        <div class="row">
+            <div class="col-8">
+                <span><b>Drivetrain: </b>{{ team.drivetrain }}</span> <br>
+                <span><b>Length x Width: </b>{{ team.length }} x {{ team.width }}</span> <br>
+                <span><b>Weight: </b>{{ team.weight }}</span> <br> <br>
+                <span><b>Intake Design: </b>{{ team.intake_design }}</span> <br> <br>
+                <span><b>Under Stage?: </b>{{ team.under_stage }}</span> <br> <br>
+                <span><b>Intake Locations: </b>{{ team.intake_locations }}</span> <br>
+                <span><b>Scoring Location: </b>{{ team.scoring_locations }}</span> <br> <br>
+                <span><b>Shooting Positions: </b>{{ team.shooting_positions }}</span> <br> <br>
+                <span><b>Auto Positions: </b>{{ team.auto_positions }}</span> <br> <br>
+                <span><b>Auto Leave: </b>{{ team.auto_leave }}</span> <br> <br>
+                <span><b>Auto Total Notes: </b>{{ team.auto_total_notes }}</span> <br> <br>
+                <span><b>Auto Amp Notes: </b>{{ team.auto_amp_notes }}</span> <br> <br>
+                <span><b>Additional Info: </b> {{ team.additional_info }}</span> <br>
+                <a href="{% url "pit_scouting" team.team_number %}">Update Info</a>
+            </div>
+            <div class="col-4">
+                <img src="{{ team.robot_picture }}" alt="Robot Picture" class="img-thumbnail">
+            </div>
+        </div>
+    {% else %}
+        <a style="color:red" href="{% url "pit_scouting" team_number %}">Pit Scout Now</a>
+    {% endif %}
+    <div class="table-responsive">
+        <table id="match_data" class="table table-bordered">
+            <thead>
+            <tr>
+                <th>Match</th>
+                <th>Leave</th>
+                <th>A-Amp</th>
+                <th>A-Speaker</th>
+                <th>T-Amp</th>
+                <th>T-Speaker</th>
+                <th>Trap</th>
+                <th>Climb</th>
+                <th>Driver</th>
+                <th>Defense</th>
+                <th id="comments_column">Comments</th>
+                <th>Scout Name</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for match in all_team_match_data %}
+                <tr>
+                    <td>{{ match.quantifier }} {{ match.match_number }}</td>
+                    <td>{{ match.auto_leave }}</td>
+                    <td>{{ match.auto_amp }}</td>
+
+                    {% with match.auto_speaker_make as auto_make %}
+                    {% with match.auto_speaker_miss as auto_miss %}
+                    <td>{{ auto_make }}/{{ auto_make|add:auto_miss }}</td>
+                    {% endwith %}
+                    {% endwith %}
+
+                    <td>{{ match.teleop_amp }}</td>
+
+                    {% with match.teleop_speaker_make as teleop_make %}
+                    {% with match.teleop_speaker_miss as teleop_miss %}
+                    <td>{{ teleop_make }}/{{ teleop_make|add:teleop_miss }}</td>
+                    {% endwith %}
+                    {% endwith %}
+
+                    <td>{{ match.trap }}</td>
+                    <td>{{ match.climb }}</td>
+                    <td>{{ match.driver_ranking }}</td>
+                    <td>{{ match.defense_ranking }}</td>
+                    <td>{{ match.comment }}</td>
+                    <td>{{ match.scout_name }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <a href="{% url "human-scout" team_number %}">Scout Human Player Now</a>
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>Match</th>
+                <th>Human Player Comments</th>
+            </tr>
+            {% for match in human_player_matches %}
+                <tr>
+                    <td style="white-space: nowrap">{{ match.match_number }}</td>
+                    <td>{{ match.human_player_comment }}</td>
+                </tr>
+            {% endfor %}
+            </thead>
+        </table>
+    </div>
+{% endblock %}

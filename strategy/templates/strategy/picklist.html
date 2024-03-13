@@ -1,0 +1,70 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block Title %}Picklist{% endblock %}
+
+{% block Styles %}
+    <style>
+        td {
+            white-space: nowrap;
+        }
+
+        th {
+            white-space: nowrap;
+        }
+
+        p {
+            display: inline;
+            line-height: 60px;
+        }
+
+        .picklist_teams {
+            border-bottom: 1px solid black;
+        }
+    </style>
+{% endblock %}
+
+{% block Content %}
+    {% for team in teams %}
+        <div class="picklist_teams", id="hello">
+            <p>{{ team }}</p>
+            <button onclick="shiftUp()", id="asdf">up</button>
+            <button onclick="shiftDown()">down</button>
+            <input type="checkbox">
+            <br>
+        </div>
+    {% endfor %}
+    <button onclick="save()">Save</button>
+{% endblock %}
+
+{% block Scripts %}
+<script>
+    function shiftUp() {
+        currentElementHTML = event.target.previousElementSibling.innerHTML;
+        previousElementHTML = event.target.parentNode.previousElementSibling.firstElementChild.innerHTML;
+        placeHolder = previousElementHTML;
+
+        // previous HTML = current HTML
+        event.target.parentNode.previousElementSibling.firstElementChild.innerHTML = currentElementHTML;
+
+        // current HTML = placeHolder
+        event.target.previousElementSibling.innerHTML = placeHolder;
+    }
+
+    function shiftDown() {
+        currentElementHTML = event.target.previousElementSibling.previousElementSibling.innerHTML;
+        nextElementHTML = event.target.parentNode.nextElementSibling.firstElementChild.innerHTML;
+        placeHolder = nextElementHTML;
+
+        //next HTML = current HTML
+        event.target.parentNode.nextElementSibling.firstElementChild.innerHTML = currentElementHTML;
+        
+        //current HTML = placeHolder
+        event.target.previousElementSibling.previousElementSibling.innerHTML = placeHolder;
+    }
+
+    function save() {
+        
+    }
+</script>
+{% endblock %}

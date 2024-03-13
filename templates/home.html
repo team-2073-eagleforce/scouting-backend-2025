@@ -1,0 +1,51 @@
+{% extends "index.html" %}
+
+{% block Styles %}
+        <style>
+        img {
+            width: 35%;
+            height: 35%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+{% endblock %}
+
+{% block Content %}
+<div style="text-align:center">
+    <h1>EagleScout</h1>
+    <img src="/static/images/EagleForce Logo.png" alt="EagleForce Logo">
+    <h1 id="result"><span id="days"></span> <span id="hours"></span> <span id="mins"></span> <span id="secs"></span> <span id="end"></span> until Silicon Valley!</h1>
+</div>
+{% endblock %}
+
+{% block Scripts %}
+    <script>
+        const countDownDate = new Date("March 1, 2024 12:00:00").getTime();
+
+        const myfunc = setInterval(function () {
+
+            const now = new Date().getTime();
+            const timeleft = countDownDate - now;
+
+            const days = Math.floor(timeleft / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeleft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeleft % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeleft % (1000 * 60)) / 1000);
+
+            document.getElementById("days").innerHTML = days + "d "
+            document.getElementById("hours").innerHTML = hours + "h "
+            document.getElementById("mins").innerHTML = minutes + "m "
+            document.getElementById("secs").innerHTML = seconds + "s "
+
+            if (timeleft < 0) {
+                clearInterval(myfunc);
+                document.getElementById("days").innerHTML = ""
+                document.getElementById("hours").innerHTML = ""
+                document.getElementById("mins").innerHTML = ""
+                document.getElementById("secs").innerHTML = ""
+                document.getElementById("result").innerHTML = "Good Luck at Silicon!";
+            }
+        }, 1000);
+    </script>
+{% endblock %}

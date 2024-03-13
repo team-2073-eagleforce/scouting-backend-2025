@@ -1,0 +1,114 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block Title %}Team 2073 Scouting{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    {% block Styles %} {% endblock %}
+</head>
+<body>
+{% block Body %}
+    <header>
+        <nav class="navbar navbar-expand-lg bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/"><h3>EagleScout</h3></a>
+                <button aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler"
+                        data-bs-target="#navbarSupportedContent" data-bs-toggle="collapse" type="button">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link active" href='{% url "scanner" %}'>QR Scanner</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href='{% url "teams" %}'>Teams</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                              Strategy
+                            </a>
+                            <ul class="dropdown-menu">
+                              <li><a class="dropdown-item" href="{% url 'rankings' %}">Rankings</a></li>
+                              <li><a class="dropdown-item" href="{% url 'dashboard' %}">Dashboard</a></li>
+                              <li><a class="dropdown-item" href="{% url 'picklist' %}">Picklist</a></li>
+                            </ul>
+                          </li>
+                        <li class="nav-item">
+                            <select class="form-select" id="comp"></select>
+                        </li>
+                        {% if not request.session.name %}
+                        <form class="d-flex" role="search">
+                            <button class="btn btn-outline-primary" onclick="location.assign('/auth')" type="button">
+                                Login with Google
+                            </button>
+                        </form>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    <div class="container">
+        {% block Content %}
+        {% endblock %}
+    </div>
+{% endblock %}
+</body>
+</html>
+<script>
+    post_data_to_server();
+
+    function toggleMobileMenu(menu) {
+        menu.classList.toggle('open');
+    }
+
+    function post_data_to_server() {
+        fetch("/get_events/", {
+                method: 'GET',
+                credentials: 'include',
+                mode: 'same-origin'
+            }
+        )
+            .then(response => {
+                return response.json();
+            })
+            .then(data => {
+                for (let event in data) {
+                    let option = document.createElement("option");
+                    option.setAttribute("id", event);
+                    option.setAttribute("value", event);
+                    option.innerText = data[event];
+                    document.getElementById("comp").appendChild(option);
+                }
+
+                let prevComp = localStorage.getItem("comp")
+                console.log(prevComp)
+                if (prevComp == null) {
+                    localStorage.setItem("comp", document.getElementById("comp").value)
+                } else {
+                    console.log(document.getElementById("comp"))
+                    document.getElementById(prevComp).setAttribute("selected", "true")
+                }
+
+            })
+    }
+
+    document.getElementById("comp").onchange = () => {
+        localStorage.setItem("comp", document.getElementById("comp").value)
+        location.assign(window.location.origin + window.location.pathname + "?comp=" + document.getElementById("comp").value);
+    }
+
+    if (localStorage.getItem("comp") !== null && window.location.search === "") {
+        location.assign(window.location.origin + window.location.pathname + "?comp=" + localStorage.getItem("comp"));
+    }
+
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+{% block Scripts %}{% endblock %}

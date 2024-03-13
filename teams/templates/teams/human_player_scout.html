@@ -1,0 +1,19 @@
+{% extends 'index.html' %}
+{% load crispy_forms_tags %}
+
+
+{% block Title %} Human Player Scout {% endblock %}
+
+{% block Styles %}
+    <style>
+        .asteriskField {
+            display: none;
+        }
+    </style>
+{% endblock %}
+
+{% block Content %}
+    <h2>Human Player Scouting</h2>
+    <h3>Team {{ team_number }}</h3>
+    {% crispy form %}
+{% endblock %}

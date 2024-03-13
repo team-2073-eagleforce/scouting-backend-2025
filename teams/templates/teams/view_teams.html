@@ -1,0 +1,27 @@
+{% extends 'index.html' %}
+
+{% block Title %} Teams {% endblock %}
+
+{% block Content %}
+    <h2>Teams</h2>
+    <table class="table table-responsive">
+        <thead>
+        <tr>
+            <th><h4>Team</h4></th>
+            <th><h4>Pit Scout Status</h4></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for team in all_teams %}
+            <tr>
+                <td><h5><a href="{% url 'team_page' team %}">{{ team }}</a></h5></td>
+                {% if team in pit_scouted %}
+                    <td style="color:mediumspringgreen"><h5>Pit Scouted</h5></td>
+                {% else %}
+                    <td><a style="color:red" href="{% url 'pit_scouting' team %}"><h5>Pit Scout</h5></a></td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

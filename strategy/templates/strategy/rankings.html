@@ -1,0 +1,48 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block Title %}Rankings{% endblock %}
+
+{% block Styles %}
+    <style>
+        td {
+            white-space: nowrap;
+        }
+
+        th {
+            white-space: nowrap;
+        }
+    </style>
+{% endblock %}
+
+{% block Content %}
+    <div class="table-responsive">
+        <table class="table" id="rankings_table">
+            <thead>
+            <tr class="sticky-top" style="background-color: gray">
+                <th>Rank</th>
+                <th onclick="sortTable(1, 'team_number')">Team Number</th>
+                <th onclick="sortTable(2, 'auto')">A-Notes</th>
+                <th onclick="sortTable(3, 'teleop')">T-Notes</th>
+                <th onclick="sortTable(4, 'trap')">Traps</th>
+                <th onclick="sortTable(5, 'climb')">Climb</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for team_number, team_stats in team_averages.items %}
+            <tr class="data">
+                <td class="rank">{{ forloop.counter }}</td>
+                <td><a href="{% url "team_page" team_number %}">{{ team_number }}</a></td>
+                {% for stat_type, stat in team_stats.items %}
+                    <td class="{{ stat_type }}">{{ stat }}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+        </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block Scripts %}
+    <script src="{% static "ranking.js" %}"></script>
+{% endblock %}

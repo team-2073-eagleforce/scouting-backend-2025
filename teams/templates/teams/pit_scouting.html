@@ -1,0 +1,31 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% load crispy_forms_tags %}
+
+{% block Title %} Pit Scouting {% endblock %}
+
+{% block Styles %}
+    <style>
+        .asteriskField {
+            display: none;
+        }
+        .requiredField {
+            font-weight: bold;
+        }
+
+        #auto_map {
+            width: 400px;
+        }
+
+    </style>
+{% endblock %}
+
+{% block Content %}
+    <h2>Pit Scouting</h2>
+    <h3>Team {{ team_number }}</h3>
+    <div class="pit_scout">
+        {% crispy form %}
+    </div>
+    <img src="/static/images/Auto_Map.jpg" alt="auto_map" id="auto_map">
+{% endblock %}

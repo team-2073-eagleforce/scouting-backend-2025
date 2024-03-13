@@ -1,0 +1,32 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block Content %}
+    <div class="container">
+        <h1>Dashboard</h1>
+
+        <form>
+            <label for="match"></label><input id="match" placeholder="Match" type="text">
+            <button id="match_button" type="button">Submit</button>
+        </form>
+        <br>
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col"></th>
+                <th scope="col">Team</th>
+                <th scope="col">A-Notes</th>
+                <th scope="col">T-Notes</th>
+                <th scope="col">Traps</th>
+                <th scope="col">Climb</th>
+            </tr>
+            </thead>
+            <tbody id="dashboardTable">
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block Scripts %}
+    <script src="{% static "dashboard.js" %}"></script>
+{% endblock %}
