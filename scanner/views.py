@@ -8,7 +8,7 @@ from helpers import login_required
 from teams.models import Teams, Team_Match_Data
 
 
-# @login_required
+@login_required
 def scanner(request):
     # Receive fetch from scanner.js
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':

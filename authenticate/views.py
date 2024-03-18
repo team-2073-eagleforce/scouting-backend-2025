@@ -23,11 +23,11 @@ client_config = {
         "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
         "redirect_uris": [
             "https://silver-chainsaw-4w5jqgp7xw4fjx96-8000.app.github.dev/auth/oauth2callback",
-            "https://eagleforce-backend.onrender.com/auth/oauth2callback"
+            "https://scouting-app-2024.vercel.app/auth/oauth2callback"
         ],
         "javascript_origins": [
             "https://silver-chainsaw-4w5jqgp7xw4fjx96-8000.app.github.dev",
-            "https://eagleforce-backend.onrender.com"
+            "https://scouting-app-2024.vercel.app"
         ]
     }
 }
