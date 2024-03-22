@@ -15,56 +15,29 @@
 
         p {
             display: inline;
-            line-height: 60px;
+            line-height: 35px;
         }
-
         .picklist_teams {
-            border-bottom: 1px solid black;
+            list-style: none;
+            border: 1px solid black;
+            background-color: gray;
         }
     </style>
 {% endblock %}
 
 {% block Content %}
-    {% for team in teams %}
-        <div class="picklist_teams", id="hello">
-            <p>{{ team }}</p>
-            <button onclick="shiftUp()", id="asdf">up</button>
-            <button onclick="shiftDown()">down</button>
-            <input type="checkbox">
+    <ul id="sortable">
+        {% for team in teams %}
+            <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams">
+                <p>{{ team }}</p>
+                <input type="checkbox">
+            </li>
             <br>
-        </div>
-    {% endfor %}
+        {% endfor %}
+    </ul>
     <button onclick="save()">Save</button>
 {% endblock %}
 
 {% block Scripts %}
-<script>
-    function shiftUp() {
-        currentElementHTML = event.target.previousElementSibling.innerHTML;
-        previousElementHTML = event.target.parentNode.previousElementSibling.firstElementChild.innerHTML;
-        placeHolder = previousElementHTML;
-
-        // previous HTML = current HTML
-        event.target.parentNode.previousElementSibling.firstElementChild.innerHTML = currentElementHTML;
-
-        // current HTML = placeHolder
-        event.target.previousElementSibling.innerHTML = placeHolder;
-    }
-
-    function shiftDown() {
-        currentElementHTML = event.target.previousElementSibling.previousElementSibling.innerHTML;
-        nextElementHTML = event.target.parentNode.nextElementSibling.firstElementChild.innerHTML;
-        placeHolder = nextElementHTML;
-
-        //next HTML = current HTML
-        event.target.parentNode.nextElementSibling.firstElementChild.innerHTML = currentElementHTML;
-        
-        //current HTML = placeHolder
-        event.target.previousElementSibling.previousElementSibling.innerHTML = placeHolder;
-    }
-
-    function save() {
-        
-    }
-</script>
+    <script src="{% static "picklist.js" %}"></script>
 {% endblock %}

@@ -44,6 +44,9 @@ class Team_Match_Data(models.Model):
     driver_ranking = models.IntegerField()
     defense_ranking = models.IntegerField()
     comment = models.CharField(max_length=256)
+    is_broken = models.IntegerField(default=0)
+    is_disabled = models.IntegerField(default=0)
+    is_tipped = models.IntegerField(default=0)
     scout_name = models.CharField(max_length=32)
 
 

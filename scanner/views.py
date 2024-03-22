@@ -8,7 +8,7 @@ from helpers import login_required
 from teams.models import Teams, Team_Match_Data
 
 
-@login_required
+# @login_required
 def scanner(request):
     # Receive fetch from scanner.js
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -19,7 +19,7 @@ def scanner(request):
         Team_Match_Data.objects.get_or_create(team_number=int(data_from_post["teamNumber"]),
                                               event=data_from_post["comp_code"],
                                               match_number=data_from_post["matchNumber"],
-                                              quantifier="Quals",
+                                              quantifier=data_from_post["quantifier"],
 
                                               auto_leave=data_from_post["autoLeave"],
                                               auto_amp=data_from_post["autoAmp"],
@@ -36,6 +36,9 @@ def scanner(request):
                                               driver_ranking=data_from_post["driverRanking"],
                                               defense_ranking=data_from_post["defenseRanking"],
                                               comment=data_from_post["comment"],
+                                              is_broken=data_from_post["isBroken"],
+                                              is_disabled=data_from_post["isDisabled"],
+                                              is_tipped=data_from_post["isTipped"],
                                               scout_name=data_from_post["name"])
 
         response = {"confirmation": "Successfully Sent"}

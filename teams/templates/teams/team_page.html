@@ -37,6 +37,11 @@
             background-color: white;
         }
 
+        .flagged_comment {
+            font-weight: 900;
+            display: inline;
+        }
+
     </style>
 {% endblock %}
 
@@ -45,19 +50,19 @@
     {% if team.pit_scout_status == True %}
         <div class="row">
             <div class="col-8">
-                <span><b>Drivetrain: </b>{{ team.drivetrain }}</span> <br>
-                <span><b>Length x Width: </b>{{ team.length }} x {{ team.width }}</span> <br>
+                <span><b>Drivetrain: </b>{{ team.drivetrain }}</span> <br> <br>
+                <span><b>Length x Width: </b>{{ team.length }} x {{ team.width }}</span> <br> <br>
                 <span><b>Weight: </b>{{ team.weight }}</span> <br> <br>
                 <span><b>Intake Design: </b>{{ team.intake_design }}</span> <br> <br>
                 <span><b>Under Stage?: </b>{{ team.under_stage }}</span> <br> <br>
-                <span><b>Intake Locations: </b>{{ team.intake_locations }}</span> <br>
+                <span><b>Intake Locations: </b>{{ team.intake_locations }}</span> <br> <br>
                 <span><b>Scoring Location: </b>{{ team.scoring_locations }}</span> <br> <br>
                 <span><b>Shooting Positions: </b>{{ team.shooting_positions }}</span> <br> <br>
                 <span><b>Auto Positions: </b>{{ team.auto_positions }}</span> <br> <br>
                 <span><b>Auto Leave: </b>{{ team.auto_leave }}</span> <br> <br>
                 <span><b>Auto Total Notes: </b>{{ team.auto_total_notes }}</span> <br> <br>
                 <span><b>Auto Amp Notes: </b>{{ team.auto_amp_notes }}</span> <br> <br>
-                <span><b>Additional Info: </b> {{ team.additional_info }}</span> <br>
+                <span><b>Additional Info: </b> {{ team.additional_info }}</span> <br> <br>
                 <a href="{% url "pit_scouting" team.team_number %}">Update Info</a>
             </div>
             <div class="col-4">
@@ -110,7 +115,20 @@
                     <td>{{ match.climb }}</td>
                     <td>{{ match.driver_ranking }}</td>
                     <td>{{ match.defense_ranking }}</td>
-                    <td>{{ match.comment }}</td>
+                    <td>
+                        {% if match.is_disabled == 1 %}
+                            <p class="flagged_comment">Disabled</p>
+                        {% endif %}
+                        {% if match.is_broken == 1 %}
+                            <p class="flagged_comment">Broken</p>
+                        {% endif %}
+                        {% if match.is_tipped == 1 %}
+                            <p class="flagged_comment">Tipped</p>
+                        {% endif %}
+                        <div>
+                            {{ match.comment }}
+                        </div>
+                    </td>
                     <td>{{ match.scout_name }}</td>
                 </tr>
             {% endfor %}

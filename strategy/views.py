@@ -10,7 +10,7 @@ from teams import models
 from helpers import login_required
 
 
-@login_required
+# @login_required
 def rankings(request):
     comp_code = request.GET.get('comp')
     teams = models.Teams.objects.filter(event=comp_code).order_by("team_number")
@@ -20,7 +20,7 @@ def rankings(request):
 
     return render(request, "strategy/rankings.html", {'team_averages': team_averages})
 
-@login_required
+# @login_required
 def picklist(request):
     comp_code = request.GET.get('comp')
     teams = []
@@ -35,7 +35,7 @@ def picklist(request):
         return render(request, "strategy/picklist.html", {'teams': teams})
 
 
-@login_required
+# @login_required
 def dashboard(request):
     comp_code = request.GET.get('comp')
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -65,9 +65,13 @@ def fetch_team_match_averages(team_number, comp_code):
                                                     Avg('teleop_amp', default=0),
                                                     Avg('teleop_speaker_make', default=0),
                                                     Avg('trap', default=0),
-                                                    Avg('climb', default=0))
+                                                    Avg('climb', default=0),
+                                                    Avg('defense_ranking', default=0))
 
     return {'auto': round(team_match_averages['auto_amp__avg'] + team_match_averages['auto_speaker_make__avg'], 3),
-            'teleop': round(team_match_averages['teleop_amp__avg'] + team_match_averages['teleop_speaker_make__avg'], 3),
+            'teleop-total': round(team_match_averages['teleop_amp__avg'] + team_match_averages['teleop_speaker_make__avg'], 3),
+            'teleop-amp': round(team_match_averages['teleop_amp__avg'], 3),
+            'teleop-speaker': round(team_match_averages['teleop_speaker_make__avg'], 3),
             'trap': round(team_match_averages['trap__avg'], 3),
-            'climb': round(team_match_averages['climb__avg'], 3)}
+            'climb': round(team_match_averages['climb__avg'], 3),
+            'defense': round(team_match_averages['defense_ranking__avg'], 3)}
