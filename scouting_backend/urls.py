@@ -35,5 +35,6 @@ urlpatterns = [
     path('strategy/rankings', strategy_views.rankings, name='rankings'),
     path('strategy/dashboard', strategy_views.dashboard, name='dashboard'),
     path('strategy/picklist', strategy_views.picklist, name='picklist'),
+    path('strategy/picklist/submit', strategy_views.picklist_submit, name='picklist_submit'),
     path("auth/", include("authenticate.urls")),
 ]

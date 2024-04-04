@@ -15,26 +15,51 @@
 
         p {
             display: inline;
-            line-height: 35px;
+            line-height: 30px;
         }
+
+        s {
+            display: inline;
+        }
+
         .picklist_teams {
-            list-style: none;
+            flex: 0 0 auto;
             border: 1px solid black;
-            background-color: gray;
+            border-radius: 5px;
+            background-color: lightgray;
+            width: 65px;
+        }
+
+        .lists {
+            display: flex;
+            flex-flow: column wrap;
+            border: 1px solid black;
+            height: 200px;
         }
     </style>
 {% endblock %}
 
 {% block Content %}
-    <ul id="sortable">
+    <h1>Picklist</h1>
+    <p>Not Chosen</p>
+    <ol class="lists", id="no_pick" ondrop="onDrop(event)", ondragover="onDragOver(event)">
         {% for team in teams %}
-            <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams">
+            <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams", ondrop="onDrop(event)", ondragover="onDragOver(event)", id="{{ team }}">
                 <p>{{ team }}</p>
-                <input type="checkbox">
+                <input type="checkbox" onchange="chosen(event)">
             </li>
-            <br>
         {% endfor %}
-    </ul>
+    </ol>
+    <p>First Pick</p>
+    <ol class="lists", id="1st_pick", ondrop="onDrop(event)", ondragover="onDragOver(event)"></ol>
+    <p>Second Pick</p>
+    <ol class="lists", id="2nd_pick", ondrop="onDrop(event)", ondragover="onDragOver(event)"></ol>
+    {% if comp_code == worlds %}
+        <p>Third Pick</p>
+        <ol class="lists", id="3rd_pick", ondrop="onDrop(event)", ondragover="onDragOver(event)"></ol>
+    {% endif %}
+    <p>DNP</p>
+    <ol class="lists", id="dnp", ondrop="onDrop(event)", ondragover="onDragOver(event)"></ol>
     <button onclick="save()">Save</button>
 {% endblock %}
 

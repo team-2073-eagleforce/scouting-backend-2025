@@ -32,8 +32,20 @@ def picklist(request):
 
             teams.append(team["team_number"])
             teams.sort()
+        return render(request, "strategy/picklist.html", {'teams': teams, 'comp_code' : comp_code})
+    
+def picklist_submit(request):
+    comp_code = request.GET.get('comp')
+    teams = []
+    if comp_code == None or comp_code == 'Testing':
         return render(request, "strategy/picklist.html", {'teams': teams})
+    else:
+        teams_data = get_teams_list(comp_code)
+        for team in teams_data:
 
+            teams.append(team["team_number"])
+            teams.sort()
+        return render(request, "strategy/picklist.html", {'teams': teams, 'comp_code' : comp_code})
 
 # @login_required
 def dashboard(request):
