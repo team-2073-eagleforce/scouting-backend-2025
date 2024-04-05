@@ -71,7 +71,7 @@ def dashboard(request):
 
 
 def fetch_team_match_averages(team_number, comp_code):
-    team_match_data = models.Team_Match_Data.objects.filter(team_number=team_number, event=comp_code)
+    team_match_data = models.Team_Match_Data.objects.filter(team_number=team_number, event=comp_code, match_number__lt=100)
     team_match_averages = team_match_data.aggregate(Avg('auto_amp', default=0),
                                                     Avg('auto_speaker_make', default=0),
                                                     Avg('teleop_amp', default=0),
