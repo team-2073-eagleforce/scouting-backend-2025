@@ -1,13 +1,17 @@
 import json
 
 from django.db.models import Avg
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 
 from api.tba import get_single_match, get_teams_list
 from teams import models
 
 from helpers import login_required
+
+from django.shortcuts import render, redirect
+from strategy.models import PickList_Data
 
 
 # @login_required
@@ -24,28 +28,58 @@ def rankings(request):
 def picklist(request):
     comp_code = request.GET.get('comp')
     teams = []
+    no_pick_teams = []
+    first_pick_teams = []
+    second_pick_teams = []
+    third_pick_teams = []
+    dn_pick_teams = []
     if comp_code == None or comp_code == 'Testing':
         return render(request, "strategy/picklist.html", {'teams': teams})
     else:
-        teams_data = get_teams_list(comp_code)
-        for team in teams_data:
-
-            teams.append(team["team_number"])
+        if len(PickList_Data.objects.filter(event=comp_code)) == 0:
+            teams_data = get_teams_list(comp_code)
+            for team in teams_data:
+                teams.append(team["team_number"])
             teams.sort()
-        return render(request, "strategy/picklist.html", {'teams': teams, 'comp_code' : comp_code})
-    
+            return render(request, "strategy/picklist.html", {'teams': teams,
+                                                          'comp_code' : comp_code,
+                                                          'no_pick_teams' : no_pick_teams,
+                                                          'first_pick_teams' : first_pick_teams,
+                                                          'second_pick_teams' : second_pick_teams,
+                                                          'third_pick_teams' : third_pick_teams,
+                                                          'dn_pick_teams' : dn_pick_teams,})
+        
+        picklist_data = PickList_Data.objects.filter(event=comp_code).values()[0]
+        no_pick_teams = picklist_data['no_pick']
+        first_pick_teams = picklist_data['first_pick']
+        second_pick_teams = picklist_data['second_pick']
+        third_pick_teams = picklist_data['third_pick']
+        dn_pick_teams = picklist_data['dn_pick']
+        return render(request, "strategy/picklist.html", {'teams': teams,
+                                                          'comp_code' : comp_code,
+                                                          'no_pick_teams' : no_pick_teams,
+                                                          'first_pick_teams' : first_pick_teams,
+                                                          'second_pick_teams' : second_pick_teams,
+                                                          'third_pick_teams' : third_pick_teams,
+                                                          'dn_pick_teams' : dn_pick_teams})
+        
+@csrf_exempt
 def picklist_submit(request):
     comp_code = request.GET.get('comp')
-    teams = []
-    if comp_code == None or comp_code == 'Testing':
-        return render(request, "strategy/picklist.html", {'teams': teams})
-    else:
-        teams_data = get_teams_list(comp_code)
-        for team in teams_data:
+    picklist_data = json.loads(request.body.decode('utf-8'))
+        
+    PickList_Data.objects.get_or_create(event=comp_code)
 
-            teams.append(team["team_number"])
-            teams.sort()
-        return render(request, "strategy/picklist.html", {'teams': teams, 'comp_code' : comp_code})
+    PickList_Data.objects.filter(event=comp_code).update(
+        event=comp_code,
+        no_pick = picklist_data[0],
+        first_pick = picklist_data[1],
+        second_pick = picklist_data[2],
+        third_pick = picklist_data[3],
+        dn_pick = picklist_data[4]
+    )
+        
+    return HttpResponse(status=200)
 
 # @login_required
 def dashboard(request):

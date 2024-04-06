@@ -49,17 +49,51 @@
                 <input type="checkbox" onchange="chosen(event)">
             </li>
         {% endfor %}
+        {% for team in no_pick_teams %}
+            <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams", ondrop="onDrop(event)", ondragover="onDragOver(event)", id="{{ team }}">
+                <p>{{ team }}</p>
+                <input type="checkbox" onchange="chosen(event)">
+            </li>
+        {% endfor %}
     </ol>
     <p>First Pick</p>
-    <ol class="lists", id="1st_pick", ondrop="onDrop(event)", ondragover="onDragOver(event)"></ol>
+    <ol class="lists", id="1st_pick", ondrop="onDrop(event)", ondragover="onDragOver(event)">
+        {% for team in first_pick_teams %}
+            <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams", ondrop="onDrop(event)", ondragover="onDragOver(event)", id="{{ team }}">
+                <p>{{ team }}</p>
+                <input type="checkbox" onchange="chosen(event)">
+            </li>
+        {% endfor %}
+    </ol>
     <p>Second Pick</p>
-    <ol class="lists", id="2nd_pick", ondrop="onDrop(event)", ondragover="onDragOver(event)"></ol>
-    {% if comp_code == worlds %}
+    <ol class="lists", id="2nd_pick", ondrop="onDrop(event)", ondragover="onDragOver(event)">
+        {% for team in second_pick_teams %}
+            <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams", ondrop="onDrop(event)", ondragover="onDragOver(event)", id="{{ team }}">
+                <p>{{ team }}</p>
+                <input type="checkbox" onchange="chosen(event)">
+            </li>
+        {% endfor %}
+    </ol>
+    {% if comp_code == '2024cmptx' %}
         <p>Third Pick</p>
-        <ol class="lists", id="3rd_pick", ondrop="onDrop(event)", ondragover="onDragOver(event)"></ol>
+        <ol class="lists", id="3rd_pick", ondrop="onDrop(event)", ondragover="onDragOver(event)">
+            {% for team in third_pick_teams %}
+                <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams", ondrop="onDrop(event)", ondragover="onDragOver(event)", id="{{ team }}">
+                    <p>{{ team }}</p>
+                    <input type="checkbox" onchange="chosen(event)">
+                </li>
+            {% endfor %}
+        </ol>
     {% endif %}
     <p>DNP</p>
-    <ol class="lists", id="dnp", ondrop="onDrop(event)", ondragover="onDragOver(event)"></ol>
+    <ol class="lists", id="dnp", ondrop="onDrop(event)", ondragover="onDragOver(event)">
+        {% for team in dn_pick_teams %}
+            <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams", ondrop="onDrop(event)", ondragover="onDragOver(event)", id="{{ team }}">
+                <p>{{ team }}</p>
+                <input type="checkbox" onchange="chosen(event)">
+            </li>
+        {% endfor %}
+    </ol>
     <button onclick="save()">Save</button>
 {% endblock %}
 
