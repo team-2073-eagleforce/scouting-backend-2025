@@ -18,6 +18,9 @@ document.getElementById("match_button").onclick = () => {
         })
         .then(data => {
             let dashboardTable = document.getElementById("dashboardTable");
+            for (i = 0; i < dashboardTable.rows.length; i++) {
+                dashboardTable.deleteRow(0);
+            }
             for (let alliance_number = 0; alliance_number < data["red_teams"].length; alliance_number++) {
                 let redTeam = data["red_teams"][alliance_number];
                 let redTeamRow = dashboardTable.insertRow();
