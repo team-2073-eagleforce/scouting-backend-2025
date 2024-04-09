@@ -82,6 +82,7 @@ def picklist_submit(request):
     return HttpResponse(status=200)
 
 # @login_required
+@csrf_exempt
 def dashboard(request):
     comp_code = request.GET.get('comp')
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -120,4 +121,5 @@ def fetch_team_match_averages(team_number, comp_code):
             'teleop-speaker': round(team_match_averages['teleop_speaker_make__avg'], 3),
             'trap': round(team_match_averages['trap__avg'], 3),
             'climb': round(team_match_averages['climb__avg'], 3),
+            'total': round(team_match_averages['auto_amp__avg'] + team_match_averages['auto_speaker_make__avg'] + team_match_averages['teleop_amp__avg'] + team_match_averages['teleop_speaker_make__avg'], 3),
             'defense': round(team_match_averages['defense_ranking__avg'], 3)}

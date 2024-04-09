@@ -1,4 +1,4 @@
-const scoringFields = ["auto", "teleop", "trap", "climb"];
+const scoringFields = ["auto", "teleop-total", "trap", "climb"];
 
 document.getElementById("match_button").onclick = () => {
     let match = document.getElementById("match").value
@@ -18,8 +18,10 @@ document.getElementById("match_button").onclick = () => {
         })
         .then(data => {
             let dashboardTable = document.getElementById("dashboardTable");
-            for (i = 0; i < dashboardTable.rows.length; i++) {
-                dashboardTable.deleteRow(0);
+            if(dashboardTable.rows.length != 0) {
+                for (i = 0; i < 6; i++) {
+                    dashboardTable.deleteRow(0);
+                }
             }
             for (let alliance_number = 0; alliance_number < data["red_teams"].length; alliance_number++) {
                 let redTeam = data["red_teams"][alliance_number];
