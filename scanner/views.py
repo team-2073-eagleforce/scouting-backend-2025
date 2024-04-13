@@ -29,6 +29,7 @@ def scanner(request):
                                               teleop_amp=data_from_post["teleopAmp"],
                                               teleop_speaker_make=data_from_post["teleopSpeakerMake"],
                                               teleop_speaker_miss=data_from_post["teleopSpeakerMiss"],
+                                              teleop_pass=data_from_post["pass"],
 
                                               trap=data_from_post["trapNumber"],
                                               climb=data_from_post["endClimb"],

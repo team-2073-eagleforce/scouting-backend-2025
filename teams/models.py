@@ -37,6 +37,7 @@ class Team_Match_Data(models.Model):
     teleop_amp = models.IntegerField()
     teleop_speaker_make = models.IntegerField()
     teleop_speaker_miss = models.IntegerField()
+    teleop_pass = models.IntegerField(default=0)
 
     trap = models.IntegerField()
     climb = models.IntegerField()

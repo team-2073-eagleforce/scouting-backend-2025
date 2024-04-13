@@ -111,6 +111,7 @@ def fetch_team_match_averages(team_number, comp_code):
                                                     Avg('auto_speaker_make', default=0),
                                                     Avg('teleop_amp', default=0),
                                                     Avg('teleop_speaker_make', default=0),
+                                                    Avg('teleop_pass', default=0),
                                                     Avg('trap', default=0),
                                                     Avg('climb', default=0),
                                                     Avg('defense_ranking', default=0))
@@ -119,6 +120,7 @@ def fetch_team_match_averages(team_number, comp_code):
             'teleop-total': round(team_match_averages['teleop_amp__avg'] + team_match_averages['teleop_speaker_make__avg'], 3),
             'teleop-amp': round(team_match_averages['teleop_amp__avg'], 3),
             'teleop-speaker': round(team_match_averages['teleop_speaker_make__avg'], 3),
+            'teleop-pass': round(team_match_averages['teleop_pass__avg'], 3),
             'trap': round(team_match_averages['trap__avg'], 3),
             'climb': round(team_match_averages['climb__avg'], 3),
             'total': round(team_match_averages['auto_amp__avg'] + team_match_averages['auto_speaker_make__avg'] + team_match_averages['teleop_amp__avg'] + team_match_averages['teleop_speaker_make__avg'], 3),
