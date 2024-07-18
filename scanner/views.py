@@ -18,7 +18,7 @@ def scanner(request):
         # Creates a new Team_Match_Data with given data if it doesn't exist
         Team_Match_Data.objects.get_or_create(team_number=int(data_from_post["teamNumber"]),
                                             #   event=data_from_post["comp_code"],
-                                              event="2024mil",
+                                              event="2024sunshow",
                                               match_number=data_from_post["matchNumber"],
                                               quantifier=data_from_post["quantifier"],
 
