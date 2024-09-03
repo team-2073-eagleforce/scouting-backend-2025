@@ -1,6 +1,7 @@
 AUTHORIZED_EMAIL = [
     # technician
     "cayden.granado@team2073.com", 
+    "adrienne.nguyen@team2073.com",
 
     # Pit Scouts
     "richmond.cheung@team2073.com",
