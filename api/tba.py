@@ -12,10 +12,9 @@ X_TBA_Auth_Key = os.environ.get("X_TBA_AUTH_KEY")
 def get_team_events():
     team_events = requests.get(f"https://www.thebluealliance.com/api/v3/team/{TEAM_KEY}/events/{YEAR}",
                                headers={"X-TBA-Auth-Key": X_TBA_Auth_Key})
-
     events = {}
     for event in team_events.json():
-        events[event["key"]] = event["short_name"]
+        events[event["key"]] = event["name"]
     events["testing"] = "Training"
 
     return events

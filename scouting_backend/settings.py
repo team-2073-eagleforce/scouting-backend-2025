@@ -149,7 +149,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
     os.path.join(BASE_DIR, 'scanner', 'static', 'scanner'),
-    os.path.join(BASE_DIR, 'teams', 'static', 'teams'),
+    # os.path.join(BASE_DIR, 'teams', 'static', 'teams'),
     os.path.join(BASE_DIR, 'strategy', 'static', 'strategy'),
 )
 
