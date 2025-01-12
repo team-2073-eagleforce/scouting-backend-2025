@@ -59,8 +59,6 @@ class NewPitScoutingData(forms.Form):
     width = forms.IntegerField()
     intake_design = forms.ChoiceField(choices=INTAKE_DESIGN, 
                                               widget=forms.RadioSelect)
-    under_stage = forms.ChoiceField(choices=BOOLEAN_VALUES, 
-                                    widget=forms.RadioSelect)
     intake_locations = forms.MultipleChoiceField(choices=INTAKE_LOCATION,
                                                  widget=forms.CheckboxSelectMultiple)
     scoring_locations = forms.MultipleChoiceField(choices=SCORING_LOCATION,
@@ -86,7 +84,6 @@ class NewPitScoutingData(forms.Form):
             'length',
             'width',
             'intake_design',
-            'under_stage', 
             'intake_locations',
             'scoring_locations',
             'shooting_positions',

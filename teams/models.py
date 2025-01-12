@@ -11,7 +11,6 @@ class Teams(models.Model):
     length = models.IntegerField(blank=True, null=True)
     width = models.IntegerField(blank=True, null=True)
     intake_design = models.CharField(max_length=50, null=True, blank=True)
-    under_stage = models.CharField(max_length=3, null=True, blank=True)
     intake_locations = models.CharField(max_length=50)
     scoring_locations = models.CharField(max_length=50)
     shooting_positions = models.CharField(max_length=50, null=True, blank=True)

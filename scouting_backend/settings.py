@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
-import os
 import random
 import string
 from pathlib import Path
@@ -32,11 +31,27 @@ if not SECRET_KEY:
 DEBUG = True
 
 # Docker HOST
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', "scouting-app-2024.vercel.app"]
+ALLOWED_HOSTS = [
+    'localhost', 
+    '127.0.0.1', 
+    "scouting-app-2024.vercel.app",
+    "8000-team2073eag-scoutingbac-nrw2ckm4v91.ws-us117.gitpod.io",
+    ".gitpod.io", ## remove in production
+    ".ws-us117.gitpod.io", # remove in production
+    "*"  # This will temporarily allow all hosts - for development only!
+]
 
 # Add here your deployment HOSTS
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://localhost:5085', 'http://127.0.0.1:8000',
-                        'http://127.0.0.1:5085', "https://localhost:8000", "https://scouting-app-2024.vercel.app"]
+CSRF_TRUSTED_ORIGINS = [
+    'https://8000-team2073eag-scoutingbac-nrw2ckm4v91.ws-us117.gitpod.io',  # Remove the trailing slash
+    'https://localhost:33281',
+    'http://localhost:8000',
+    'http://localhost:5085',
+    'http://127.0.0.1:8000',
+    'http://127.0.0.1:5085',
+    "https://localhost:8000",
+    "https://scouting-app-2024.vercel.app"
+]
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
@@ -91,6 +106,7 @@ TEMPLATES = [
     },
 ]
 
+# settings.py
 WSGI_APPLICATION = 'scouting_backend.wsgi.application'
 
 # Database

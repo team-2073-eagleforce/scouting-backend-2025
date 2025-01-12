@@ -83,7 +83,6 @@ def pit_scouting(request, team_number):
                 length=form.cleaned_data.get('length'),
                 width=form.cleaned_data.get('width'),
                 intake_design=intake_design_char,
-                under_stage=form.cleaned_data.get('under_stage'),
                 intake_locations=intake_locations_char,
                 scoring_locations=scoring_locations_char,
                 shooting_positions=shooting_positions_char,
