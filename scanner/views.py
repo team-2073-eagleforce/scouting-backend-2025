@@ -17,21 +17,28 @@ def scanner(request):
         Teams.objects.get_or_create(team_number=int(data_from_post["teamNumber"]), event=data_from_post["comp_code"])
         # Creates a new Team_Match_Data with given data if it doesn't exist
         Team_Match_Data.objects.get_or_create(team_number=int(data_from_post["teamNumber"]),
+                                              name=data_from_post["name"],
                                               event=data_from_post["comp_code"],
                                               match_number=data_from_post["matchNumber"],
                                               quantifier=data_from_post["quantifier"],
 
                                               auto_leave=data_from_post["autoLeave"],
-                                              auto_amp=data_from_post["autoAmp"],
-                                              auto_speaker_make=data_from_post["autoSpeakerMake"],
-                                              auto_speaker_miss=data_from_post["autoSpeakerMiss"],
+                                              auto_net=data_from_post["autoNet"],
+                                              auto_processor=data_from_post["autoProcessor"],
+                                              auto_removed=data_from_post["autoRemoved"],
+                                              auto_L1=data_from_post["autoL1"],
+                                              auto_L2=data_from_post["autoL2"],
+                                              auto_L3=data_from_post["autoL3"],
+                                              auto_L4=data_from_post["autoL4"], 
 
-                                              teleop_amp=data_from_post["teleopAmp"],
-                                              teleop_speaker_make=data_from_post["teleopSpeakerMake"],
-                                              teleop_speaker_miss=data_from_post["teleopSpeakerMiss"],
-                                              teleop_pass=data_from_post["pass"],
+                                              telenet=data_from_post["telenet"],
+                                              teleProcessor=data_from_post["teleProcessor"],
+                                              teleRemoved=data_from_post["teleRemoved"],
+                                              teleL1=data_from_post["teleL1"],
+                                              teleL2=data_from_post["teleL2"],
+                                              teleL3=data_from_post["teleL3"],
+                                              teleL4=data_from_post["teleL4"],
 
-                                              trap=data_from_post["trapNumber"],
                                               climb=data_from_post["endClimb"],
 
                                               driver_ranking=data_from_post["driverRanking"],
