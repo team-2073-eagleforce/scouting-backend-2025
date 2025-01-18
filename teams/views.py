@@ -57,49 +57,76 @@ def team_page(request, team_number):
 
     return render(request, 'teams/team_page.html', {"team_number": team_number})
 
-
 # @login_required
 def pit_scouting(request, team_number):
     comp_code = request.GET.get('comp')
+    print(f"Method: {request.method}")  # Check if POST
+    print(f"Competition Code: {comp_code}")  # Check if comp_code exists
+    
     if request.method == 'POST' and comp_code is not None:
         form = NewPitScoutingData(request.POST, request.FILES)
+        print(f"Form is valid: {form.is_valid()}")
+        
+        if not form.is_valid():
+            print(f"Form errors: {form.errors}")  # Print validation errors
+        
         if form.is_valid():
-            image_response = cloudinary.uploader.upload(request.FILES['robot_picture'])
-            img_url = image_response["secure_url"]
-            image_url_list = img_url.split("upload/")
-            image_url_list.insert(1, "upload/w_0.4,c_scale/")
-            img_url = "".join(image_url_list)
+            try:
+                # Handle image upload
+                image_response = cloudinary.uploader.upload(request.FILES['robot_picture'])
+                img_url = image_response["secure_url"]
+                image_url_list = img_url.split("upload/")
+                image_url_list.insert(1, "upload/w_0.4,c_scale/")
+                img_url = "".join(image_url_list)
 
-            Teams.objects.get_or_create(team_number=team_number, event=comp_code)
+                # Get or create team
+                team, created = Teams.objects.get_or_create(
+                    team_number=team_number,
+                    event=comp_code
+                )
+                print(f"Team created: {created}")  # Check if team was created
 
-            intake_design_char = form.cleaned_data.get('intake_design')
-            intake_locations_char = ", ".join(form.cleaned_data.get('intake_locations'))
-            scoring_locations_char = ", ".join(form.cleaned_data.get('scoring_locations'))
-            shooting_positions_char = ", ".join(form.cleaned_data.get('shooting_positions'))
-            auto_positions_char = ", ".join(form.cleaned_data.get('auto_positions'))
-            Teams.objects.filter(team_number=team_number, event=comp_code).update(
-                drivetrain=form.cleaned_data.get('drivetrain'),
-                weight=form.cleaned_data.get('weight'),
-                length=form.cleaned_data.get('length'),
-                width=form.cleaned_data.get('width'),
-                intake_design=intake_design_char,
-                intake_locations=intake_locations_char,
-                scoring_locations=scoring_locations_char,
-                shooting_positions=shooting_positions_char,
-                auto_positions=auto_positions_char,
-                auto_leave=form.cleaned_data.get('auto_leave'),
-                auto_total_notes=form.cleaned_data.get('auto_total_notes'),
-                auto_amp_notes=form.cleaned_data.get('auto_amp_notes'),
-                robot_picture=img_url,
-                additional_info=form.cleaned_data.get('additional_info'),
-                pit_scout_status=True)
+                # Process multi-select fields
+                intake_locations_char = ", ".join(form.cleaned_data.get('intake_locations'))
+                scoring_locations_char = ", ".join(form.cleaned_data.get('scoring_locations'))
+                auto_positions_char = ", ".join(form.cleaned_data.get('auto_positions'))
+                cage_positions_char = ", ".join(form.cleaned_data.get('cage_positions'))
 
-            return redirect("team_page", team_number=team_number)
+                # Update team data
+                update_result = Teams.objects.filter(
+                    team_number=team_number,
+                    event=comp_code
+                ).update(
+                    drivetrain=form.cleaned_data.get('drivetrain'),
+                    weight=form.cleaned_data.get('weight'),
+                    length=form.cleaned_data.get('length'),
+                    width=form.cleaned_data.get('width'),
+                    intake_design=form.cleaned_data.get('intake_design'),
+                    intake_locations=intake_locations_char,
+                    scoring_locations=scoring_locations_char,
+                    cage_positions=cage_positions_char,
+                    under_shallow_coral=form.cleaned_data.get('under_shallow_coral'),
+                    removeable=form.cleaned_data.get('removeable'),
+                    auto_positions=auto_positions_char,
+                    auto_leave=form.cleaned_data.get('auto_leave'),
+                    auto_total_notes=form.cleaned_data.get('auto_total_notes'),
+                    auto_coral_notes=form.cleaned_data.get('auto_coral_notes'),
+                    robot_picture=img_url,
+                    additional_info=form.cleaned_data.get('additional_info'),
+                    pit_scout_status=True
+                )
+                print(f"Update result: {update_result}")  # Check if update was successful
+                print(f"Cleaned data: {form.cleaned_data}")  # Print the form data
+
+                return redirect('team_page', team_number=team_number)
+            except Exception as e:
+                print(f"Error occurred: {str(e)}")  # Print any errors
+                raise  # Re-raise the exception to see it in the Django error page
     else:
         form = NewPitScoutingData()
+    
     return render(request, "teams/pit_scouting.html", {'form': form, 'team_number': team_number})
-
-
+    
 # @login_required
 def human_player_submit(request, team_number):
     comp_code = request.GET.get('comp')

@@ -1,58 +1,74 @@
 from django.db import models
 from django.db.models import Model
 
-
 class Teams(models.Model):
     team_number = models.IntegerField()
-    event = models.CharField(max_length=16, default="testing")
-    robot_picture = models.URLField(blank=True, null=True)
-    drivetrain = models.CharField(max_length=32)
-    weight = models.IntegerField(blank=True, null=True)
-    length = models.IntegerField(blank=True, null=True)
-    width = models.IntegerField(blank=True, null=True)
-    intake_design = models.CharField(max_length=50, null=True, blank=True)
-    intake_locations = models.CharField(max_length=50)
-    scoring_locations = models.CharField(max_length=50)
-    shooting_positions = models.CharField(max_length=50, null=True, blank=True)
-    auto_positions = models.CharField(max_length=50, null=True, blank=True)
-    auto_leave = models.CharField(max_length=3, null=True, blank=True)
-    auto_total_notes = models.IntegerField(blank=True, null=True)
-    auto_amp_notes = models.IntegerField(blank=True, null=True)
-    additional_info = models.CharField(max_length=256, blank=True, null=True)
+    event = models.CharField(max_length=10)
+    drivetrain = models.CharField(max_length=50)
+    weight = models.IntegerField(null=True)
+    length = models.IntegerField(null=True)
+    width = models.IntegerField(null=True)
+    intake_design = models.CharField(max_length=50)
+    intake_locations = models.CharField(max_length=100)
+    scoring_locations = models.CharField(max_length=100)
+    cage_positions = models.CharField(max_length=100)
+    under_shallow_coral = models.CharField(max_length=10)
+    removeable = models.CharField(max_length=10)
+    auto_positions = models.CharField(max_length=100)
+    auto_leave = models.CharField(max_length=10)
+    auto_total_notes = models.IntegerField(null=True)
+    auto_coral_notes = models.IntegerField(null=True)
+    robot_picture = models.URLField(max_length=200, null=True)
+    additional_info = models.TextField(null=True)
     pit_scout_status = models.BooleanField(default=False)
 
+    class Meta:
+        unique_together = ('team_number', 'event')
 
 class Team_Match_Data(models.Model):
+    # Meta Information
     team_number = models.IntegerField()
     event = models.CharField(max_length=16, default="testing")
     match_number = models.IntegerField()
     quantifier = models.CharField(max_length=10)
 
+    # Auto Period
     auto_leave = models.IntegerField()
-    auto_amp = models.IntegerField()
-    auto_speaker_make = models.IntegerField()
-    auto_speaker_miss = models.IntegerField()
+    auto_L1 = models.IntegerField()
+    auto_L2 = models.IntegerField()
+    auto_L3 = models.IntegerField()
+    auto_L4 = models.IntegerField()
+    auto_net = models.IntegerField()
+    auto_processor = models.IntegerField()
+    auto_removed = models.IntegerField()
 
-    teleop_amp = models.IntegerField()
-    teleop_speaker_make = models.IntegerField()
-    teleop_speaker_miss = models.IntegerField()
-    teleop_pass = models.IntegerField(default=0)
+    # Teleop Period
+    teleL1 = models.IntegerField()
+    teleL2 = models.IntegerField()
+    teleL3 = models.IntegerField()
+    teleL4 = models.IntegerField()
+    telenet = models.IntegerField()
+    teleProcessor = models.IntegerField()
+    teleRemoved = models.IntegerField()
 
-    trap = models.IntegerField()
+    # End Game
     climb = models.IntegerField()
 
+    # Rankings and Comments
     driver_ranking = models.IntegerField()
     defense_ranking = models.IntegerField()
     comment = models.CharField(max_length=256)
+    
+    # Status Flags
     is_broken = models.IntegerField(default=0)
     is_disabled = models.IntegerField(default=0)
     is_tipped = models.IntegerField(default=0)
+    
+    # Scout Information
     scout_name = models.CharField(max_length=32)
-
 
 class Human_Player_Match(models.Model):
     team_number = models.IntegerField()
     match_number = models.IntegerField(default=0)
     event = models.CharField(max_length=16, default="testing")
-    
     human_player_comment = models.CharField(max_length=1000, default="None")

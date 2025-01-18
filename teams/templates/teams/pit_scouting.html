@@ -22,10 +22,12 @@
 {% endblock %}
 
 {% block Content %}
-    <h2>Pit Scouting</h2>
-    <h3>Team {{ team_number }}</h3>
+    <h2>Pit Scouting - Team {{ team_number }}</h2>
     <div class="pit_scout">
-        {% crispy form %}
+        <form method="POST" enctype="multipart/form-data" action="?comp={{ request.GET.comp }}">
+            {% csrf_token %}
+            {% crispy form %}
+        </form>
     </div>
     <img src="/static/images/Auto_Map.jpg" alt="auto_map" id="auto_map">
 {% endblock %}

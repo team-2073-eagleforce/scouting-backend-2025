@@ -11,7 +11,7 @@ DRIVETRAINS = (
     ("Mechanum","Mechanum"),
     ("Omni", "Omni"),
     ("Tank", "Tank")
-    )
+)
 
 INTAKE_LOCATION = (
     ("Source", "Source"),
@@ -19,22 +19,18 @@ INTAKE_LOCATION = (
     ("None :(", "None :("))
 
 SCORING_LOCATION = (
-    ("Speaker", "Speaker"),
-    ("Amp", "Amp"),
-    ("Trap", "Trap"),
-    ("None :(", "None :("))
+    ("L1", "L1"),
+    ("L2", "L2"),
+    ("L3", "L3"),
+    ("L4", "L4"),
+    ("Net", "Net"),
+    ("Processor", "Processor")
+)
 
 INTAKE_DESIGN = (
     ("Over Bumper", "Over Bumper"),
     ("Under Bumper", "Under Bumper"),
     ("Other", "Other")
-)
-
-SHOOTING_POSITIONS = (
-    ("Subwoofer", "Subwoofer"),
-    ("Podium", "Podium"),
-    ("Wing", "Wing"),
-    ("Midfield", "Midfield")
 )
 
 AUTO_POSITIONS = (
@@ -43,6 +39,11 @@ AUTO_POSITIONS = (
     ("3", "3"),
     ("4", "4"),
     ("5", "5")
+)
+
+PREFERRED_CAGE_POSITION = (
+    ("Shallow", "Shallow"),
+    ("Deep", "Deep")
 )
 
 BOOLEAN_VALUES = (
@@ -63,20 +64,42 @@ class NewPitScoutingData(forms.Form):
                                                  widget=forms.CheckboxSelectMultiple)
     scoring_locations = forms.MultipleChoiceField(choices=SCORING_LOCATION,
                                                   widget=forms.CheckboxSelectMultiple)
-    shooting_positions = forms.MultipleChoiceField(choices=SHOOTING_POSITIONS, 
-                                                   widget=forms.CheckboxSelectMultiple)
     auto_positions = forms.MultipleChoiceField(choices=AUTO_POSITIONS, 
                                                widget=forms.CheckboxSelectMultiple)
-    auto_leave = forms.ChoiceField(choices=BOOLEAN_VALUES, 
-                                   widget=forms.RadioSelect)
+    # Change this to MultipleChoiceField
+    cage_positions = forms.MultipleChoiceField(
+        choices=PREFERRED_CAGE_POSITION,
+        widget=forms.CheckboxSelectMultiple,  # Change to CheckboxSelectMultiple
+        required=True
+    )
+    under_shallow_coral = forms.ChoiceField(
+        choices=BOOLEAN_VALUES,
+        widget=forms.RadioSelect,
+        required=True
+    )
+    removeable = forms.ChoiceField(
+        choices=BOOLEAN_VALUES,
+        widget=forms.RadioSelect
+    )
+    auto_leave = forms.ChoiceField(
+        choices=BOOLEAN_VALUES, 
+        widget=forms.RadioSelect,
+        required=True
+    )
     auto_total_notes = forms.IntegerField()
-    auto_amp_notes = forms.IntegerField()
+    auto_coral_notes = forms.IntegerField()
     robot_picture = forms.ImageField()
-    additional_info = forms.CharField(max_length=512)
+    additional_info = forms.CharField(
+        max_length=512,
+        required=False,
+        widget=forms.Textarea
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.form_enctype = 'multipart/form-data'
         self.helper.attrs = {"novalidate": ''}
         self.helper.layout = Layout(
             'drivetrain',
@@ -86,14 +109,17 @@ class NewPitScoutingData(forms.Form):
             'intake_design',
             'intake_locations',
             'scoring_locations',
-            'shooting_positions',
-            'auto_positions',
+            'cage_positions',
+            'under_shallow_coral',
+            'removeable',
             'auto_leave',
+            'auto_positions',
             'auto_total_notes',
-            'auto_amp_notes',
+            'auto_coral_notes',
             'robot_picture',
             'additional_info',
-            Submit('submit', 'Submit'))
+            Submit('submit', 'Submit')
+        )
 
 
 class NewHumanScoutingData(forms.ModelForm):

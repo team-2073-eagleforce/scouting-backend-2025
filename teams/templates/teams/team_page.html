@@ -3,47 +3,6 @@
 
 {% block Title %} Team {{ team_number }}{% endblock %}
 
-{% block Styles %}
-    <style>
-        td:not(#comments_data) {
-            white-space: nowrap;
-        }
-
-        #comments_column {
-            padding-right: 200px;
-        }
-
-        th {
-            white-space: nowrap;
-        }
-
-        #match_data tr td:nth-child(n+2) {
-            background-color: lightcyan;
-        }
-
-        #match_data tr td:nth-child(n+5) {
-            background-color: lightpink;
-        }
-
-        #match_data tr td:nth-child(n+7) {
-            background-color: lightgoldenrodyellow;
-        }
-
-        #match_data tr td:nth-child(n+9) {
-            background-color: lavenderblush;
-        }
-
-        #match_data tr td:nth-child(12) {
-            background-color: white;
-        }
-
-        .flagged_comment {
-            font-weight: 900;
-            display: inline;
-        }
-
-    </style>
-{% endblock %}
 
 {% block Content %}
     <h2>Team {{ team_number }}</h2>
@@ -51,26 +10,27 @@
         <div class="row">
             <div class="col-8">
                 <span><b>Drivetrain: </b>{{ team.drivetrain }}</span> <br> <br>
-                <span><b>Length x Width: </b>{{ team.length }} x {{ team.width }}</span> <br> <br>
+                <span><b>Length x Width (Bumper): </b>{{ team.length }} x {{ team.width }}</span> <br> <br>
                 <span><b>Weight: </b>{{ team.weight }}</span> <br> <br>
                 <span><b>Intake Design: </b>{{ team.intake_design }}</span> <br> <br>
-                <span><b>Under Stage?: </b>{{ team.under_stage }}</span> <br> <br>
+                <span><b>Under Shallow Coral: </b>{{ team.under_shallow_coral }}</span> <br> <br>
+                <span><b>Ball Remover?: </b>{{ team.removeable }}</span> <br> <br>
                 <span><b>Intake Locations: </b>{{ team.intake_locations }}</span> <br> <br>
-                <span><b>Scoring Location: </b>{{ team.scoring_locations }}</span> <br> <br>
-                <span><b>Shooting Positions: </b>{{ team.shooting_positions }}</span> <br> <br>
+                <span><b>Scoring Locations: </b>{{ team.scoring_locations }}</span> <br> <br>
+                <span><b>Cage Positions: </b>{{ team.cage_positions }}</span> <br> <br>
                 <span><b>Auto Positions: </b>{{ team.auto_positions }}</span> <br> <br>
                 <span><b>Auto Leave: </b>{{ team.auto_leave }}</span> <br> <br>
-                <span><b>Auto Total Notes: </b>{{ team.auto_total_notes }}</span> <br> <br>
-                <span><b>Auto Amp Notes: </b>{{ team.auto_amp_notes }}</span> <br> <br>
+                <span><b>Auto Total: </b>{{ team.auto_total_notes }}</span> <br> <br>
+                <span><b>Auto Coral: </b>{{ team.auto_coral_notes }}</span> <br> <br>
                 <span><b>Additional Info: </b> {{ team.additional_info }}</span> <br> <br>
-                <a href="{% url "pit_scouting" team.team_number %}">Update Info</a>
+                <a href="{% url 'pit_scouting' team.team_number %}?comp={{ request.GET.comp }}">Update Info</a>
             </div>
             <div class="col-4">
                 <img src="{{ team.robot_picture }}" alt="Robot Picture" class="img-thumbnail">
             </div>
         </div>
     {% else %}
-        <a style="color:red" href="{% url "pit_scouting" team_number %}">Pit Scout Now</a>
+    <a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}">Pit Scout</a>
     {% endif %}
     <div class="table-responsive">
         <table id="match_data" class="table table-bordered">
@@ -78,12 +38,20 @@
             <tr>
                 <th>Match</th>
                 <th>Leave</th>
-                <th>A-Amp</th>
-                <th>A-Speaker</th>
-                <th>T-Amp</th>
-                <th>T-Speaker</th>
-                <th>Pass</th>
-                <th>Trap</th>
+                <th>A-L1</th>
+                <th>A-L2</th>
+                <th>A-L3</th>
+                <th>A-L4</th>
+                <th>A-Net</th>
+                <th>A-Proc</th>
+                <th>A-Rem</th>
+                <th>T-L1</th>
+                <th>T-L2</th>
+                <th>T-L3</th>
+                <th>T-L4</th>
+                <th>T-Net</th>
+                <th>T-Proc</th>
+                <th>T-Rem</th>
                 <th>Climb</th>
                 <th>Driver</th>
                 <th>Defense</th>
@@ -96,24 +64,20 @@
                 <tr>
                     <td>{{ match.quantifier }} {{ match.match_number }}</td>
                     <td>{{ match.auto_leave }}</td>
-                    <td>{{ match.auto_amp }}</td>
-
-                    {% with match.auto_speaker_make as auto_make %}
-                    {% with match.auto_speaker_miss as auto_miss %}
-                    <td>{{ auto_make }}/{{ auto_make|add:auto_miss }}</td>
-                    {% endwith %}
-                    {% endwith %}
-
-                    <td>{{ match.teleop_amp }}</td>
-
-                    {% with match.teleop_speaker_make as teleop_make %}
-                    {% with match.teleop_speaker_miss as teleop_miss %}
-                    <td>{{ teleop_make }}/{{ teleop_make|add:teleop_miss }}</td>
-                    <td>{{ match.teleop_pass }}</td>
-                    {% endwith %}
-                    {% endwith %}
-
-                    <td>{{ match.trap }}</td>
+                    <td>{{ match.auto_L1 }}</td>
+                    <td>{{ match.auto_L2 }}</td>
+                    <td>{{ match.auto_L3 }}</td>
+                    <td>{{ match.auto_L4 }}</td>
+                    <td>{{ match.auto_net }}</td>
+                    <td>{{ match.auto_processor }}</td>
+                    <td>{{ match.auto_removed }}</td>
+                    <td>{{ match.teleL1 }}</td>
+                    <td>{{ match.teleL2 }}</td>
+                    <td>{{ match.teleL3 }}</td>
+                    <td>{{ match.teleL4 }}</td>
+                    <td>{{ match.telenet }}</td>
+                    <td>{{ match.teleProcessor }}</td>
+                    <td>{{ match.teleRemoved }}</td>
                     <td>{{ match.climb }}</td>
                     <td>{{ match.driver_ranking }}</td>
                     <td>{{ match.defense_ranking }}</td>
