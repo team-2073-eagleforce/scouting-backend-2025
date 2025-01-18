@@ -2,6 +2,7 @@ AUTHORIZED_EMAIL = [
     # technician
     "cayden.granado@team2073.com", 
     "adrienne.nguyen@team2073.com",
+    "chris.luk@team2073.com"
 
     # Pit Scouts
     "richmond.cheung@team2073.com",
@@ -32,4 +33,4 @@ AUTHORIZED_EMAIL = [
 ]
 
 CONST_HOME_TEAM = 2073
-CONST_YEAR = 2024
+CONST_YEAR = 2025
