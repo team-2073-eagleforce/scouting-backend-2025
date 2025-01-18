@@ -1,4 +1,5 @@
 let draggedItem = null;
+let saveTimeout = null;
 
 function onDragStart(ev) {
     draggedItem = ev.target;
@@ -52,6 +53,18 @@ function onDrop(ev) {
 
     const droppedItem = document.getElementById(ev.dataTransfer.getData("team_number_id"));
     if (droppedItem) {
+        // Check if the team already exists in the target list
+        const teamId = droppedItem.id;
+        const existingInList = Array.from(list.getElementsByTagName('li'))
+            .some(li => li.id === teamId && li !== droppedItem);
+
+        if (existingInList) {
+            // If duplicate found, return item to original position
+            draggedItem.classList.remove('being-dragged');
+            draggedItem = null;
+            return;
+        }
+
         const mouseY = ev.clientY;
         const items = Array.from(list.children);
         let insertPosition = null;
@@ -71,7 +84,6 @@ function onDrop(ev) {
         }
     }
 
-    // Remove the dragging class
     if (draggedItem) {
         draggedItem.classList.remove('being-dragged');
     }
@@ -108,30 +120,97 @@ function chosen(ev) {
     save();
 }
 
-function save() {
-    var no_pick = Array.from(document.getElementById("no_pick").getElementsByTagName("li")).map(li => li.id);
-    var first_pick = Array.from(document.getElementById("1st_pick").getElementsByTagName("li")).map(li => li.id);
-    var second_pick = Array.from(document.getElementById("2nd_pick").getElementsByTagName("li")).map(li => li.id);
-    var third_pick = [];
-    if (document.getElementById("3rd_pick")) {
-        third_pick = Array.from(document.getElementById("3rd_pick").getElementsByTagName("li")).map(li => li.id);
-    }
-    var dn_pick = Array.from(document.getElementById("dnp").getElementsByTagName("li")).map(li => li.id);
+function handleDuplicates() {
+    const allTeams = new Map(); // Map to store team IDs and their locations
+    const duplicates = new Set(); // Set to store duplicate team IDs
 
-    var picklist_save_data = [no_pick, first_pick, second_pick, third_pick, dn_pick];
+    // Check all lists for duplicates
+    ['no_pick', '1st_pick', '2nd_pick', '3rd_pick', 'dnp'].forEach(listId => {
+        const list = document.getElementById(listId);
+        if (!list) return;
 
-    fetch(`/strategy/picklist/submit/?comp=${localStorage.getItem("comp")}`, {
-        method: 'POST',
-        credentials: 'include',
-        mode: 'same-origin',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': getCookie('csrftoken'),
-        },
-        body: JSON.stringify(picklist_save_data)
+        Array.from(list.getElementsByTagName('li')).forEach(li => {
+            const teamId = li.id;
+            if (allTeams.has(teamId)) {
+                // Found a duplicate
+                duplicates.add(teamId);
+                // Store all locations of this team
+                const locations = allTeams.get(teamId);
+                locations.push({ listId, element: li });
+                allTeams.set(teamId, locations);
+            } else {
+                // First occurrence of this team
+                allTeams.set(teamId, [{ listId, element: li }]);
+            }
+        });
     });
+
+    // Handle duplicates
+    duplicates.forEach(teamId => {
+        const locations = allTeams.get(teamId);
+        // Keep the first occurrence, move others to no_pick
+        const noPick = document.getElementById('no_pick');
+        
+        // Skip the first occurrence (keep it where it is)
+        for (let i = 1; i < locations.length; i++) {
+            const duplicate = locations[i].element;
+            // Remove the duplicate from its current location
+            duplicate.remove();
+        }
+
+        // Flash the remaining instances to indicate there was a duplicate
+        const remainingElement = locations[0].element;
+        remainingElement.style.backgroundColor = 'yellow';
+        setTimeout(() => {
+            remainingElement.style.backgroundColor = '';
+        }, 1000);
+    });
+
+    return duplicates.size > 0;
+}
+
+// Modify your save function to check for duplicates before saving
+function save() {
+    // Clear any pending save operation
+    if (saveTimeout) {
+        clearTimeout(saveTimeout);
+    }
+
+    // Set a new timeout
+    saveTimeout = setTimeout(() => {
+        // Check for duplicates first
+        if (handleDuplicates()) {
+            console.log("Duplicates were detected and handled");
+        }
+
+        var no_pick = Array.from(document.getElementById("no_pick").getElementsByTagName("li")).map(li => li.id);
+        var first_pick = Array.from(document.getElementById("1st_pick").getElementsByTagName("li")).map(li => li.id);
+        var second_pick = Array.from(document.getElementById("2nd_pick").getElementsByTagName("li")).map(li => li.id);
+        var third_pick = [];
+        if (document.getElementById("3rd_pick")) {
+            third_pick = Array.from(document.getElementById("3rd_pick").getElementsByTagName("li")).map(li => li.id);
+        }
+        var dn_pick = Array.from(document.getElementById("dnp").getElementsByTagName("li")).map(li => li.id);
+
+        var picklist_save_data = [no_pick, first_pick, second_pick, third_pick, dn_pick];
+
+        fetch(`/strategy/picklist/submit/?comp=${localStorage.getItem("comp")}`, {
+            method: 'POST',
+            credentials: 'include',
+            mode: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify(picklist_save_data)
+        }).catch(error => {
+            console.error('Save failed:', error);
+            // Optionally retry the save after a delay
+            setTimeout(save, 1000);
+        });
+    }, 250); // Wait 250ms before actually saving
 }
 
 function fetchUpdates() {
