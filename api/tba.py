@@ -17,6 +17,15 @@ def get_team_events():
         events[event["key"]] = event["name"]
     events["testing"] = "Training"
 
+    '''
+    events["2025cacc"] = "Capital City Classic"
+    events["2025cc"] = "Chezy Champs"
+    events["2025mttd"] = "Madtown Throwdown"
+    '''
+
+    # Manual addition of data, MUST wait until TBA adds these events
+    # to their website or else the API will break... (do I "NEED" to make this a dynamic loader?)
+
     return events
 
 
