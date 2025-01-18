@@ -1,6 +1,9 @@
 let draggedItem = null;
 let saveTimeout = null;
 
+let saveQueue = [];
+let isSaving = false;
+
 function onDragStart(ev) {
     draggedItem = ev.target;
     ev.dataTransfer.setData("team_number_id", ev.target.id);
@@ -171,47 +174,54 @@ function handleDuplicates() {
 
 // Modify your save function to check for duplicates before saving
 function save() {
-    // Clear any pending save operation
+    // Clear any pending save timeout
     if (saveTimeout) {
         clearTimeout(saveTimeout);
     }
 
-    // Set a new timeout
+    // Add save request to queue
+    saveQueue.push(true);
+
+    // Set a timeout to process the queue
     saveTimeout = setTimeout(() => {
-        // Check for duplicates first
         if (handleDuplicates()) {
             console.log("Duplicates were detected and handled");
         }
-
-        var no_pick = Array.from(document.getElementById("no_pick").getElementsByTagName("li")).map(li => li.id);
-        var first_pick = Array.from(document.getElementById("1st_pick").getElementsByTagName("li")).map(li => li.id);
-        var second_pick = Array.from(document.getElementById("2nd_pick").getElementsByTagName("li")).map(li => li.id);
-        var third_pick = [];
-        if (document.getElementById("3rd_pick")) {
-            third_pick = Array.from(document.getElementById("3rd_pick").getElementsByTagName("li")).map(li => li.id);
-        }
-        var dn_pick = Array.from(document.getElementById("dnp").getElementsByTagName("li")).map(li => li.id);
-
-        var picklist_save_data = [no_pick, first_pick, second_pick, third_pick, dn_pick];
-
-        fetch(`/strategy/picklist/submit/?comp=${localStorage.getItem("comp")}`, {
-            method: 'POST',
-            credentials: 'include',
-            mode: 'same-origin',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': getCookie('csrftoken'),
-            },
-            body: JSON.stringify(picklist_save_data)
-        }).catch(error => {
-            console.error('Save failed:', error);
-            // Optionally retry the save after a delay
-            setTimeout(save, 1000);
-        });
-    }, 250); // Wait 250ms before actually saving
+        processSaveQueue();
+    }, 250);
 }
+
+// Optional: Add visual indicator that changes are pending
+function updateSaveIndicator() {
+    const indicator = document.getElementById('save-indicator') || createSaveIndicator();
+    if (saveQueue.length > 0 || isSaving) {
+        indicator.style.display = 'block';
+    } else {
+        indicator.style.display = 'none';
+    }
+}
+
+function createSaveIndicator() {
+    const indicator = document.createElement('div');
+    indicator.id = 'save-indicator';
+    indicator.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        display: none;
+        z-index: 1000;
+    `;
+    indicator.textContent = 'Saving changes...';
+    document.body.appendChild(indicator);
+    return indicator;
+}
+
+// Add observer to update save indicator
+setInterval(updateSaveIndicator, 100);
 
 function fetchUpdates() {
     if (draggedItem) return; // Don't update while dragging
@@ -288,6 +298,58 @@ function getCookie(name) {
         }
     }
     return cookieValue;
+}
+
+function processSaveQueue() {
+    if (isSaving || saveQueue.length === 0) return;
+    
+    isSaving = true;
+    
+    // Get latest state for the save
+    var no_pick = Array.from(document.getElementById("no_pick").getElementsByTagName("li")).map(li => li.id);
+    var first_pick = Array.from(document.getElementById("1st_pick").getElementsByTagName("li")).map(li => li.id);
+    var second_pick = Array.from(document.getElementById("2nd_pick").getElementsByTagName("li")).map(li => li.id);
+    var third_pick = [];
+    if (document.getElementById("3rd_pick")) {
+        third_pick = Array.from(document.getElementById("3rd_pick").getElementsByTagName("li")).map(li => li.id);
+    }
+    var dn_pick = Array.from(document.getElementById("dnp").getElementsByTagName("li")).map(li => li.id);
+
+    var picklist_save_data = [no_pick, first_pick, second_pick, third_pick, dn_pick];
+
+    // Clear the queue before sending
+    saveQueue = [];
+
+    fetch(`/strategy/picklist/submit/?comp=${localStorage.getItem("comp")}`, {
+        method: 'POST',
+        credentials: 'include',
+        mode: 'same-origin',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify(picklist_save_data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Save failed');
+        }
+        return response.json();
+    })
+    .catch(error => {
+        console.error('Save failed:', error);
+        // If save fails, add back to queue
+        saveQueue.push(true);
+    })
+    .finally(() => {
+        isSaving = false;
+        // If there are more saves queued, process them
+        if (saveQueue.length > 0) {
+            setTimeout(processSaveQueue, 100);
+        }
+    });
 }
 
 // Start the periodic updates when the page loads
