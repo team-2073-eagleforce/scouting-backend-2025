@@ -19,31 +19,34 @@
     <div class="table-responsive">
         <table class="table" id="rankings_table">
             <thead>
-            <tr class="sticky-top" style="background-color: gray">
-                <th>Rank</th>
-                <th onclick="sortTable(1, 'team_number')">Team Number</th>
-                <th onclick="sortTable(2, 'auto')">A-Notes</th>
-                <th onclick="sortTable(3, 'teleop-total')">T-Total</th>
-                <th onclick="sortTable(4, 'teleop-amp')">T-Amp</th>
-                <th onclick="sortTable(5, 'teleop-speaker')">T-Speaker</th>
-                <th onclick="sortTable(6, 'teleop-pass')">Pass</th>
-                <th onclick="sortTable(7, 'trap')">Traps</th>
-                <th onclick="sortTable(8, 'climb')">Climb</th>
-                <th onclick="sortTable(9, 'total')">Total</th>
-                <th onclick="sortTable(10, 'defense')">Defense</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for team_number, team_stats in team_averages.items %}
-            <tr class="data">
-                <td class="rank">{{ forloop.counter }}</td>
-                <td><a href="{% url "team_page" team_number %}">{{ team_number }}</a></td>
-                {% for stat_type, stat in team_stats.items %}
-                    <td class="{{ stat_type }}">{{ stat }}</td>
-                {% endfor %}
-            </tr>
-        {% endfor %}
-        </tbody>
+                <tr class="sticky-top" style="background-color: gray">
+                    <th>Rank</th>
+                    <th onclick="sortTable(1, 'team_number')">Team Number</th>
+                    <th onclick="sortTable(2, 'autoleave')">Auto Leave</th>
+                    <th onclick="sortTable(3, 'auto')">Auto Total</th>
+                    <th onclick="sortTable(4, 'L1')">L1 Total</th>
+                    <th onclick="sortTable(5, 'L2')">L2 Total</th>
+                    <th onclick="sortTable(6, 'L3')">L3 Total</th>
+                    <th onclick="sortTable(7, 'L4')">L4 Total</th>
+                    <th onclick="sortTable(8, 'net')">Net Total</th>
+                    <th onclick="sortTable(9, 'processor')">Processor</th>
+                    <th onclick="sortTable(10, 'removed')">Removed</th>
+                    <th onclick="sortTable(11, 'climb')">Climb</th>
+                    <th onclick="sortTable(12, 'total')">Total</th>
+                    <th onclick="sortTable(13, 'defense')">Defense</th>
+                </tr>                
+            </thead>
+            <tbody>
+            {% for team_number, team_stats in team_averages.items %}
+                <tr class="data">
+                    <td class="rank">{{ forloop.counter }}</td>
+                    <td><a href="{% url "team_page" team_number %}">{{ team_number }}</a></td>
+                    {% for stat_type, stat in team_stats.items %}
+                        <td class="{{ stat_type }}">{{ stat }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
         </table>
     </div>
 {% endblock %}

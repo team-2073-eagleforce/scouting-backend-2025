@@ -35,34 +35,34 @@
     <div class="table-responsive">
         <table id="match_data" class="table table-bordered">
             <thead>
-            <tr>
-                <th>Match</th>
-                <th>Leave</th>
-                <th>A-L1</th>
-                <th>A-L2</th>
-                <th>A-L3</th>
-                <th>A-L4</th>
-                <th>A-Net</th>
-                <th>A-Proc</th>
-                <th>A-Rem</th>
-                <th>T-L1</th>
-                <th>T-L2</th>
-                <th>T-L3</th>
-                <th>T-L4</th>
-                <th>T-Net</th>
-                <th>T-Proc</th>
-                <th>T-Rem</th>
-                <th>Climb</th>
-                <th>Driver</th>
-                <th>Defense</th>
-                <th id="comments_column">Comments</th>
-                <th>Scout Name</th>
-            </tr>
+                <tr>
+                    <th>Match</th>
+                    <th>Leave</th>
+                    <th>A-L1</th>
+                    <th>A-L2</th>
+                    <th>A-L3</th>
+                    <th>A-L4</th>
+                    <th>A-Net</th>
+                    <th>A-Proc</th>
+                    <th>A-Rem</th>
+                    <th>T-L1</th>
+                    <th>T-L2</th>
+                    <th>T-L3</th>
+                    <th>T-L4</th>
+                    <th>T-Net</th>
+                    <th>T-Proc</th>
+                    <th>T-Rem</th>
+                    <th>Climb</th>
+                    <th>Driver</th>
+                    <th>Defense</th>
+                    <th id="comments_column">Comments</th>
+                    <th>Scout Name</th>
+                </tr>
             </thead>
             <tbody>
-            {% for match in all_team_match_data %}
+                {% for match in all_team_match_data %}
                 <tr>
-                    <td>{{ match.quantifier }} {{ match.match_number }}</td>
+                    <td>{{ match.match_number }}{% if match.quantifier %}-{{ match.quantifier }}{% endif %}</td>
                     <td>{{ match.auto_leave }}</td>
                     <td>{{ match.auto_L1 }}</td>
                     <td>{{ match.auto_L2 }}</td>
@@ -81,26 +81,17 @@
                     <td>{{ match.climb }}</td>
                     <td>{{ match.driver_ranking }}</td>
                     <td>{{ match.defense_ranking }}</td>
-                    <td>
-                        {% if match.is_disabled == 1 %}
-                            <p class="flagged_comment">Disabled</p>
-                        {% endif %}
-                        {% if match.is_broken == 1 %}
-                            <p class="flagged_comment">Broken</p>
-                        {% endif %}
-                        {% if match.is_tipped == 1 %}
-                            <p class="flagged_comment">Tipped</p>
-                        {% endif %}
-                        <div>
-                            {{ match.comment }}
-                        </div>
-                    </td>
+                    <td>{{ match.comment }}</td>
                     <td>{{ match.scout_name }}</td>
                 </tr>
-            {% endfor %}
+                {% empty %}
+                <tr>
+                    <td colspan="21" class="text-center">No match data available</td>
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
-    </div>
+    </div>    
     <a href="{% url "human-scout" team_number %}">Scout Human Player Now</a>
     <div class="table-responsive">
         <table class="table table-bordered">

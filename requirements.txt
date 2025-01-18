@@ -6,6 +6,7 @@ dj-database-url==2.1.0
 Django==4.2.9
 django-crispy-forms==2.1
 idna==3.4
+Image
 numpy==1.24.2
 Pillow==9.4.0
 python-decouple==3.8

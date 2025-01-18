@@ -104,24 +104,67 @@ def dashboard(request):
 
     return render(request, "strategy/dashboard.html")
 
-
 def fetch_team_match_averages(team_number, comp_code):
-    team_match_data = models.Team_Match_Data.objects.filter(team_number=team_number, event=comp_code, match_number__lt=100)
-    team_match_averages = team_match_data.aggregate(Avg('auto_amp', default=0),
-                                                    Avg('auto_speaker_make', default=0),
-                                                    Avg('teleop_amp', default=0),
-                                                    Avg('teleop_speaker_make', default=0),
-                                                    Avg('teleop_pass', default=0),
-                                                    Avg('trap', default=0),
-                                                    Avg('climb', default=0),
-                                                    Avg('defense_ranking', default=0))
+    team_match_data = models.Team_Match_Data.objects.filter(
+        team_number=team_number,
+        event=comp_code,
+        match_number__lt=100
+    )
+    
+    team_match_averages = team_match_data.aggregate(
+        # Auto Period
+        Avg('auto_leave', default=0),
+        Avg('auto_L1', default=0),
+        Avg('auto_L2', default=0),
+        Avg('auto_L3', default=0),
+        Avg('auto_L4', default=0),
+        Avg('auto_net', default=0),
+        Avg('auto_processor', default=0),
+        Avg('auto_removed', default=0),
+        # Teleop Period
+        Avg('teleL1', default=0),
+        Avg('teleL2', default=0),
+        Avg('teleL3', default=0),
+        Avg('teleL4', default=0),
+        Avg('telenet', default=0),
+        Avg('teleProcessor', default=0),
+        Avg('teleRemoved', default=0),
+        # End Game
+        Avg('climb', default=0),
+        # Rankings
+        Avg('defense_ranking', default=0)
+    )
 
-    return {'auto': round(team_match_averages['auto_amp__avg'] + team_match_averages['auto_speaker_make__avg'], 3),
-            'teleop-total': round(team_match_averages['teleop_amp__avg'] + team_match_averages['teleop_speaker_make__avg'], 3),
-            'teleop-amp': round(team_match_averages['teleop_amp__avg'], 3),
-            'teleop-speaker': round(team_match_averages['teleop_speaker_make__avg'], 3),
-            'teleop-pass': round(team_match_averages['teleop_pass__avg'], 3),
-            'trap': round(team_match_averages['trap__avg'], 3),
-            'climb': round(team_match_averages['climb__avg'], 3),
-            'total': round(team_match_averages['auto_amp__avg'] + team_match_averages['auto_speaker_make__avg'] + team_match_averages['teleop_amp__avg'] + team_match_averages['teleop_speaker_make__avg'], 3),
-            'defense': round(team_match_averages['defense_ranking__avg'], 3)}
+    auto_total = (
+        team_match_averages['auto_L1__avg'] +
+        team_match_averages['auto_L2__avg'] +
+        team_match_averages['auto_L3__avg'] +
+        team_match_averages['auto_L4__avg'] +
+        team_match_averages['auto_net__avg'] +
+        team_match_averages['auto_processor__avg']
+    )
+
+    teleop_total = (
+        team_match_averages['teleL1__avg'] +
+        team_match_averages['teleL2__avg'] +
+        team_match_averages['teleL3__avg'] +
+        team_match_averages['teleL4__avg'] +
+        team_match_averages['telenet__avg'] +
+        team_match_averages['teleProcessor__avg']
+    )
+
+    return {
+    'autoleave': round(team_match_averages['auto_leave__avg'], 3),
+    'auto': round(auto_total, 3),
+    'L1': round(team_match_averages['auto_L1__avg'] + team_match_averages['teleL1__avg'], 3),
+    'L2': round(team_match_averages['auto_L2__avg'] + team_match_averages['teleL2__avg'], 3),
+    'L3': round(team_match_averages['auto_L3__avg'] + team_match_averages['teleL3__avg'], 3),
+    'L4': round(team_match_averages['auto_L4__avg'] + team_match_averages['teleL4__avg'], 3),
+    'net': round(team_match_averages['auto_net__avg'] + team_match_averages['telenet__avg'], 3),
+    'processor': round(team_match_averages['auto_processor__avg'] + team_match_averages['teleProcessor__avg'], 3),
+    'removed': round(team_match_averages['auto_removed__avg'] + team_match_averages['teleRemoved__avg'], 3),
+    'climb': round(team_match_averages['climb__avg'], 3),
+    'total': round(auto_total + teleop_total + team_match_averages['climb__avg'], 3),
+    'defense': round(team_match_averages['defense_ranking__avg'], 3)
+}
+
