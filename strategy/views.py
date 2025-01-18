@@ -66,20 +66,34 @@ def picklist(request):
 @csrf_exempt
 def picklist_submit(request):
     comp_code = request.GET.get('comp')
-    picklist_data = json.loads(request.body.decode('utf-8'))
+    
+    if request.method == 'POST':
+        picklist_data = json.loads(request.body.decode('utf-8'))
         
-    PickList_Data.objects.get_or_create(event=comp_code)
-
-    PickList_Data.objects.filter(event=comp_code).update(
-        event=comp_code,
-        no_pick = picklist_data[0],
-        first_pick = picklist_data[1],
-        second_pick = picklist_data[2],
-        third_pick = picklist_data[3],
-        dn_pick = picklist_data[4]
-    )
-        
-    return HttpResponse(status=200)
+        PickList_Data.objects.get_or_create(event=comp_code)
+        PickList_Data.objects.filter(event=comp_code).update(
+            event=comp_code,
+            no_pick = picklist_data[0],
+            first_pick = picklist_data[1],
+            second_pick = picklist_data[2],
+            third_pick = picklist_data[3],
+            dn_pick = picklist_data[4]
+        )
+        return HttpResponse(status=200)
+    
+    elif request.method == 'GET':
+        try:
+            picklist = PickList_Data.objects.get(event=comp_code)
+            data = [
+                picklist.no_pick,
+                picklist.first_pick,
+                picklist.second_pick,
+                picklist.third_pick,
+                picklist.dn_pick
+            ]
+            return JsonResponse(data, safe=False)
+        except PickList_Data.DoesNotExist:
+            return JsonResponse([], safe=False)
 
 # @login_required
 @csrf_exempt

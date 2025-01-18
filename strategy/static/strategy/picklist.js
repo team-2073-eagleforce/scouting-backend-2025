@@ -16,7 +16,7 @@ function onDrop(ev) {
     } else {
         ev.target.parentNode.after(document.getElementById(ev.dataTransfer.getData("team_number_id")));
     }
-    
+    save(); // Auto-save when item is dropped
 }
 
 function chosen(ev) {
@@ -29,6 +29,7 @@ function chosen(ev) {
         normal.innerHTML = ev.target.parentNode.querySelector("s").innerHTML;
         ev.target.parentNode.querySelector("s").replaceWith(normal);
     }
+    save(); // Auto-save when item is checked/unchecked
 }
 
 function save() {
@@ -63,7 +64,7 @@ function save() {
         dn_pick_list.push(dn_pick[i].innerHTML);
     }
     var picklist_save_data = [no_pick_list, first_pick_list, second_pick_list, third_pick_list, dn_pick_list]
-    fetch(`picklist/submit?comp=${localStorage.getItem("comp")}`, {
+    fetch(`/strategy/picklist/submit/?comp=${localStorage.getItem("comp")}`, {
         method: 'POST',
         credentials: 'include',
         mode: 'same-origin',
@@ -73,7 +74,7 @@ function save() {
             'X-CSRFToken': getCookie('csrftoken'),
         },
         body: JSON.stringify(picklist_save_data)
-    })
+    })     
 }
 
 function getCookie(name) {
@@ -91,3 +92,58 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+function fetchUpdates() {
+    fetch(`/strategy/picklist/submit/?comp=${localStorage.getItem("comp")}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        updateLists(data);
+    });
+}
+
+function updateLists(data) {
+    // Update each list with the new data
+    updateList("no_pick", data[0]);
+    updateList("1st_pick", data[1]);
+    updateList("2nd_pick", data[2]);
+    if(document.getElementById("3rd_pick") != null) {
+        updateList("3rd_pick", data[3]);
+    }
+    updateList("dnp", data[4]);
+}
+
+function updateList(listId, teams) {
+    const list = document.getElementById(listId);
+    // Only update if the content is different
+    const currentTeams = Array.from(list.getElementsByTagName("p")).map(p => p.innerHTML);
+    if (JSON.stringify(currentTeams) !== JSON.stringify(teams)) {
+        // Clear existing items
+        while (list.firstChild) {
+            list.removeChild(list.firstChild);
+        }
+        // Add new items
+        teams.forEach(team => {
+            const div = document.createElement("div");
+            div.id = team;
+            div.draggable = true;
+            div.setAttribute("ondragstart", "onDragStart(event)");
+            const p = document.createElement("p");
+            p.innerHTML = team;
+            div.appendChild(p);
+            list.appendChild(div);
+        });
+    }
+}
+
+// Start periodic updates when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Update every 2 seconds
+    setInterval(fetchUpdates, 1000);
+});
