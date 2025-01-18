@@ -13,36 +13,61 @@
             white-space: nowrap;
         }
 
-        p {
-            display: inline;
-            line-height: 30px;
-        }
-
         s {
             display: inline;
-        }
+        }      
 
-        .picklist_teams {
-            flex: 0 0 auto;
-            border: 1px solid black;
-            border-radius: 5px;
-            background-color: lightgray;
-            width: 65px;
+        p {
+        display: inline;
+        line-height: 24px;  /* Reduced from 30px */
         }
 
         .lists {
             display: flex;
             flex-flow: column wrap;
             border: 1px solid black;
-            height: 200px;
+            height: 150px;
+            min-width: 100px;
+            margin-bottom: 10px;
         }
+
+        .picklist_teams {
+            flex: 0 0 auto;
+            border: 1px solid black;
+            border-radius: 3px;
+            background-color: lightgray;
+            width: 75px;  /* Increased fixed width */
+            height: 20px; /* Added fixed height */
+            margin: 2px;
+            padding: 2px;
+            display: flex; /* Added to control layout */
+            align-items: center; /* Center content vertically */
+            justify-content: space-between; /* Space between team number and checkbox */
+        }
+
+        .picklist_teams p {
+            font-size: 0.9em;
+            margin: 0;
+            padding: 0 3px;
+            white-space: nowrap; /* Prevent text wrapping */
+            overflow: hidden; /* Hide overflow */
+            text-overflow: ellipsis; /* Show ... for overflow text */
+            max-width: 55px; /* Leave room for checkbox */
+        }
+
+        .picklist_teams input[type="checkbox"] {
+            margin: 0 2px;
+            flex-shrink: 0; /* Prevent checkbox from shrinking */
+        }
+
+
     </style>
 {% endblock %}
 
 {% block Content %}
     <h1>Picklist</h1>
     <p>Not Chosen</p>
-    <ol class="lists", id="no_pick" ondrop="onDrop(event)", ondragover="onDragOver(event)">
+    <ol class="lists" id="no_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)">
         {% for team in teams %}
             <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams", ondrop="onDrop(event)", ondragover="onDragOver(event)", id="{{ team }}">
                 <p>{{ team }}</p>
@@ -100,3 +125,10 @@
 {% block Scripts %}
     <script src="{% static "picklist.js" %}"></script>
 {% endblock %}
+
+<script>
+    // Start the periodic updates when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        setInterval(fetchUpdates, 2000);
+    });
+</script>
