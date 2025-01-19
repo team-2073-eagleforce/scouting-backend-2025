@@ -1,3 +1,9 @@
+import json
+import os
+from pathlib import Path
+
+from time import time
+
 from django.db.models import Avg
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
@@ -11,10 +17,6 @@ from helpers import login_required
 from django.shortcuts import render, redirect
 from strategy.models import PickList_Data
 
-import json
-import os
-from pathlib import Path
-
 def get_json_path(comp_code):
     # Get the project root directory
     BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,13 +29,25 @@ def read_json_picklist(comp_code):
     json_path = get_json_path(comp_code)
     if json_path.exists():
         with open(json_path, 'r') as f:
-            return json.load(f)
+            data = json.load(f)
+            # Handle both old and new format
+            if isinstance(data, list):
+                # Convert old format to new format
+                return {
+                    'timestamp': int(time() * 1000),
+                    'data': data
+                }
+            return data
     return None
 
 def write_json_picklist(comp_code, data):
     json_path = get_json_path(comp_code)
+    json_data = {
+        'timestamp': int(time() * 1000),  # Current time in milliseconds
+        'data': data
+    }
     with open(json_path, 'w') as f:
-        json.dump(data, f)
+        json.dump(json_data, f)
 
 # @login_required
 def rankings(request):
@@ -87,51 +101,65 @@ def picklist(request):
 @csrf_exempt
 def picklist_submit(request):
     comp_code = request.GET.get('comp')
-    
+    client_timestamp = request.GET.get('timestamp', '0')
+    save_to_db = request.GET.get('save_to_db') == 'true'
+
     if request.method == 'POST':
-        picklist_data = json.loads(request.body.decode('utf-8'))
-        
-        # Save to JSON file first
-        write_json_picklist(comp_code, picklist_data)
-        
-        # Only save to database when explicitly requested
-        if request.GET.get('save_to_db') == 'true':
-            PickList_Data.objects.get_or_create(event=comp_code)
-            PickList_Data.objects.filter(event=comp_code).update(
-                event=comp_code,
-                no_pick = picklist_data[0],
-                first_pick = picklist_data[1],
-                second_pick = picklist_data[2],
-                third_pick = picklist_data[3],
-                dn_pick = picklist_data[4]
-            )
-        return HttpResponse(status=200)
-    
+        try:
+            picklist_data = json.loads(request.body.decode('utf-8'))
+            
+            # Save to JSON file first
+            write_json_picklist(comp_code, picklist_data)
+            
+            if save_to_db:
+                # Save to database
+                PickList_Data.objects.get_or_create(event=comp_code)
+                PickList_Data.objects.filter(event=comp_code).update(
+                    event=comp_code,
+                    no_pick=picklist_data[0],
+                    first_pick=picklist_data[1],
+                    second_pick=picklist_data[2],
+                    third_pick=picklist_data[3],
+                    dn_pick=picklist_data[4]
+                )
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Data saved successfully',
+                'timestamp': int(time() * 1000)
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)
+
     elif request.method == 'GET':
-        # Always try to get from JSON file first
         json_data = read_json_picklist(comp_code)
         
-        # If JSON file doesn't exist, get from database and create JSON file
-        if json_data is None:
-            try:
-                picklist = PickList_Data.objects.get(event=comp_code)
-                json_data = [
-                    picklist.no_pick,
-                    picklist.first_pick,
-                    picklist.second_pick,
-                    picklist.third_pick,
-                    picklist.dn_pick
-                ]
-                write_json_picklist(comp_code, json_data)
-            except PickList_Data.DoesNotExist:
-                json_data = [[], [], [], [], []]
-                write_json_picklist(comp_code, json_data)
+        if not json_data:
+            return JsonResponse({
+                'status': 'no_data',
+                'timestamp': int(time() * 1000)
+            })
+
+        if int(client_timestamp) >= json_data['timestamp']:
+            return JsonResponse({
+                'status': 'no_change',
+                'timestamp': json_data['timestamp']
+            })
         
-        response = JsonResponse(json_data, safe=False)
-        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        response['Pragma'] = 'no-cache'
-        response['Expires'] = '0'
-        return response
+        return JsonResponse({
+            'status': 'updated',
+            'data': json_data['data'],
+            'timestamp': json_data['timestamp']
+        })
+
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
 
 # @login_required
 @csrf_exempt

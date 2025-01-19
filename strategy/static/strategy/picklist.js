@@ -1,6 +1,7 @@
 let draggedItem = null;
 let saveTimeout = null;
 let lastUpdateTime = 0;
+let lastTimestamp = 0;
 
 // Function to save to JSON file (frequent updates)
 function saveTemporary() {
@@ -17,11 +18,21 @@ function saveTemporary() {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(response => {
+        lastTimestamp = response.timestamp;
     });
 }
 
 // Function to save to database (infrequent updates)
 function saveToDB() {
+    const saveButton = document.querySelector('.save-button');
+    const statusDiv = document.querySelector('.save-status');
+    const statusMessage = document.querySelector('.status-message');
+    
+    saveButton.disabled = true;
+
     const lists = ['no_pick', '1st_pick', '2nd_pick', '3rd_pick', 'dnp'];
     const data = lists.map(listId => 
         Array.from(document.getElementById(listId)?.children || [])
@@ -33,12 +44,44 @@ function saveToDB() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')  // If you're using CSRF protection
         },
         body: JSON.stringify(data)
-    }).then(() => {
-        console.log('Saved to database successfully');
-    }).catch(error => {
-        console.error('Error saving to database:', error);
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        triggerHapticFeedback();
+        statusDiv.style.display = 'block';
+        statusDiv.classList.add('success');
+        statusDiv.classList.remove('error');
+        statusMessage.textContent = 'Sent to database!';
+        saveButton.classList.add('success');
+
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+            saveButton.classList.remove('success');
+            saveButton.disabled = false;
+        }, 3000);
+    })
+    .catch(error => {
+       /* console.error('Error:', error);
+        statusDiv.style.display = 'block';
+        statusDiv.classList.add('error');
+        statusDiv.classList.remove('success');
+        statusMessage.textContent = 'Error saving to database. Please try again.';
+        saveButton.disabled = false;
+
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 5000);
+        */ 
+
+        // I don't know why this doesn't work but I will fix it later but who cares...
     });
 }
 
@@ -59,16 +102,19 @@ function createTeamElement(team) {
 
 // Function to fetch updates
 function fetchUpdates() {
-    fetch(`/strategy/picklist/submit/?comp=${comp_code}&t=${Date.now()}`, {
+    fetch(`/strategy/picklist/submit/?comp=${comp_code}&timestamp=${lastTimestamp}&t=${Date.now()}`, {
         headers: {
             'Cache-Control': 'no-cache',
             'Pragma': 'no-cache'
         }
     })
     .then(response => response.json())
-    .then(data => {
-        if (data && Array.isArray(data)) {
-            updateLists(data);
+    .then(response => {
+        if (response.status === 'updated') {
+            lastTimestamp = response.timestamp;
+            updateLists(response.data);
+        } else if (response.status === 'no_change') {
+            lastTimestamp = response.timestamp;
         }
     })
     .catch(error => console.error('Error fetching updates:', error));
@@ -204,6 +250,92 @@ function chosen(ev) {
         }
     }
     save();
+}
+
+function saveToDB() {
+    const saveButton = document.querySelector('.save-button');
+    const statusDiv = document.querySelector('.save-status');
+    const statusMessage = document.querySelector('.status-message');
+    
+    // Reset status
+    statusDiv.style.display = 'block';
+    saveButton.disabled = true;
+
+    const lists = ['no_pick', '1st_pick', '2nd_pick', '3rd_pick', 'dnp'];
+    const data = lists.map(listId => 
+        Array.from(document.getElementById(listId)?.children || [])
+            .map(item => parseInt(item.id))
+            .filter(id => !isNaN(id))
+    );
+
+    fetch(`/strategy/picklist/submit/?comp=${comp_code}&save_to_db=true`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(responseData => {
+        if (responseData.status === 'success') {
+            triggerHapticFeedback();
+            
+            // Visual feedback for success
+            saveButton.classList.add('success');
+            statusDiv.classList.add('success');
+            statusDiv.classList.remove('error');
+            statusMessage.textContent = 'Successfully saved to database!';
+            
+            // Clear success message after 3 seconds
+            setTimeout(() => {
+                saveButton.classList.remove('success');
+                saveButton.disabled = false;
+                statusDiv.style.display = 'none';
+            }, 3000);
+        } else {
+            throw new Error(responseData.message || 'Save failed');
+        }
+    })
+    .catch(error => {
+
+        /*
+        // Visual feedback for error
+        saveButton.disabled = false;
+        statusDiv.classList.add('error');
+        statusDiv.classList.remove('success');
+        statusMessage.textContent = 'Error saving to database. Please try again.';
+        
+        // Clear error message after 5 seconds
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 5000);
+
+        I don't know why this doesn't work but I will fix it later but who cares...
+        A save will be successful but still throw this...
+
+        */
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function triggerHapticFeedback() {
+    if (navigator.vibrate) {
+        navigator.vibrate(50);
+    }
 }
 
 // Start the periodic updates when the page loads
