@@ -18,8 +18,8 @@
         }      
 
         p {
-        display: inline;
-        line-height: 24px;  /* Reduced from 30px */
+            display: inline;
+            line-height: 24px;
         }
 
         .lists {
@@ -36,32 +36,49 @@
             border: 1px solid black;
             border-radius: 3px;
             background-color: lightgray;
-            width: 75px;  /* Increased fixed width */
-            height: 20px; /* Added fixed height */
+            width: 75px;
+            height: 20px;
             margin: 2px;
             padding: 2px;
-            display: flex; /* Added to control layout */
-            align-items: center; /* Center content vertically */
-            justify-content: space-between; /* Space between team number and checkbox */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             transition: background-color 0.3s ease;
+        }
+
+        .picklist_teams.being-dragged {
+            opacity: 0.5;
+            background-color: #a0a0a0;
         }
 
         .picklist_teams p {
             font-size: 0.9em;
             margin: 0;
             padding: 0 3px;
-            white-space: nowrap; /* Prevent text wrapping */
-            overflow: hidden; /* Hide overflow */
-            text-overflow: ellipsis; /* Show ... for overflow text */
-            max-width: 55px; /* Leave room for checkbox */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 55px;
         }
 
         .picklist_teams input[type="checkbox"] {
             margin: 0 2px;
-            flex-shrink: 0; /* Prevent checkbox from shrinking */
+            flex-shrink: 0;
         }
 
+        .save-button {
+            margin: 20px 0;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
 
+        .save-button:hover {
+            background-color: #45a049;
+        }
     </style>
 {% endblock %}
 
@@ -70,31 +87,31 @@
     <p>Not Chosen</p>
     <ol class="lists" id="no_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)">
         {% for team in teams %}
-            <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams", ondrop="onDrop(event)", ondragover="onDragOver(event)", id="{{ team }}">
+            <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
                 <p>{{ team }}</p>
                 <input type="checkbox" onchange="chosen(event)">
             </li>
         {% endfor %}
         {% for team in no_pick_teams %}
-            <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams", ondrop="onDrop(event)", ondragover="onDragOver(event)", id="{{ team }}">
+            <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
                 <p>{{ team }}</p>
                 <input type="checkbox" onchange="chosen(event)">
             </li>
         {% endfor %}
     </ol>
     <p>First Pick</p>
-    <ol class="lists", id="1st_pick", ondrop="onDrop(event)", ondragover="onDragOver(event)">
+    <ol class="lists" id="1st_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)">
         {% for team in first_pick_teams %}
-            <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams", ondrop="onDrop(event)", ondragover="onDragOver(event)", id="{{ team }}">
+            <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
                 <p>{{ team }}</p>
                 <input type="checkbox" onchange="chosen(event)">
             </li>
         {% endfor %}
     </ol>
     <p>Second Pick</p>
-    <ol class="lists", id="2nd_pick", ondrop="onDrop(event)", ondragover="onDragOver(event)">
+    <ol class="lists" id="2nd_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)">
         {% for team in second_pick_teams %}
-            <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams", ondrop="onDrop(event)", ondragover="onDragOver(event)", id="{{ team }}">
+            <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
                 <p>{{ team }}</p>
                 <input type="checkbox" onchange="chosen(event)">
             </li>
@@ -102,9 +119,9 @@
     </ol>
     {% if comp_code == '2024cmptx' %}
         <p>Third Pick</p>
-        <ol class="lists", id="3rd_pick", ondrop="onDrop(event)", ondragover="onDragOver(event)">
+        <ol class="lists" id="3rd_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)">
             {% for team in third_pick_teams %}
-                <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams", ondrop="onDrop(event)", ondragover="onDragOver(event)", id="{{ team }}">
+                <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
                     <p>{{ team }}</p>
                     <input type="checkbox" onchange="chosen(event)">
                 </li>
@@ -112,24 +129,21 @@
         </ol>
     {% endif %}
     <p>DNP</p>
-    <ol class="lists", id="dnp", ondrop="onDrop(event)", ondragover="onDragOver(event)">
+    <ol class="lists" id="dnp" ondrop="onDrop(event)" ondragover="onDragOver(event)">
         {% for team in dn_pick_teams %}
-            <li draggable="true", ondragstart="onDragStart(event)", class="picklist_teams", ondrop="onDrop(event)", ondragover="onDragOver(event)", id="{{ team }}">
+            <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
                 <p>{{ team }}</p>
                 <input type="checkbox" onchange="chosen(event)">
             </li>
         {% endfor %}
     </ol>
-    <button onclick="save()">Save</button>
+    <button onclick="saveToDB()" class="save-button">Save to Database</button>
+
+    <script>
+        const comp_code = "{{ comp_code }}";
+    </script>
 {% endblock %}
 
 {% block Scripts %}
-    <script src="{% static "picklist.js" %}"></script>
+    <script src="{% static 'picklist.js' %}"></script>
 {% endblock %}
-
-<script>
-    // Start the periodic updates when the page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        setInterval(fetchUpdates, 2000);
-    });
-</script>

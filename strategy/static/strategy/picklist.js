@@ -1,14 +1,109 @@
 let draggedItem = null;
 let saveTimeout = null;
+let lastUpdateTime = 0;
 
-let saveQueue = [];
-let isSaving = false;
+// Function to save to JSON file (frequent updates)
+function saveTemporary() {
+    const lists = ['no_pick', '1st_pick', '2nd_pick', '3rd_pick', 'dnp'];
+    const data = lists.map(listId => 
+        Array.from(document.getElementById(listId)?.children || [])
+            .map(item => parseInt(item.id))
+            .filter(id => !isNaN(id))
+    );
+
+    fetch(`/strategy/picklist/submit/?comp=${comp_code}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    });
+}
+
+// Function to save to database (infrequent updates)
+function saveToDB() {
+    const lists = ['no_pick', '1st_pick', '2nd_pick', '3rd_pick', 'dnp'];
+    const data = lists.map(listId => 
+        Array.from(document.getElementById(listId)?.children || [])
+            .map(item => parseInt(item.id))
+            .filter(id => !isNaN(id))
+    );
+
+    fetch(`/strategy/picklist/submit/?comp=${comp_code}&save_to_db=true`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    }).then(() => {
+        console.log('Saved to database successfully');
+    }).catch(error => {
+        console.error('Error saving to database:', error);
+    });
+}
+
+// Function to create team element
+function createTeamElement(team) {
+    return `
+        <li draggable="true" 
+            ondragstart="onDragStart(event)" 
+            class="picklist_teams" 
+            ondrop="onDrop(event)" 
+            ondragover="onDragOver(event)" 
+            id="${team}">
+            <p>${team}</p>
+            <input type="checkbox" onchange="chosen(event)">
+        </li>
+    `;
+}
+
+// Function to fetch updates
+function fetchUpdates() {
+    fetch(`/strategy/picklist/submit/?comp=${comp_code}&t=${Date.now()}`, {
+        headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data && Array.isArray(data)) {
+            updateLists(data);
+        }
+    })
+    .catch(error => console.error('Error fetching updates:', error));
+}
+
+// Function to update the lists with new data
+function updateLists(data) {
+    const lists = ['no_pick', '1st_pick', '2nd_pick', '3rd_pick', 'dnp'];
+    
+    lists.forEach((listId, index) => {
+        const list = document.getElementById(listId);
+        if (!list) return;
+
+        const currentTeams = Array.from(list.children).map(item => parseInt(item.id));
+        const newTeams = data[index] || [];
+
+        // Only update if there are actual changes and we're not currently dragging
+        if (JSON.stringify(currentTeams) !== JSON.stringify(newTeams) && !draggedItem) {
+            list.innerHTML = newTeams.map(team => createTeamElement(team)).join('');
+        }
+    });
+}
+
+// Modified save function
+function save() {
+    if (saveTimeout) {
+        clearTimeout(saveTimeout);
+    }
+    saveTemporary();
+}
 
 function onDragStart(ev) {
     draggedItem = ev.target;
     ev.dataTransfer.setData("team_number_id", ev.target.id);
     ev.dataTransfer.effectAllowed = "move";
-    // Add a class to indicate dragging state
     draggedItem.classList.add('being-dragged');
 }
 
@@ -56,18 +151,6 @@ function onDrop(ev) {
 
     const droppedItem = document.getElementById(ev.dataTransfer.getData("team_number_id"));
     if (droppedItem) {
-        // Check if the team already exists in the target list
-        const teamId = droppedItem.id;
-        const existingInList = Array.from(list.getElementsByTagName('li'))
-            .some(li => li.id === teamId && li !== droppedItem);
-
-        if (existingInList) {
-            // If duplicate found, return item to original position
-            draggedItem.classList.remove('being-dragged');
-            draggedItem = null;
-            return;
-        }
-
         const mouseY = ev.clientY;
         const items = Array.from(list.children);
         let insertPosition = null;
@@ -85,16 +168,16 @@ function onDrop(ev) {
         } else {
             list.appendChild(droppedItem);
         }
+        
+        save();
     }
 
     if (draggedItem) {
         draggedItem.classList.remove('being-dragged');
     }
     draggedItem = null;
-    save();
 }
 
-// Helper function to get the list element
 function getListElement(element) {
     if (element.classList.contains('lists')) {
         return element;
@@ -123,236 +206,11 @@ function chosen(ev) {
     save();
 }
 
-function handleDuplicates() {
-    const allTeams = new Map(); // Map to store team IDs and their locations
-    const duplicates = new Set(); // Set to store duplicate team IDs
-
-    // Check all lists for duplicates
-    ['no_pick', '1st_pick', '2nd_pick', '3rd_pick', 'dnp'].forEach(listId => {
-        const list = document.getElementById(listId);
-        if (!list) return;
-
-        Array.from(list.getElementsByTagName('li')).forEach(li => {
-            const teamId = li.id;
-            if (allTeams.has(teamId)) {
-                // Found a duplicate
-                duplicates.add(teamId);
-                // Store all locations of this team
-                const locations = allTeams.get(teamId);
-                locations.push({ listId, element: li });
-                allTeams.set(teamId, locations);
-            } else {
-                // First occurrence of this team
-                allTeams.set(teamId, [{ listId, element: li }]);
-            }
-        });
-    });
-
-    // Handle duplicates
-    duplicates.forEach(teamId => {
-        const locations = allTeams.get(teamId);
-        // Keep the first occurrence, move others to no_pick
-        const noPick = document.getElementById('no_pick');
-        
-        // Skip the first occurrence (keep it where it is)
-        for (let i = 1; i < locations.length; i++) {
-            const duplicate = locations[i].element;
-            // Remove the duplicate from its current location
-            duplicate.remove();
-        }
-
-        // Flash the remaining instances to indicate there was a duplicate
-        const remainingElement = locations[0].element;
-        remainingElement.style.backgroundColor = 'yellow';
-        setTimeout(() => {
-            remainingElement.style.backgroundColor = '';
-        }, 1000);
-    });
-
-    return duplicates.size > 0;
-}
-
-// Modify your save function to check for duplicates before saving
-function save() {
-    // Clear any pending save timeout
-    if (saveTimeout) {
-        clearTimeout(saveTimeout);
-    }
-
-    // Add save request to queue
-    saveQueue.push(true);
-
-    // Set a timeout to process the queue
-    saveTimeout = setTimeout(() => {
-        if (handleDuplicates()) {
-            console.log("Duplicates were detected and handled");
-        }
-        processSaveQueue();
-    }, 250);
-}
-
-// Optional: Add visual indicator that changes are pending
-function updateSaveIndicator() {
-    const indicator = document.getElementById('save-indicator') || createSaveIndicator();
-    if (saveQueue.length > 0 || isSaving) {
-        indicator.style.display = 'block';
-    } else {
-        indicator.style.display = 'none';
-    }
-}
-
-function createSaveIndicator() {
-    const indicator = document.createElement('div');
-    indicator.id = 'save-indicator';
-    indicator.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 10px;
-        border-radius: 5px;
-        display: none;
-        z-index: 1000;
-    `;
-    indicator.textContent = 'Saving changes...';
-    document.body.appendChild(indicator);
-    return indicator;
-}
-
-// Add observer to update save indicator
-setInterval(updateSaveIndicator, 100);
-
-function fetchUpdates() {
-    if (draggedItem) return; // Don't update while dragging
-
-    fetch(`/strategy/picklist/submit/?comp=${localStorage.getItem("comp")}`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data) {
-            updateLists(data);
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching updates:', error);
-    });
-}
-
-function updateLists(data) {
-    if (!data || !Array.isArray(data)) return;
-    
-    const listIds = ['no_pick', '1st_pick', '2nd_pick', '3rd_pick', 'dnp'];
-    
-    // Store current checkbox states
-    const checkboxStates = new Map();
-    document.querySelectorAll('.picklist_teams').forEach(li => {
-        const checkbox = li.querySelector('input[type="checkbox"]');
-        if (checkbox) {
-            checkboxStates.set(li.id, checkbox.checked);
-        }
-    });
-
-    data.forEach((teams, index) => {
-        const listElement = document.getElementById(listIds[index]);
-        if (!listElement) return;
-        
-        // Only update if this list doesn't contain the dragged item
-        if (draggedItem && listElement.contains(draggedItem)) return;
-
-        // Update list content
-        listElement.innerHTML = teams.map(team => `
-            <li draggable="true" 
-                ondragstart="onDragStart(event)" 
-                class="picklist_teams" 
-                ondrop="onDrop(event)" 
-                ondragover="onDragOver(event)" 
-                id="${team}">
-                ${checkboxStates.get(team) ? 
-                    `<s>${team}</s>` : 
-                    `<p>${team}</p>`}
-                <input type="checkbox" 
-                       onchange="chosen(event)" 
-                       ${checkboxStates.get(team) ? 'checked' : ''}>
-            </li>
-        `).join('');
-    });
-}
-
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-function processSaveQueue() {
-    if (isSaving || saveQueue.length === 0) return;
-    
-    isSaving = true;
-    
-    // Get latest state for the save
-    var no_pick = Array.from(document.getElementById("no_pick").getElementsByTagName("li")).map(li => li.id);
-    var first_pick = Array.from(document.getElementById("1st_pick").getElementsByTagName("li")).map(li => li.id);
-    var second_pick = Array.from(document.getElementById("2nd_pick").getElementsByTagName("li")).map(li => li.id);
-    var third_pick = [];
-    if (document.getElementById("3rd_pick")) {
-        third_pick = Array.from(document.getElementById("3rd_pick").getElementsByTagName("li")).map(li => li.id);
-    }
-    var dn_pick = Array.from(document.getElementById("dnp").getElementsByTagName("li")).map(li => li.id);
-
-    var picklist_save_data = [no_pick, first_pick, second_pick, third_pick, dn_pick];
-
-    // Clear the queue before sending
-    saveQueue = [];
-
-    fetch(`/strategy/picklist/submit/?comp=${localStorage.getItem("comp")}`, {
-        method: 'POST',
-        credentials: 'include',
-        mode: 'same-origin',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': getCookie('csrftoken'),
-        },
-        body: JSON.stringify(picklist_save_data)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Save failed');
-        }
-        return response.json();
-    })
-    .catch(error => {
-        console.error('Save failed:', error);
-        // If save fails, add back to queue
-        saveQueue.push(true);
-    })
-    .finally(() => {
-        isSaving = false;
-        // If there are more saves queued, process them
-        if (saveQueue.length > 0) {
-            setTimeout(processSaveQueue, 100);
-        }
-    });
-}
-
 // Start the periodic updates when the page loads
 document.addEventListener('DOMContentLoaded', function() {
-    setInterval(fetchUpdates, 2000);
+    // Initial fetch
+    fetchUpdates();
+    
+    // Set up periodic updates
+    setInterval(fetchUpdates, 1000);
 });
