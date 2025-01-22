@@ -57,7 +57,6 @@ def team_page(request, team_number):
 
     return render(request, 'teams/team_page.html', {"team_number": team_number})
 
-# @login_required
 def pit_scouting(request, team_number):
     comp_code = request.GET.get('comp')
     print(f"Method: {request.method}")  # Check if POST
@@ -73,11 +72,26 @@ def pit_scouting(request, team_number):
         if form.is_valid():
             try:
                 # Handle image upload
-                image_response = cloudinary.uploader.upload(request.FILES['robot_picture'])
-                img_url = image_response["secure_url"]
-                image_url_list = img_url.split("upload/")
-                image_url_list.insert(1, "upload/w_0.4,c_scale/")
-                img_url = "".join(image_url_list)
+                if 'robot_picture' in request.FILES:
+                    image_file = request.FILES['robot_picture']
+                    # Validate file type (optional)
+                    allowed_types = ['image/png', 'image/jpeg', 'image/jpg']
+                    if image_file.content_type not in allowed_types:
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Invalid file type. Only PNG, JPEG, and JPG are allowed.'
+                        }, status=400)
+
+                    # Upload to Cloudinary
+                    image_response = cloudinary.uploader.upload(image_file)
+                    img_url = image_response["secure_url"]
+
+                    # Resize image (optional)
+                    image_url_list = img_url.split("upload/")
+                    image_url_list.insert(1, "upload/w_0.4,c_scale/")
+                    img_url = "".join(image_url_list)
+                else:
+                    img_url = None  # No image provided
 
                 # Get or create team
                 team, created = Teams.objects.get_or_create(
@@ -87,10 +101,10 @@ def pit_scouting(request, team_number):
                 print(f"Team created: {created}")  # Check if team was created
 
                 # Process multi-select fields
-                intake_locations_char = ", ".join(form.cleaned_data.get('intake_locations'))
-                scoring_locations_char = ", ".join(form.cleaned_data.get('scoring_locations'))
-                auto_positions_char = ", ".join(form.cleaned_data.get('auto_positions'))
-                cage_positions_char = ", ".join(form.cleaned_data.get('cage_positions'))
+                intake_locations_char = ", ".join(form.cleaned_data.get('intake_locations', []))
+                scoring_locations_char = ", ".join(form.cleaned_data.get('scoring_locations', []))
+                auto_positions_char = ", ".join(form.cleaned_data.get('auto_positions', []))
+                cage_positions_char = ", ".join(form.cleaned_data.get('cage_positions', []))
 
                 # Update team data
                 update_result = Teams.objects.filter(
@@ -111,7 +125,7 @@ def pit_scouting(request, team_number):
                     auto_leave=form.cleaned_data.get('auto_leave'),
                     auto_total_notes=form.cleaned_data.get('auto_total_notes'),
                     auto_coral_notes=form.cleaned_data.get('auto_coral_notes'),
-                    robot_picture=img_url,
+                    robot_picture=img_url,  # Save the image URL
                     additional_info=form.cleaned_data.get('additional_info'),
                     pit_scout_status=True
                 )
@@ -121,7 +135,10 @@ def pit_scouting(request, team_number):
                 return redirect('team_page', team_number=team_number)
             except Exception as e:
                 print(f"Error occurred: {str(e)}")  # Print any errors
-                raise  # Re-raise the exception to see it in the Django error page
+                return JsonResponse({
+                    'status': 'error',
+                    'message': str(e)
+                }, status=500)
     else:
         form = NewPitScoutingData()
     

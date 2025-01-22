@@ -3,7 +3,6 @@
 
 {% block Title %} Team {{ team_number }}{% endblock %}
 
-
 {% block Content %}
     <h2>Team {{ team_number }}</h2>
     {% if team.pit_scout_status == True %}
@@ -26,12 +25,40 @@
                 <a href="{% url 'pit_scouting' team.team_number %}?comp={{ request.GET.comp }}">Update Info</a>
             </div>
             <div class="col-4">
-                <img src="{{ team.robot_picture }}" alt="Robot Picture" class="img-thumbnail">
+                {% if team.robot_picture %}
+                    <img src="{{ team.robot_picture }}" alt="Robot Picture" class="img-thumbnail">
+                {% else %}
+                    <p>No robot picture available.</p>
+                {% endif %}
             </div>
         </div>
     {% else %}
-    <a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}">Pit Scout</a>
+        <a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}">Pit Scout</a>
     {% endif %}
+
+    <!-- Starting Positions Row -->
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th colspan="21">Starting Positions (Auto Positions)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="21">
+                        {% if team.auto_positions %}
+                            {{ team.auto_positions }}
+                        {% else %}
+                            No starting positions recorded.
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Match Data Table -->
     <div class="table-responsive">
         <table id="match_data" class="table table-bordered">
             <thead>
@@ -61,52 +88,56 @@
             </thead>
             <tbody>
                 {% for match in all_team_match_data %}
-                <tr>
-                    <td>{{ match.match_number }}{% if match.quantifier %}-{{ match.quantifier }}{% endif %}</td>
-                    <td>{{ match.auto_leave }}</td>
-                    <td>{{ match.auto_L1 }}</td>
-                    <td>{{ match.auto_L2 }}</td>
-                    <td>{{ match.auto_L3 }}</td>
-                    <td>{{ match.auto_L4 }}</td>
-                    <td>{{ match.auto_net }}</td>
-                    <td>{{ match.auto_processor }}</td>
-                    <td>{{ match.auto_removed }}</td>
-                    <td>{{ match.teleL1 }}</td>
-                    <td>{{ match.teleL2 }}</td>
-                    <td>{{ match.teleL3 }}</td>
-                    <td>{{ match.teleL4 }}</td>
-                    <td>{{ match.telenet }}</td>
-                    <td>{{ match.teleProcessor }}</td>
-                    <td>{{ match.teleRemoved }}</td>
-                    <td>{{ match.climb }}</td>
-                    <td>{{ match.driver_ranking }}</td>
-                    <td>{{ match.defense_ranking }}</td>
-                    <td>{{ match.comment }}</td>
-                    <td>{{ match.scout_name }}</td>
-                </tr>
+                    <tr>
+                        <td>{{ match.match_number }}{% if match.quantifier %}-{{ match.quantifier }}{% endif %}</td>
+                        <td>{{ match.auto_leave }}</td>
+                        <td>{{ match.auto_L1 }}</td>
+                        <td>{{ match.auto_L2 }}</td>
+                        <td>{{ match.auto_L3 }}</td>
+                        <td>{{ match.auto_L4 }}</td>
+                        <td>{{ match.auto_net }}</td>
+                        <td>{{ match.auto_processor }}</td>
+                        <td>{{ match.auto_removed }}</td>
+                        <td>{{ match.teleL1 }}</td>
+                        <td>{{ match.teleL2 }}</td>
+                        <td>{{ match.teleL3 }}</td>
+                        <td>{{ match.teleL4 }}</td>
+                        <td>{{ match.telenet }}</td>
+                        <td>{{ match.teleProcessor }}</td>
+                        <td>{{ match.teleRemoved }}</td>
+                        <td>{{ match.climb }}</td>
+                        <td>{{ match.driver_ranking }}</td>
+                        <td>{{ match.defense_ranking }}</td>
+                        <td>{{ match.comment }}</td>
+                        <td>{{ match.scout_name }}</td>
+                    </tr>
                 {% empty %}
-                <tr>
-                    <td colspan="21" class="text-center">No match data available</td>
-                </tr>
+                    <tr>
+                        <td colspan="21" class="text-center">No match data available</td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>
-    </div>    
-    <a href="{% url "human-scout" team_number %}">Scout Human Player Now</a>
+    </div>
+
+    <!-- Human Player Scouting Section -->
+    <a href="{% url 'human-scout' team_number %}">Scout Human Player Now</a>
     <div class="table-responsive">
         <table class="table table-bordered">
             <thead>
-            <tr>
-                <th>Match</th>
-                <th>Human Player Comments</th>
-            </tr>
-            {% for match in human_player_matches %}
                 <tr>
-                    <td style="white-space: nowrap">{{ match.match_number }}</td>
-                    <td>{{ match.human_player_comment }}</td>
+                    <th>Match</th>
+                    <th>Human Player Comments</th>
                 </tr>
-            {% endfor %}
             </thead>
+            <tbody>
+                {% for match in human_player_matches %}
+                    <tr>
+                        <td style="white-space: nowrap">{{ match.match_number }}</td>
+                        <td>{{ match.human_player_comment }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
         </table>
     </div>
 {% endblock %}
