@@ -238,18 +238,18 @@ def fetch_team_match_averages(team_number, comp_code):
     start_pos = match_data.start_pos if match_data else 0
 
     return {
-    'autoleave': round(team_match_averages['auto_leave__avg'], 3),
-    'auto': round(auto_total, 3),
-    'L1': round(team_match_averages['auto_L1__avg'] + team_match_averages['teleL1__avg'], 3),
-    'L2': round(team_match_averages['auto_L2__avg'] + team_match_averages['teleL2__avg'], 3),
-    'L3': round(team_match_averages['auto_L3__avg'] + team_match_averages['teleL3__avg'], 3),
-    'L4': round(team_match_averages['auto_L4__avg'] + team_match_averages['teleL4__avg'], 3),
-    'net': round(team_match_averages['auto_net__avg'] + team_match_averages['telenet__avg'], 3),
-    'start_pos': start_pos,
-    'processor': round(team_match_averages['auto_processor__avg'] + team_match_averages['teleProcessor__avg'], 3),
-    'removed': round(team_match_averages['auto_removed__avg'] + team_match_averages['teleRemoved__avg'], 3),
-    'climb': round(team_match_averages['climb__avg'], 3),
-    'total': round(auto_total + teleop_total + team_match_averages['climb__avg'], 3),
-    'defense': round(team_match_averages['defense_ranking__avg'], 3)
-}
+        'autoleave': round(team_match_averages['auto_leave__avg'], 3),
+        'auto': round(auto_total, 3),
+        'L1': round(team_match_averages['auto_L1__avg'] + team_match_averages['teleL1__avg'], 3),
+        'L2': round(team_match_averages['auto_L2__avg'] + team_match_averages['teleL2__avg'], 3),
+        'L3': round(team_match_averages['auto_L3__avg'] + team_match_averages['teleL3__avg'], 3),
+        'L4': round(team_match_averages['auto_L4__avg'] + team_match_averages['teleL4__avg'], 3),
+        'net': round(team_match_averages['auto_net__avg'] + team_match_averages['telenet__avg'], 3),
+        'start_pos': start_pos,
+        'processor': round(team_match_averages['auto_processor__avg'] + team_match_averages['teleProcessor__avg'], 3),
+        'removed': round(team_match_averages['auto_removed__avg'] + team_match_averages['teleRemoved__avg'], 3),
+        'climb': round(team_match_averages['climb__avg'], 3),
+        'total': round(auto_total + teleop_total + team_match_averages['climb__avg'], 3),
+        'defense': round(team_match_averages['defense_ranking__avg'], 3)
+    }
 

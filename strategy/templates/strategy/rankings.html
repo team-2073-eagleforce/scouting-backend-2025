@@ -34,18 +34,29 @@
                     <th onclick="sortTable(11, 'climb')">Climb</th>
                     <th onclick="sortTable(12, 'total')">Total</th>
                     <th onclick="sortTable(13, 'defense')">Defense</th>
-                </tr>                
+                    <th onclick="sortTable(14, 'start_pos')">Start Position</th>
+                </tr>
             </thead>
             <tbody>
-            {% for team_number, team_stats in team_averages.items %}
-                <tr class="data">
-                    <td class="rank">{{ forloop.counter }}</td>
-                    <td><a href="{% url "team_page" team_number %}">{{ team_number }}</a></td>
-                    {% for stat_type, stat in team_stats.items %}
-                        <td class="{{ stat_type }}">{{ stat }}</td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
+                {% for team_number, team_stats in team_averages.items %}
+                    <tr class="data">
+                        <td class="rank">{{ forloop.counter }}</td>
+                        <td><a href="{% url "team_page" team_number %}">{{ team_number }}</a></td>
+                        <td class="autoleave">{{ team_stats.autoleave }}</td>
+                        <td class="auto">{{ team_stats.auto }}</td>
+                        <td class="L1">{{ team_stats.L1 }}</td>
+                        <td class="L2">{{ team_stats.L2 }}</td>
+                        <td class="L3">{{ team_stats.L3 }}</td>
+                        <td class="L4">{{ team_stats.L4 }}</td>
+                        <td class="net">{{ team_stats.net }}</td>
+                        <td class="processor">{{ team_stats.processor }}</td>
+                        <td class="removed">{{ team_stats.removed }}</td>
+                        <td class="climb">{{ team_stats.climb }}</td>
+                        <td class="total">{{ team_stats.total }}</td>
+                        <td class="defense">{{ team_stats.defense }}</td>
+                        <td class="start_pos">{{ team_stats.start_pos }}</td>
+                    </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
