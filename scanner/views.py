@@ -17,10 +17,12 @@ def scanner(request):
         Teams.objects.get_or_create(team_number=int(data_from_post["teamNumber"]), event=data_from_post["comp_code"])
         # Creates a new Team_Match_Data with given data if it doesn't exist
         Team_Match_Data.objects.get_or_create(team_number=int(data_from_post["teamNumber"]),
-                                              name=data_from_post["name"],
+                                              ## name=data_from_post["name"],
+                                              scout_name=data_from_post["name"],
                                               event=data_from_post["comp_code"],
                                               match_number=data_from_post["matchNumber"],
                                               quantifier=data_from_post["quantifier"],
+                                              start_pos=data_from_post["startPos"],
 
                                               auto_leave=data_from_post["autoLeave"],
                                               auto_net=data_from_post["autoNet"],
@@ -46,8 +48,7 @@ def scanner(request):
                                               comment=data_from_post["comment"],
                                               is_broken=data_from_post["isBroken"],
                                               is_disabled=data_from_post["isDisabled"],
-                                              is_tipped=data_from_post["isTipped"],
-                                              scout_name=data_from_post["name"])
+                                              is_tipped=data_from_post["isTipped"])
 
         response = {"confirmation": "Successfully Sent"}
         return JsonResponse(response)

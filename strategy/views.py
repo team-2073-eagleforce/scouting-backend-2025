@@ -201,6 +201,7 @@ def fetch_team_match_averages(team_number, comp_code):
         Avg('auto_net', default=0),
         Avg('auto_processor', default=0),
         Avg('auto_removed', default=0),
+        Avg('start_pos', default=0),
         # Teleop Period
         Avg('teleL1', default=0),
         Avg('teleL2', default=0),
@@ -233,6 +234,9 @@ def fetch_team_match_averages(team_number, comp_code):
         team_match_averages['teleProcessor__avg']
     )
 
+    match_data = team_match_data.first()  # Gets the specific match data
+    start_pos = match_data.start_pos if match_data else 0
+
     return {
     'autoleave': round(team_match_averages['auto_leave__avg'], 3),
     'auto': round(auto_total, 3),
@@ -241,6 +245,7 @@ def fetch_team_match_averages(team_number, comp_code):
     'L3': round(team_match_averages['auto_L3__avg'] + team_match_averages['teleL3__avg'], 3),
     'L4': round(team_match_averages['auto_L4__avg'] + team_match_averages['teleL4__avg'], 3),
     'net': round(team_match_averages['auto_net__avg'] + team_match_averages['telenet__avg'], 3),
+    'start_pos': start_pos,
     'processor': round(team_match_averages['auto_processor__avg'] + team_match_averages['teleProcessor__avg'], 3),
     'removed': round(team_match_averages['auto_removed__avg'] + team_match_averages['teleRemoved__avg'], 3),
     'climb': round(team_match_averages['climb__avg'], 3),
