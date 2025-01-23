@@ -2,6 +2,9 @@ let draggedItem = null;
 let saveTimeout = null;
 let lastUpdateTime = 0;
 let lastTimestamp = 0;
+const INACTIVITY_TIMEOUT = 5000; // 5 seconds of inactivity before auto-save
+const FETCH_UPDATE_INTERVAL = 10000; // Fetch updates every 10 seconds
+let isFetching = false; // To prevent overlapping fetch requests
 
 // Function to save to JSON file (frequent updates)
 function saveTemporary() {
@@ -44,7 +47,7 @@ function saveToDB() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')  // If you're using CSRF protection
+            'X-CSRFToken': getCookie('csrftoken')  // Include CSRF token if needed
         },
         body: JSON.stringify(data)
     })
@@ -69,7 +72,7 @@ function saveToDB() {
         }, 3000);
     })
     .catch(error => {
-       /* console.error('Error:', error);
+        console.error('Error:', error);
         statusDiv.style.display = 'block';
         statusDiv.classList.add('error');
         statusDiv.classList.remove('success');
@@ -79,10 +82,17 @@ function saveToDB() {
         setTimeout(() => {
             statusDiv.style.display = 'none';
         }, 5000);
-        */ 
-
-        // I don't know why this doesn't work but I will fix it later but who cares...
     });
+}
+
+// Function to reset the inactivity timer
+function resetInactivityTimer() {
+    if (saveTimeout) {
+        clearTimeout(saveTimeout);
+    }
+    saveTimeout = setTimeout(() => {
+        saveToDB(); // Auto-save to the database after inactivity
+    }, INACTIVITY_TIMEOUT);
 }
 
 // Function to create team element
@@ -100,8 +110,11 @@ function createTeamElement(team) {
     `;
 }
 
-// Function to fetch updates
+// Function to fetch updates with throttling
 function fetchUpdates() {
+    if (isFetching) return; // Prevent overlapping requests
+    isFetching = true;
+
     fetch(`/strategy/picklist/submit/?comp=${comp_code}&timestamp=${lastTimestamp}&t=${Date.now()}`, {
         headers: {
             'Cache-Control': 'no-cache',
@@ -116,8 +129,12 @@ function fetchUpdates() {
         } else if (response.status === 'no_change') {
             lastTimestamp = response.timestamp;
         }
+        isFetching = false;
     })
-    .catch(error => console.error('Error fetching updates:', error));
+    .catch(error => {
+        console.error('Error fetching updates:', error);
+        isFetching = false;
+    });
 }
 
 // Function to update the lists with new data
@@ -144,6 +161,7 @@ function save() {
         clearTimeout(saveTimeout);
     }
     saveTemporary();
+    resetInactivityTimer(); // Reset the inactivity timer
 }
 
 function onDragStart(ev) {
@@ -151,6 +169,7 @@ function onDragStart(ev) {
     ev.dataTransfer.setData("team_number_id", ev.target.id);
     ev.dataTransfer.effectAllowed = "move";
     draggedItem.classList.add('being-dragged');
+    resetInactivityTimer(); // Reset the inactivity timer
 }
 
 function onDragOver(ev) {
@@ -188,6 +207,7 @@ function onDragOver(ev) {
             list.insertBefore(draggedItem, closestItem.nextSibling);
         }
     }
+    resetInactivityTimer(); // Reset the inactivity timer
 }
 
 function onDrop(ev) {
@@ -222,6 +242,7 @@ function onDrop(ev) {
         draggedItem.classList.remove('being-dragged');
     }
     draggedItem = null;
+    resetInactivityTimer(); // Reset the inactivity timer
 }
 
 function getListElement(element) {
@@ -250,71 +271,7 @@ function chosen(ev) {
         }
     }
     save();
-}
-
-function saveToDB() {
-    const saveButton = document.querySelector('.save-button');
-    const statusDiv = document.querySelector('.save-status');
-    const statusMessage = document.querySelector('.status-message');
-    
-    // Reset status
-    statusDiv.style.display = 'block';
-    saveButton.disabled = true;
-
-    const lists = ['no_pick', '1st_pick', '2nd_pick', '3rd_pick', 'dnp'];
-    const data = lists.map(listId => 
-        Array.from(document.getElementById(listId)?.children || [])
-            .map(item => parseInt(item.id))
-            .filter(id => !isNaN(id))
-    );
-
-    fetch(`/strategy/picklist/submit/?comp=${comp_code}&save_to_db=true`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(responseData => {
-        if (responseData.status === 'success') {
-            triggerHapticFeedback();
-            
-            // Visual feedback for success
-            saveButton.classList.add('success');
-            statusDiv.classList.add('success');
-            statusDiv.classList.remove('error');
-            statusMessage.textContent = 'Successfully saved to database!';
-            
-            // Clear success message after 3 seconds
-            setTimeout(() => {
-                saveButton.classList.remove('success');
-                saveButton.disabled = false;
-                statusDiv.style.display = 'none';
-            }, 3000);
-        } else {
-            throw new Error(responseData.message || 'Save failed');
-        }
-    })
-    .catch(error => {
-
-        /*
-        // Visual feedback for error
-        saveButton.disabled = false;
-        statusDiv.classList.add('error');
-        statusDiv.classList.remove('success');
-        statusMessage.textContent = 'Error saving to database. Please try again.';
-        
-        // Clear error message after 5 seconds
-        setTimeout(() => {
-            statusDiv.style.display = 'none';
-        }, 5000);
-
-        I don't know why this doesn't work but I will fix it later but who cares...
-        A save will be successful but still throw this...
-
-        */
-    });
+    resetInactivityTimer(); // Reset the inactivity timer
 }
 
 function getCookie(name) {
@@ -343,6 +300,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial fetch
     fetchUpdates();
     
-    // Set up periodic updates
-    setInterval(fetchUpdates, 1000);
+    // Set up periodic updates with throttling
+    setInterval(fetchUpdates, FETCH_UPDATE_INTERVAL);
+
+    // Start the inactivity timer
+    resetInactivityTimer();
 });
