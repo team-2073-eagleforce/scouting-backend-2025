@@ -115,6 +115,29 @@
             display: inline-block;
             vertical-align: middle;
         }
+
+        /* Add this to your existing CSS */
+        .picklist_teams a.team-link {
+            text-decoration: none; /* Remove underline */
+            color: inherit; /* Inherit text color */
+            flex-grow: 1; /* Allow the link to take up available space */
+            display: flex; /* Ensure the link behaves like a flex container */
+            align-items: center; /* Center the content vertically */
+            justify-content: space-between; /* Space out the team number and checkbox */
+        }
+
+        .picklist_teams a.team-link:hover {
+            text-decoration: underline; /* Add underline on hover */
+        }
+
+        .picklist_teams a.team-link p {
+            margin: 0; /* Remove default margin */
+            padding: 0 3px; /* Add some padding */
+            white-space: nowrap; /* Prevent text from wrapping */
+            overflow: hidden; /* Hide overflow */
+            text-overflow: ellipsis; /* Add ellipsis for overflow */
+            max-width: 55px; /* Limit the width of the team number */
+        }
     </style>
 {% endblock %}
 
@@ -124,13 +147,17 @@
     <ol class="lists" id="no_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)">
         {% for team in teams %}
             <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
-                <p>{{ team }}</p>
+                <a href="{% url 'team_page' team %}?comp={{ comp_code }}" class="team-link" target="_blank">
+                    <p>{{ team }}</p>
+                </a>
                 <input type="checkbox" onchange="chosen(event)">
             </li>
         {% endfor %}
         {% for team in no_pick_teams %}
             <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
-                <p>{{ team }}</p>
+                <a href="{% url 'team_page' team %}?comp={{ comp_code }}" class="team-link" target="_blank">
+                    <p>{{ team }}</p>
+                </a>
                 <input type="checkbox" onchange="chosen(event)">
             </li>
         {% endfor %}
@@ -139,7 +166,9 @@
     <ol class="lists" id="1st_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)">
         {% for team in first_pick_teams %}
             <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
-                <p>{{ team }}</p>
+                <a href="{% url 'team_page' team %}?comp={{ comp_code }}" class="team-link" target="_blank">
+                    <p>{{ team }}</p>
+                </a>
                 <input type="checkbox" onchange="chosen(event)">
             </li>
         {% endfor %}
@@ -148,7 +177,9 @@
     <ol class="lists" id="2nd_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)">
         {% for team in second_pick_teams %}
             <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
-                <p>{{ team }}</p>
+                <a href="{% url 'team_page' team %}?comp={{ comp_code }}" class="team-link" target="_blank">
+                    <p>{{ team }}</p>
+                </a>
                 <input type="checkbox" onchange="chosen(event)">
             </li>
         {% endfor %}
@@ -158,7 +189,9 @@
         <ol class="lists" id="3rd_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)">
             {% for team in third_pick_teams %}
                 <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
-                    <p>{{ team }}</p>
+                    <a href="{% url 'team_page' team %}?comp={{ comp_code }}" class="team-link" target="_blank">
+                        <p>{{ team }}</p>
+                    </a>
                     <input type="checkbox" onchange="chosen(event)">
                 </li>
             {% endfor %}
@@ -168,7 +201,9 @@
     <ol class="lists" id="dnp" ondrop="onDrop(event)" ondragover="onDragOver(event)">
         {% for team in dn_pick_teams %}
             <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
-                <p>{{ team }}</p>
+                <a href="{% url 'team_page' team %}?comp={{ comp_code }}" class="team-link" target="_blank">
+                    <p>{{ team }}</p>
+                </a>
                 <input type="checkbox" onchange="chosen(event)">
             </li>
         {% endfor %}
