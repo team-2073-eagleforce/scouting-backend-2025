@@ -2,8 +2,8 @@ let draggedItem = null;
 let saveTimeout = null;
 let lastUpdateTime = 0;
 let lastTimestamp = 0;
-const INACTIVITY_TIMEOUT = 5000; // 5 seconds of inactivity before auto-save
-const FETCH_UPDATE_INTERVAL = 10000; // Fetch updates every 10 seconds
+const INACTIVITY_TIMEOUT = 3000; // 3 seconds of inactivity before auto-save
+const FETCH_UPDATE_INTERVAL = 5000; // Fetch updates every 10 seconds
 let isFetching = false; // To prevent overlapping fetch requests
 
 // Function to save to JSON file (frequent updates)
