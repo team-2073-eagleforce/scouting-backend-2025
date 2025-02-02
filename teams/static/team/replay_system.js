@@ -34,6 +34,13 @@ class ReplaySystem {
         this.currentIndex = 0;
         this.isPlaying = false;
         this.animationFrame = null;
+
+        this.currentPosition = { x: 0, y: 0 };
+        this.targetPosition = { x: 0, y: 0 };
+        this.animationProgress = 0;
+        this.animationDuration = 1000; // Duration in milliseconds
+        this.lastTimestamp = 0;
+
         
         this.initializeCanvas();
         this.setupEventListeners();
@@ -153,9 +160,12 @@ class ReplaySystem {
         console.log("Play called");
         if (!this.isPlaying && this.currentPath.length > 0) {
             this.isPlaying = true;
-            this.animate();
+            this.lastTimestamp = 0;
+            this.animationProgress = 0;
+            this.animate(performance.now());
         }
     }
+    
 
     pause() {
         console.log("Pause called");
@@ -244,23 +254,80 @@ class ReplaySystem {
         this.ctx.fill();
     }
 
-    animate() {
+    animate(timestamp) {
         if (!this.isPlaying) return;
-
-        this.clearCanvas();
-        this.drawCurrentPosition();
-        this.drawRobot(this.currentPath[this.currentIndex]);
+    
+        if (!this.lastTimestamp) {
+            this.lastTimestamp = timestamp;
+        }
+    
+        const deltaTime = timestamp - this.lastTimestamp;
+        this.lastTimestamp = timestamp;
+    
+        // Update animation progress
+        this.animationProgress += deltaTime;
+        
+        // Get current and next positions
+        const currentPos = fieldPositions[this.currentPath[this.currentIndex]];
+        const nextPos = fieldPositions[this.currentPath[this.currentIndex + 1]];
+    
+        if (currentPos && nextPos) {
+            // Calculate interpolation factor (0 to 1)
+            const t = Math.min(this.animationProgress / this.animationDuration, 1);
+            
+            // Interpolate between positions
+            const scaledCurrentPos = this.getScaledPosition(currentPos);
+            const scaledNextPos = this.getScaledPosition(nextPos);
+            
+            const interpolatedX = scaledCurrentPos.x + (scaledNextPos.x - scaledCurrentPos.x) * t;
+            const interpolatedY = scaledCurrentPos.y + (scaledNextPos.y - scaledCurrentPos.y) * t;
+    
+            // Clear and redraw
+            this.clearCanvas();
+            
+            // Draw path line
+            this.ctx.beginPath();
+            this.ctx.moveTo(scaledCurrentPos.x, scaledCurrentPos.y);
+            this.ctx.lineTo(scaledNextPos.x, scaledNextPos.y);
+            this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+    
+            // Draw points
+            this.ctx.beginPath();
+            this.ctx.arc(scaledCurrentPos.x, scaledCurrentPos.y, 5, 0, 2 * Math.PI);
+            this.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            this.ctx.fill();
+    
+            this.ctx.beginPath();
+            this.ctx.arc(scaledNextPos.x, scaledNextPos.y, 5, 0, 2 * Math.PI);
+            this.ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+            this.ctx.fill();
+    
+            // Draw robot at interpolated position
+            this.ctx.beginPath();
+            this.ctx.arc(interpolatedX, interpolatedY, 10, 0, 2 * Math.PI);
+            this.ctx.fillStyle = 'red';
+            this.ctx.fill();
+    
+            // Move to next position when animation completes
+            if (t === 1) {
+                this.currentIndex++;
+                this.animationProgress = 0;
+                this.lastTimestamp = 0;
+            }
+        }
+    
         this.updatePositionDisplay();
-
+    
+        // Continue animation if there are more positions
         if (this.currentIndex < this.currentPath.length - 1) {
-            this.currentIndex++;
-            setTimeout(() => {
-                this.animationFrame = requestAnimationFrame(() => this.animate());
-            }, 1000);
+            this.animationFrame = requestAnimationFrame((timestamp) => this.animate(timestamp));
         } else {
             this.isPlaying = false;
         }
     }
+    
 }
 
 // Initialize when the page loads
