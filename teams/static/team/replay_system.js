@@ -2,24 +2,24 @@ console.log("Replay System Loading...");
 
 // Field position configurations
 const fieldPositions = {
-    "A": { x: 278, y: 115 },
-    "B": { x: 278, y: 160 },
-    "C": { x: 285, y: 200 },
-    "D": { x: 330, y: 220 },
-    "E": { x: 375, y: 220 },
-    "F": { x: 420, y: 200 },
-    "G": { x: 430, y: 160 },
-    "H": { x: 430, y: 115 },
-    "I": { x: 420, y: 70 },
-    "J": { x: 375, y: 50 },
-    "K": { x: 330, y: 50 },
-    "L": { x: 285, y: 70 },
-    "processor": { x: 390, y: 265 },
-    "groundA": { x: 175, y: 85 },
-    "groundB": { x: 175, y: 150 },
-    "groundC": { x: 175, y: 220 },
-    "sourceA": { x: 88, y: 90 },
-    "sourceB": { x: 88, y: 232 }
+    "A": { x: 278 * (512/800), y: 115 * (288/400) },
+    "B": { x: 278 * (512/800), y: 160 * (288/400) },
+    "C": { x: 285 * (512/800), y: 200 * (288/400) },
+    "D": { x: 330 * (512/800), y: 220 * (288/400) },
+    "E": { x: 375 * (512/800), y: 220 * (288/400) },
+    "F": { x: 420 * (512/800), y: 200 * (288/400) },
+    "G": { x: 430 * (512/800), y: 160 * (288/400) },
+    "H": { x: 430 * (512/800), y: 115 * (288/400) },
+    "I": { x: 420 * (512/800), y: 70 * (288/400) },
+    "J": { x: 375 * (512/800), y: 50 * (288/400) },
+    "K": { x: 330 * (512/800), y: 50 * (288/400) },
+    "L": { x: 285 * (512/800), y: 70 * (288/400) },
+    "processor": { x: 390 * (512/800), y: 265 * (288/400) },
+    "groundA": { x: 175 * (512/800), y: 85 * (288/400) },
+    "groundB": { x: 175 * (512/800), y: 150 * (288/400) },
+    "groundC": { x: 175 * (512/800), y: 220 * (288/400) },
+    "sourceA": { x: 88 * (512/800), y: 90 * (288/400) },
+    "sourceB": { x: 88 * (512/800), y: 232 * (288/400) }
 };
 
 class ReplaySystem {
@@ -34,18 +34,122 @@ class ReplaySystem {
         
         this.initializeCanvas();
         this.setupEventListeners();
+        this.selectedPoint = null;
+        this.isDragging = false;
+        this.positions = JSON.parse(JSON.stringify(fieldPositions)); // Clone positions
+        this.enableDragMode();
+    }
+
+    enableDragMode() {
+        // Add print button
+        const printButton = document.createElement('button');
+        printButton.textContent = 'Print Positions';
+        printButton.style.position = 'absolute';
+        printButton.style.top = '10px';
+        printButton.style.left = '10px';
+        printButton.style.padding = '10px';
+        printButton.style.backgroundColor = '#007bff';
+        printButton.style.color = '#fff';
+        printButton.style.border = 'none';
+        printButton.style.borderRadius = '5px';
+        printButton.style.cursor = 'pointer';
+        printButton.onclick = () => this.printPositions();
+        document.body.appendChild(printButton);
+    
+        // Mouse event listeners
+        this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+        this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        this.canvas.addEventListener('mouseup', () => this.handleMouseUp());
+    
+        // Start rendering loop
+        this.renderCalibrationView();
+    }
+
+    getMousePos(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        return {
+            x: (e.clientX - rect.left) * (this.canvas.width / rect.width),
+            y: (e.clientY - rect.top) * (this.canvas.height / rect.height)
+        };
+    }
+
+    handleMouseDown(e) {
+        const mousePos = this.getMousePos(e);
+        const hitRadius = 10;
+
+        // Check if we clicked on a point
+        for (const [key, pos] of Object.entries(this.positions)) {
+            const dx = mousePos.x - pos.x;
+            const dy = mousePos.y - pos.y;
+            if (dx * dx + dy * dy < hitRadius * hitRadius) {
+                this.selectedPoint = key;
+                this.isDragging = true;
+                break;
+            }
+        }
+    }
+
+    handleMouseMove(e) {
+        if (this.isDragging && this.selectedPoint) {
+            const mousePos = this.getMousePos(e);
+            this.positions[this.selectedPoint] = {
+                x: Math.round(mousePos.x),
+                y: Math.round(mousePos.y)
+            };
+        }
+    }
+
+    handleMouseUp() {
+        this.isDragging = false;
+        this.selectedPoint = null;
+    }
+
+    renderCalibrationView() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Draw all points
+        for (const [key, pos] of Object.entries(this.positions)) {
+            // Draw point
+            this.ctx.beginPath();
+            this.ctx.arc(pos.x, pos.y, 5, 0, 2 * Math.PI);
+            this.ctx.fillStyle = this.selectedPoint === key ? 'red' : 'blue';
+            this.ctx.fill();
+
+            // Draw label
+            this.ctx.fillStyle = 'black';
+            this.ctx.font = '12px Arial';
+            this.ctx.fillText(key, pos.x + 10, pos.y + 10);
+        }
+
+        requestAnimationFrame(() => this.renderCalibrationView());
+    }
+
+    printPositions() {
+        const formattedPositions = {};
+        for (const [key, pos] of Object.entries(this.positions)) {
+            formattedPositions[key] = {
+                x: Math.round(pos.x),
+                y: Math.round(pos.y)
+            };
+        }
+    
+        // Format the output for easy copying
+        let output = 'const fieldPositions = {\n';
+        for (const [key, pos] of Object.entries(formattedPositions)) {
+            output += `    "${key}": { x: ${pos.x}, y: ${pos.y} },\n`;
+        }
+        output += '};';
+    
+        console.log(output); // Log to console
+        alert(output); // Show in an alert for easy copying
     }
 
     initializeCanvas() {
-        const img = document.querySelector("img[alt='Auto Map']");
-        if (img) {
-            this.canvas.width = img.width;
-            this.canvas.height = img.height;
-            console.log("Canvas initialized:", this.canvas.width, "x", this.canvas.height);
-        } else {
-            console.error("Auto Map image not found");
-        }
+        this.canvas.width = 512;
+        this.canvas.height = 400;
+        console.log("Canvas initialized:", this.canvas.width, "x", this.canvas.height);
     }
+    
 
     setupEventListeners() {
         const pathSelector = document.getElementById('pathSelector');
