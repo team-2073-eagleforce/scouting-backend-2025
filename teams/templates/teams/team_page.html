@@ -91,7 +91,17 @@
                 <td>{{ match.driver_ranking }}</td>
                 <td>{{ match.defense_ranking }}</td>
                 <td>{{ match.start_pos }}</td>
-                <td>{{ match.auto_path|default:"" }}</td>
+                <td>
+                    {% if match.auto_path %}
+                        <a href="#" class="auto-path-link" data-match="{{ match.match_number }}" 
+                           data-quantifier="{{ match.quantifier }}" data-scout="{{ match.scout_name }}">
+                            View Path
+                        </a>
+                        <div class="auto-path-popup" style="display: none;">
+                            {{ match.auto_path }}
+                        </div>
+                    {% endif %}
+                </td>                
                 <td>{{ match.comment }}</td>
                 <td>{{ match.scout_name }}</td>
             </tr>
@@ -168,6 +178,69 @@
     .btn {
         min-width: 80px;
     }
+
+    .auto-path-popup {
+        position: absolute;
+        background: white;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        z-index: 1000;
+        max-width: 300px;
+        white-space: pre-wrap;
+    }
+    
+    .auto-path-link {
+        color: #007bff;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    
+    .auto-path-link:hover {
+        text-decoration: underline;
+    }
+
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const pathLinks = document.querySelectorAll('.auto-path-link');
+        let currentPopup = null;
+    
+        pathLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Close any open popup
+                if (currentPopup) {
+                    currentPopup.style.display = 'none';
+                }
+                
+                // Get the popup div
+                const popup = this.nextElementSibling;
+                
+                // Position the popup near the link
+                const rect = this.getBoundingClientRect();
+                popup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+                popup.style.left = rect.left + 'px';
+                
+                // Show the popup
+                popup.style.display = 'block';
+                currentPopup = popup;
+            });
+        });
+    
+        // Close popup when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.auto-path-link') && !e.target.closest('.auto-path-popup')) {
+                if (currentPopup) {
+                    currentPopup.style.display = 'none';
+                    currentPopup = null;
+                }
+            }
+        });
+    });
+    </script>
 
 {% endblock %}
