@@ -158,7 +158,7 @@ class ReplaySystem {
         this.currentIndex = 0;
         this.pause();
         this.clearCanvas();
-        this.drawPath();
+        this.drawCurrentPosition();
         if (this.currentPath.length > 0) {
             this.drawRobot(this.currentPath[0]);
         }
@@ -168,68 +168,54 @@ class ReplaySystem {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    drawPath() {
+    drawCurrentPosition() {
         if (!this.currentPath.length) return;
-    
+
+        const currentPos = this.currentPath[this.currentIndex];
+        const nextPos = this.currentPath[this.currentIndex + 1];
+
+        if (!fieldPositions[currentPos]) return;
+
+        // Draw current position
+        const scaledCurrentPos = this.getScaledPosition(fieldPositions[currentPos]);
         this.ctx.beginPath();
-        this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-        this.ctx.lineWidth = 2;
-    
-        this.currentPath.forEach((pos, index) => {
-            if (fieldPositions[pos]) {
-                const scaledPos = this.getScaledPosition(fieldPositions[pos]);
-                if (index === 0) {
-                    this.ctx.moveTo(scaledPos.x, scaledPos.y);
-                } else {
-                    this.ctx.lineTo(scaledPos.x, scaledPos.y);
-                }
-            }
-        });
-        this.ctx.stroke();
-    
-        // Draw points
-        this.currentPath.forEach(pos => {
-            if (fieldPositions[pos]) {
-                const scaledPos = this.getScaledPosition(fieldPositions[pos]);
-                this.ctx.beginPath();
-                this.ctx.arc(scaledPos.x, scaledPos.y, 5, 0, 2 * Math.PI);
-                this.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-                this.ctx.fill();
-            }
-        });
+        this.ctx.arc(scaledCurrentPos.x, scaledCurrentPos.y, 5, 0, 2 * Math.PI);
+        this.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        this.ctx.fill();
+
+        // Draw line to next position if it exists
+        if (nextPos && fieldPositions[nextPos]) {
+            const scaledNextPos = this.getScaledPosition(fieldPositions[nextPos]);
+            this.ctx.beginPath();
+            this.ctx.moveTo(scaledCurrentPos.x, scaledCurrentPos.y);
+            this.ctx.lineTo(scaledNextPos.x, scaledNextPos.y);
+            this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+
+            // Draw next position
+            this.ctx.beginPath();
+            this.ctx.arc(scaledNextPos.x, scaledNextPos.y, 5, 0, 2 * Math.PI);
+            this.ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+            this.ctx.fill();
+        }
     }
-    
+
     drawRobot(position) {
         if (!fieldPositions[position]) return;
-    
+
         const scaledPos = this.getScaledPosition(fieldPositions[position]);
-    
-        // Draw robot
         this.ctx.beginPath();
         this.ctx.arc(scaledPos.x, scaledPos.y, 10, 0, 2 * Math.PI);
         this.ctx.fillStyle = 'red';
         this.ctx.fill();
-    
-        // Draw direction line
-        if (this.currentIndex < this.currentPath.length - 1) {
-            const nextPos = fieldPositions[this.currentPath[this.currentIndex + 1]];
-            if (nextPos) {
-                const scaledNextPos = this.getScaledPosition(nextPos);
-                this.ctx.beginPath();
-                this.ctx.moveTo(scaledPos.x, scaledPos.y);
-                this.ctx.lineTo(scaledNextPos.x, scaledNextPos.y);
-                this.ctx.strokeStyle = 'red';
-                this.ctx.lineWidth = 2;
-                this.ctx.stroke();
-            }
-        }
     }
 
     animate() {
         if (!this.isPlaying) return;
 
         this.clearCanvas();
-        this.drawPath();
+        this.drawCurrentPosition();
         this.drawRobot(this.currentPath[this.currentIndex]);
 
         if (this.currentIndex < this.currentPath.length - 1) {
