@@ -1,7 +1,7 @@
 console.log("Replay System Loading...");
 
-const ORIGINAL_CANVAS_WIDTH = 512; // Original canvas width when generating fieldPositions
-const ORIGINAL_CANVAS_HEIGHT = 400; // Original canvas height when generating fieldPositions
+const ORIGINAL_CANVAS_WIDTH = 512;
+const ORIGINAL_CANVAS_HEIGHT = 400;
 
 // Field position configurations
 const fieldPositions = {
@@ -77,19 +77,22 @@ class ReplaySystem {
         const playButton = document.getElementById('playButton');
         const pauseButton = document.getElementById('pauseButton');
         const resetButton = document.getElementById('resetButton');
+        const backButton = document.getElementById('backButton');
+        const forwardButton = document.getElementById('forwardButton');
     
-        if (playButton && pauseButton && resetButton) {
+        if (playButton && pauseButton && resetButton && backButton && forwardButton) {
             playButton.addEventListener('click', () => this.play());
             pauseButton.addEventListener('click', () => this.pause());
             resetButton.addEventListener('click', () => this.reset());
+            backButton.addEventListener('click', () => this.stepBack());
+            forwardButton.addEventListener('click', () => this.stepForward());
         } else {
             console.error("One or more control buttons not found");
         }
     
-        // Handle window resizing
         window.addEventListener('resize', () => {
             this.initializeCanvas();
-            this.reset(); // Redraw the path and robot
+            this.reset();
         });
     }
 
@@ -137,6 +140,15 @@ class ReplaySystem {
         });
     }
 
+    updatePositionDisplay() {
+        const currentPosition = document.getElementById('currentPosition');
+        const totalPositions = document.getElementById('totalPositions');
+        if (currentPosition && totalPositions) {
+            currentPosition.textContent = this.currentIndex + 1;
+            totalPositions.textContent = this.currentPath.length;
+        }
+    }
+
     play() {
         console.log("Play called");
         if (!this.isPlaying && this.currentPath.length > 0) {
@@ -161,6 +173,27 @@ class ReplaySystem {
         this.drawCurrentPosition();
         if (this.currentPath.length > 0) {
             this.drawRobot(this.currentPath[0]);
+        }
+        this.updatePositionDisplay();
+    }
+
+    stepBack() {
+        if (this.currentIndex > 0) {
+            this.currentIndex--;
+            this.clearCanvas();
+            this.drawCurrentPosition();
+            this.drawRobot(this.currentPath[this.currentIndex]);
+            this.updatePositionDisplay();
+        }
+    }
+
+    stepForward() {
+        if (this.currentIndex < this.currentPath.length - 1) {
+            this.currentIndex++;
+            this.clearCanvas();
+            this.drawCurrentPosition();
+            this.drawRobot(this.currentPath[this.currentIndex]);
+            this.updatePositionDisplay();
         }
     }
 
@@ -217,6 +250,7 @@ class ReplaySystem {
         this.clearCanvas();
         this.drawCurrentPosition();
         this.drawRobot(this.currentPath[this.currentIndex]);
+        this.updatePositionDisplay();
 
         if (this.currentIndex < this.currentPath.length - 1) {
             this.currentIndex++;

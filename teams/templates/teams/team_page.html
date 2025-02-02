@@ -118,14 +118,21 @@
         {% endfor %}
     </select>    
 
-    <div class="replay-canvas-container">
-        <img src="{% static 'images/replays.png' %}" alt="Auto Map" style="width: 100%; max-width: 800px;">
-        <canvas id="replayCanvas" style="position: absolute; top: 0; left: 0; width: 100%; max-width: 800px; height: 450px;"></canvas>
-    </div>    
+    <div class="d-flex">
+        <div class="replay-canvas-container">
+            <img src="{% static 'images/replays.png' %}" alt="Auto Map" style="width: 100%; max-width: 800px;">
+            <canvas id="replayCanvas" style="position: absolute; top: 0; left: 0; width: 100%; max-width: 800px; height: auto;"></canvas>
+        </div>
+        <div class="path-info ms-3">
+            <p>Position: <span id="currentPosition">0</span> / <span id="totalPositions">0</span></p>
+        </div>
+    </div>
 
     <div class="controls mt-2">
+        <button id="backButton" class="btn btn-secondary">Back</button>
         <button id="playButton" class="btn btn-primary">Play</button>
         <button id="pauseButton" class="btn btn-secondary">Pause</button>
+        <button id="forwardButton" class="btn btn-secondary">Forward</button>
         <button id="resetButton" class="btn btn-warning">Reset</button>
     </div>
 </div>
@@ -134,21 +141,33 @@
 <script src="{% static 'team/replay_system.js' %}"></script>
 
 <style>
-.replay-container {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.replay-canvas-container {
-    position: relative;
-}
-
-.controls {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 10px;
-}
+    .replay-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .replay-canvas-container {
+        position: relative;
+        flex: 1;
+    }
+    
+    .path-info {
+        width: 150px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+    
+    .controls {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    
+    .btn {
+        min-width: 80px;
+    }
 </style>
 
 {% endblock %}
