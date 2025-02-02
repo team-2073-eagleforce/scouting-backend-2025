@@ -112,7 +112,7 @@
         {% for match in all_team_match_data %}
             {% if match.auto_path %}
                 <option value="{{ match.match_number }}">
-                    Match {{ match.match_number }}{% if match.quantifier %}-{{ match.quantifier }}{% endif %}
+                    Match {{ match.match_number }}{% if match.quantifier %}-{{ match.quantifier }}{% endif %}-{{match.scout_name}}
                 </option>
             {% endif %}
         {% endfor %}
