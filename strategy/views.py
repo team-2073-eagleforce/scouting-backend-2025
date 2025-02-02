@@ -17,6 +17,9 @@ from helpers import login_required
 from django.shortcuts import render, redirect
 from strategy.models import PickList_Data
 
+from django.http import JsonResponse
+from teams.models import Team_Match_Data
+
 def get_json_path(comp_code):
     # Get the project root directory
     BASE_DIR = Path(__file__).resolve().parent.parent
@@ -253,3 +256,31 @@ def fetch_team_match_averages(team_number, comp_code):
         'defense': round(team_match_averages['defense_ranking__avg'], 3)
     }
 
+def get_path_data(request, team_number):
+    """API endpoint for retrieving auto path data"""
+    comp_code = request.GET.get('comp')
+    match_number = request.GET.get('match')
+    
+    if not comp_code:
+        return JsonResponse({'error': 'Competition code required'}, status=400)
+    
+    try:
+        match_data = Team_Match_Data.objects.get(
+            team_number=team_number,
+            event=comp_code,
+            match_number=match_number
+        )
+        
+        return JsonResponse({
+            'path': match_data.auto_path,
+            'match_number': match_data.match_number,
+            'quantifier': match_data.quantifier
+        })
+    except Team_Match_Data.DoesNotExist:
+        return JsonResponse({
+            'error': f'Match data not found for team {team_number}, match {match_number}'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'error': f'Server error: {str(e)}'
+        }, status=500)

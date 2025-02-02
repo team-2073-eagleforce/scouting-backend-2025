@@ -1,82 +1,96 @@
 console.log("Script loaded");
+
+const scoringFields = ["auto", "autoleave", "L1", "L2", "L3", "L4", "net", "processor", "removed", "climb", "defense", "start_pos"];
+
+// Add a flag to track initialization
+if (window.dashboardInitialized) {
+    console.warn('Dashboard already initialized');
+} else {
+    window.dashboardInitialized = true;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM loaded");
         
-const scoringFields = ["auto", "autoleave", "L1", "L2", "L3", "L4", "net", "processor", "removed", "climb", "defense"];
+        const button = document.getElementById("match_button");
+        if (!button) {
+            console.error("Match button not found");
+            return;
+        }
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM loaded");
-    
-    document.getElementById("match_button").onclick = function() {
-        console.log("Button clicked");
-        let match = document.getElementById("match").value;
-        console.log("Match value:", match);
-
-        fetch("", {
-            method: 'POST',
-            credentials: 'include',
-            mode: 'same-origin',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': getCookie('csrftoken'),
-            },
-            body: JSON.stringify(match)
-        })
-        .then(response => {
-            console.log("Response received:", response);
-            return response.json();
-        })
-        .then(data => {
-            console.log("Data received:", data);
-            let dashboardTable = document.getElementById("dashboardTable");
+        button.onclick = function(e) {
+            e.preventDefault();
+            console.log("Button clicked");
             
-            // Clear existing rows
+            const dashboardTable = document.getElementById("dashboardTable");
+            if (!dashboardTable) {
+                console.error("Table not found");
+                return;
+            }
+
+            let match = document.getElementById("match").value;
+            if (!match) {
+                console.warn("No match value entered");
+                return;
+            }
+
+            // Clear table before fetch
             dashboardTable.innerHTML = '';
+            console.log("Table cleared, starting fetch");
 
-            // Red alliance
-            for (let alliance_number = 0; alliance_number < data["red_teams"].length; alliance_number++) {
-                let redTeam = data["red_teams"][alliance_number];
-                let redTeamRow = dashboardTable.insertRow();
+            fetch("", {
+                method: 'POST',
+                credentials: 'include',
+                mode: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify(match)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Processing data for match:", match);
 
-                let redTeamScoringField = redTeamRow.insertCell();
-                redTeamScoringField.appendChild(document.createTextNode("Red " + (alliance_number + 1)));
+                // Process red alliance
+                (data.red_teams || []).forEach((redTeam, index) => {
+                    const row = dashboardTable.insertRow();
+                    
+                    // Add position and team number
+                    row.insertCell().textContent = `Red ${index + 1}`;
+                    row.insertCell().textContent = redTeam;
+                    
+                    // Add scoring fields
+                    scoringFields.forEach(field => {
+                        const cell = row.insertCell();
+                        cell.textContent = data.red[redTeam]?.[field] || '0';
+                    });
+                });
 
-                let redTeamNumber = redTeamRow.insertCell();
-                redTeamNumber.appendChild(document.createTextNode(redTeam));
+                // Process blue alliance
+                (data.blue_teams || []).forEach((blueTeam, index) => {
+                    const row = dashboardTable.insertRow();
+                    
+                    // Add position and team number
+                    row.insertCell().textContent = `Blue ${index + 1}`;
+                    row.insertCell().textContent = blueTeam;
+                    
+                    // Add scoring fields
+                    scoringFields.forEach(field => {
+                        const cell = row.insertCell();
+                        cell.textContent = data.blue[blueTeam]?.[field] || '0';
+                    });
+                });
 
-                for (let scoringField of scoringFields) {
-                    let redTeamScoringField = redTeamRow.insertCell();
-                    let value = data["red"][redTeam] && data["red"][redTeam][scoringField] !== undefined 
-                        ? data["red"][redTeam][scoringField] 
-                        : '0';
-                    redTeamScoringField.appendChild(document.createTextNode(value));
-                }
-            }
-
-            // Blue alliance
-            for (let alliance_number = 0; alliance_number < data["blue_teams"].length; alliance_number++) {
-                let blueTeam = data["blue_teams"][alliance_number];
-                let blueTeamRow = dashboardTable.insertRow();
-
-                let blueTeamScoringField = blueTeamRow.insertCell();
-                blueTeamScoringField.appendChild(document.createTextNode("Blue " + (alliance_number + 1)));
-
-                let blueTeamNumber = blueTeamRow.insertCell();
-                blueTeamNumber.appendChild(document.createTextNode(blueTeam));
-
-                for (let scoringField of scoringFields) {
-                    let blueTeamScoringField = blueTeamRow.insertCell();
-                    let value = data["blue"][blueTeam] && data["blue"][blueTeam][scoringField] !== undefined 
-                        ? data["blue"][blueTeam][scoringField] 
-                        : '0';
-                    blueTeamScoringField.appendChild(document.createTextNode(value));
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    };
-});
+                console.log("Table population complete");
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                dashboardTable.innerHTML = '<tr><td colspan="14">Error loading data</td></tr>';
+            });
+        };
+    });
+}
 
 function getCookie(name) {
     let cookieValue = null;

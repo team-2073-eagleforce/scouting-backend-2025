@@ -21,5 +21,6 @@ urlpatterns = [
     path('strategy/dashboard/', strategy_views.dashboard, name='dashboard'),
     path('strategy/picklist/', strategy_views.picklist, name='picklist'),
     path('strategy/picklist/submit/', strategy_views.picklist_submit, name='picklist_submit'),
+    path('api/get_path_data/<int:team_number>/', strategy_views.get_path_data, name='get_path_data'),
     path("auth/", include("authenticate.urls")),
 ]

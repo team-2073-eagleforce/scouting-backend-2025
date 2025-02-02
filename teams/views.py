@@ -44,7 +44,6 @@ def display_teams(request):
 
     return render(request, 'teams/view_teams.html', {'all_teams': all_teams, "pit_scouted": pit_scouted})
 
-
 # @login_required
 def team_page(request, team_number):
     comp_code = request.GET.get('comp')
@@ -55,11 +54,10 @@ def team_page(request, team_number):
             event=comp_code
         ).order_by("-quantifier", "-match_number")
         
-        # Get human player matches
-        human_player_matches = Human_Player_Match.objects.filter(
-            team_number=team_number,
-            event=comp_code
-        )
+        # Debug: Print auto_path data
+        for match in all_team_match_data:
+            print(f"Match {match.match_number} auto_path: {match.auto_path}")
+            print(f"Auto path type: {type(match.auto_path)}")
         
         # Extract paths with match numbers for dropdown
         paths_data = [
@@ -70,18 +68,21 @@ def team_page(request, team_number):
             }
             for match in all_team_match_data if match.auto_path
         ]
+        
+        # Debug: Print paths_data
+        print("Paths data:", paths_data)
 
         context = {
             'team': team,
             'all_team_match_data': all_team_match_data,
             'team_number': team_number,
-            'human_player_matches': human_player_matches,
             'paths_data': paths_data,
             'comp_code': comp_code
         }
         return render(request, 'teams/team_page.html', context)
     
     return render(request, 'teams/team_page.html', {'team_number': team_number})
+
 
 def pit_scouting(request, team_number):
     comp_code = request.GET.get('comp')
@@ -186,3 +187,24 @@ def human_player_submit(request, team_number):
     else:
         form = NewHumanScoutingData()
     return render(request, "teams/human_player_scout.html", {'form': form, 'team_number': team_number})
+
+def get_path_data(request, team_number):
+    comp_code = request.GET.get('comp')
+    if not comp_code:
+        return JsonResponse({'error': 'Competition code required'}, status=400)
+    
+    try:
+        match_number = request.GET.get('match')
+        match_data = Team_Match_Data.objects.get(
+            team_number=team_number,
+            event=comp_code,
+            match_number=match_number
+        )
+        
+        return JsonResponse({
+            'path': match_data.auto_path,
+            'match_number': match_data.match_number,
+            'quantifier': match_data.quantifier
+        })
+    except Team_Match_Data.DoesNotExist:
+        return JsonResponse({'error': 'Match data not found'}, status=404)
