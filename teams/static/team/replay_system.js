@@ -2,20 +2,24 @@ console.log("Replay System Loading...");
 
 // Field position configurations
 const fieldPositions = {
-    "A": { x: 50, y: 50 },
-    "B": { x: 100, y: 100 },
-    "C": { x: 150, y: 150 },
-    "D": { x: 200, y: 200 },
-    "E": { x: 250, y: 250 },
-    "F": { x: 300, y: 300 },
-    "H": { x: 350, y: 350 },
-    "G": { x: 400, y: 400 },
-    "processor": { x: 450, y: 450 },
-    "groundA": { x: 500, y: 500 },
-    "groundB": { x: 550, y: 550 },
-    "groundC": { x: 600, y: 600 },
-    "sourceA": { x: 650, y: 650 },
-    "sourceB": { x: 700, y: 700 }
+    "A": { x: 278, y: 115 },
+    "B": { x: 278, y: 160 },
+    "C": { x: 285, y: 200 },
+    "D": { x: 330, y: 220 },
+    "E": { x: 375, y: 220 },
+    "F": { x: 420, y: 200 },
+    "G": { x: 430, y: 160 },
+    "H": { x: 430, y: 115 },
+    "I": { x: 420, y: 70 },
+    "J": { x: 375, y: 50 },
+    "K": { x: 330, y: 50 },
+    "L": { x: 285, y: 70 },
+    "processor": { x: 390, y: 265 },
+    "groundA": { x: 175, y: 85 },
+    "groundB": { x: 175, y: 150 },
+    "groundC": { x: 175, y: 220 },
+    "sourceA": { x: 88, y: 90 },
+    "sourceB": { x: 88, y: 232 }
 };
 
 class ReplaySystem {
