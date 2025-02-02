@@ -22,7 +22,7 @@
                 <span><b>Auto Total: </b>{{ team.auto_total_notes }}</span> <br> <br>
                 <span><b>Auto Coral: </b>{{ team.auto_coral_notes }}</span> <br> <br>
                 <span><b>Additional Info: </b> {{ team.additional_info }}</span> <br> <br>
-                <a href="{% url 'pit_scouting' team.team_number %}?comp={{ request.GET.comp }}">Update Info</a>
+                <a href="{% url 'pit_scouting' team_number %}?comp={{ request.GET.comp }}">Update Info</a>
             </div>
             <div class="col-4">
                 {% if team.robot_picture %}
@@ -35,28 +35,6 @@
     {% else %}
         <a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}">Pit Scout</a>
     {% endif %}
-
-    <!-- Starting Positions Row -->
-    <div class="table-responsive">
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th colspan="21">Starting Positions (Auto Positions)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td colspan="21">
-                        {% if team.auto_positions %}
-                            {{ team.auto_positions }}
-                        {% else %}
-                            No starting positions recorded.
-                        {% endif %}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
 
     <!-- Match Data Table -->
     <div class="table-responsive">
@@ -82,62 +60,203 @@
                     <th>Climb</th>
                     <th>Driver</th>
                     <th>Defense</th>
+                    <th>Start Position</th>
+                    <th>Auto Path</th>
                     <th id="comments_column">Comments</th>
                     <th>Scout Name</th>
                 </tr>
             </thead>
             <tbody>
                 {% for match in all_team_match_data %}
-                    <tr>
-                        <td>{{ match.match_number }}{% if match.quantifier %}-{{ match.quantifier }}{% endif %}</td>
-                        <td>{{ match.auto_leave }}</td>
-                        <td>{{ match.auto_L1 }}</td>
-                        <td>{{ match.auto_L2 }}</td>
-                        <td>{{ match.auto_L3 }}</td>
-                        <td>{{ match.auto_L4 }}</td>
-                        <td>{{ match.auto_net }}</td>
-                        <td>{{ match.auto_processor }}</td>
-                        <td>{{ match.auto_removed }}</td>
-                        <td>{{ match.teleL1 }}</td>
-                        <td>{{ match.teleL2 }}</td>
-                        <td>{{ match.teleL3 }}</td>
-                        <td>{{ match.teleL4 }}</td>
-                        <td>{{ match.telenet }}</td>
-                        <td>{{ match.teleProcessor }}</td>
-                        <td>{{ match.teleRemoved }}</td>
-                        <td>{{ match.climb }}</td>
-                        <td>{{ match.driver_ranking }}</td>
-                        <td>{{ match.defense_ranking }}</td>
-                        <td>{{ match.comment }}</td>
-                        <td>{{ match.scout_name }}</td>
-                    </tr>
+                <tr>
+                    <td>{{ match.match_number }}{% if match.quantifier %}-{{ match.quantifier }}{% endif %}</td>
+                    <td>{{ match.auto_leave }}</td>
+                    <td>{{ match.auto_L1 }}</td>
+                    <td>{{ match.auto_L2 }}</td>
+                    <td>{{ match.auto_L3 }}</td>
+                    <td>{{ match.auto_L4 }}</td>
+                    <td>{{ match.auto_net }}</td>
+                    <td>{{ match.auto_processor }}</td>
+                    <td>{{ match.auto_removed }}</td>
+                    <td>{{ match.teleL1 }}</td>
+                    <td>{{ match.teleL2 }}</td>
+                    <td>{{ match.teleL3 }}</td>
+                    <td>{{ match.teleL4 }}</td>
+                    <td>{{ match.telenet }}</td>
+                    <td>{{ match.teleProcessor }}</td>
+                    <td>{{ match.teleRemoved }}</td>
+                    <td>{{ match.climb }}</td>
+                    <td>{{ match.driver_ranking }}</td>
+                    <td>{{ match.defense_ranking }}</td>
+                    <td>{{ match.start_pos }}</td>
+                    <td>{{ match.auto_path|default:"" }}</td>
+                    <td>{{ match.comment }}</td>
+                    <td>{{ match.scout_name }}</td>
+                </tr>
                 {% empty %}
-                    <tr>
-                        <td colspan="21" class="text-center">No match data available</td>
-                    </tr>
+                <tr>
+                    <td colspan="22" class="text-center">No match data available</td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <!-- Human Player Scouting Section -->
-    <a href="{% url 'human-scout' team_number %}">Scout Human Player Now</a>
-    <div class="table-responsive">
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Match</th>
-                    <th>Human Player Comments</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for match in human_player_matches %}
-                    <tr>
-                        <td style="white-space: nowrap">{{ match.match_number }}</td>
-                        <td>{{ match.human_player_comment }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Replay System Section -->
+    <h3>Auto Path Replay</h3>
+    <div class="replay-container">
+        <select id="pathSelector" class="form-control mb-2">
+            <option value="">Select a match to replay</option>
+            {% for path in paths_data %}
+                <option value="{{ forloop.counter0 }}">
+                    Match {{ path.match_number }}
+                    {% if path.quantifier %}-{{ path.quantifier }}{% endif %}
+                </option>
+            {% endfor %}
+        </select>
+        
+        <div style="position: relative;">
+            <img src="{% static 'images/replays.png' %}" alt="Auto Map" style="width: 100%; max-width: 800px;">
+            <canvas id="replayCanvas" style="position: absolute; top: 0; left: 0; width: 100%; max-width: 800px; height: auto;"></canvas>
+        </div>
+        
+        <div class="controls mt-2">
+            <button id="playButton" class="btn btn-primary">Play</button>
+            <button id="pauseButton" class="btn btn-secondary">Pause</button>
+            <button id="resetButton" class="btn btn-warning">Reset</button>
+        </div>
     </div>
+
+    <!-- Serialize paths_data for JavaScript -->
+    {{ paths_data|json_script:"paths-data" }}
+
+    <!-- JavaScript for Replay System -->
+    <script>
+        // Load paths_data from the JSON script tag
+        const pathsData = JSON.parse(document.getElementById('paths-data').textContent);
+
+        // Define field positions (adjust coordinates to match your field image)
+        const fieldPositions = {
+            "A": { x: 50, y: 50 },
+            "B": { x: 100, y: 100 },
+            "C": { x: 150, y: 150 },
+            "D": { x: 200, y: 200 },
+            "E": { x: 250, y: 250 },
+            "F": { x: 300, y: 300 },
+            "H": { x: 350, y: 350 },
+            "G": { x: 400, y: 400 },
+            "processor": { x: 450, y: 450 },
+            "groundA": { x: 500, y: 500 },
+            "groundB": { x: 550, y: 550 },
+            "groundC": { x: 600, y: 600 },
+            "sourceA": { x: 650, y: 650 },
+            "sourceB": { x: 700, y: 700 }
+        };
+
+        class ReplaySystem {
+            constructor() {
+                this.canvas = document.getElementById('replayCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.currentPath = [];
+                this.currentIndex = 0;
+                this.isPlaying = false;
+                this.animationFrame = null;
+                
+                // Match canvas size to image
+                const img = document.querySelector("img[alt='Auto Map']");
+                this.canvas.width = img.width;
+                this.canvas.height = img.height;
+                
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                document.getElementById('pathSelector').addEventListener('change', (e) => {
+                    this.loadPath(parseInt(e.target.value));
+                });
+                
+                document.getElementById('playButton').addEventListener('click', () => this.play());
+                document.getElementById('pauseButton').addEventListener('click', () => this.pause());
+                document.getElementById('resetButton').addEventListener('click', () => this.reset());
+            }
+
+            loadPath(pathIndex) {
+                if (pathsData[pathIndex]) {
+                    this.currentPath = pathsData[pathIndex].path.split(',').map(pos => pos.trim());
+                    this.reset();
+                }
+            }
+
+            play() {
+                if (!this.isPlaying) {
+                    this.isPlaying = true;
+                    this.animate();
+                }
+            }
+
+            pause() {
+                this.isPlaying = false;
+                if (this.animationFrame) {
+                    cancelAnimationFrame(this.animationFrame);
+                }
+            }
+
+            reset() {
+                this.currentIndex = 0;
+                this.pause();
+                this.clearCanvas();
+                this.drawRobot(this.currentPath[0]);
+            }
+
+            clearCanvas() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+
+            drawRobot(position) {
+                if (!fieldPositions[position]) return;
+                
+                this.ctx.beginPath();
+                this.ctx.arc(
+                    fieldPositions[position].x,
+                    fieldPositions[position].y,
+                    10, 0, 2 * Math.PI
+                );
+                this.ctx.fillStyle = 'red';
+                this.ctx.fill();
+            }
+
+            animate() {
+                if (!this.isPlaying) return;
+                
+                this.clearCanvas();
+                this.drawRobot(this.currentPath[this.currentIndex]);
+                
+                if (this.currentIndex < this.currentPath.length - 1) {
+                    this.currentIndex++;
+                    this.animationFrame = requestAnimationFrame(() => this.animate());
+                } else {
+                    this.isPlaying = false;
+                }
+            }
+        }
+
+        // Initialize the replay system when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const replaySystem = new ReplaySystem();
+        });
+    </script>
+
+    <style>
+        .replay-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+    </style>
 {% endblock %}

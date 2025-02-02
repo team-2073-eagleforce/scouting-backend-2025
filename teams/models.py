@@ -65,6 +65,8 @@ class Team_Match_Data(models.Model):
     is_disabled = models.IntegerField(default=0)
     is_tipped = models.IntegerField(default=0)
     
+    auto_path = models.JSONField(default=list) 
+    
     # Scout Information
     scout_name = models.CharField(max_length=32)
 

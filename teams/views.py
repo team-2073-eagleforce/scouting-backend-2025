@@ -50,12 +50,38 @@ def team_page(request, team_number):
     comp_code = request.GET.get('comp')
     if comp_code is not None:
         team, created = Teams.objects.get_or_create(team_number=team_number, event=comp_code)
-        all_team_match_data = Team_Match_Data.objects.filter(team_number=team_number, event=comp_code).order_by("-quantifier", "-match_number")
-        human_player_matches = Human_Player_Match.objects.filter(team_number=team_number, event=comp_code)
+        all_team_match_data = Team_Match_Data.objects.filter(
+            team_number=team_number, 
+            event=comp_code
+        ).order_by("-quantifier", "-match_number")
+        
+        # Get human player matches
+        human_player_matches = Human_Player_Match.objects.filter(
+            team_number=team_number,
+            event=comp_code
+        )
+        
+        # Extract paths with match numbers for dropdown
+        paths_data = [
+            {
+                'match_number': match.match_number,
+                'quantifier': match.quantifier,
+                'path': match.auto_path
+            }
+            for match in all_team_match_data if match.auto_path
+        ]
 
-        return render(request, 'teams/team_page.html', {'team': team, 'all_team_match_data': all_team_match_data, "team_number": team_number, "human_player_matches": human_player_matches})
-
-    return render(request, 'teams/team_page.html', {"team_number": team_number})
+        context = {
+            'team': team,
+            'all_team_match_data': all_team_match_data,
+            'team_number': team_number,
+            'human_player_matches': human_player_matches,
+            'paths_data': paths_data,
+            'comp_code': comp_code
+        }
+        return render(request, 'teams/team_page.html', context)
+    
+    return render(request, 'teams/team_page.html', {'team_number': team_number})
 
 def pit_scouting(request, team_number):
     comp_code = request.GET.get('comp')
