@@ -1,25 +1,28 @@
 console.log("Replay System Loading...");
 
+const ORIGINAL_CANVAS_WIDTH = 512; // Original canvas width when generating fieldPositions
+const ORIGINAL_CANVAS_HEIGHT = 400; // Original canvas height when generating fieldPositions
+
 // Field position configurations
 const fieldPositions = {
-    "A": { x: 278 * (512/800), y: 115 * (288/400) },
-    "B": { x: 278 * (512/800), y: 160 * (288/400) },
-    "C": { x: 285 * (512/800), y: 200 * (288/400) },
-    "D": { x: 330 * (512/800), y: 220 * (288/400) },
-    "E": { x: 375 * (512/800), y: 220 * (288/400) },
-    "F": { x: 420 * (512/800), y: 200 * (288/400) },
-    "G": { x: 430 * (512/800), y: 160 * (288/400) },
-    "H": { x: 430 * (512/800), y: 115 * (288/400) },
-    "I": { x: 420 * (512/800), y: 70 * (288/400) },
-    "J": { x: 375 * (512/800), y: 50 * (288/400) },
-    "K": { x: 330 * (512/800), y: 50 * (288/400) },
-    "L": { x: 285 * (512/800), y: 70 * (288/400) },
-    "processor": { x: 390 * (512/800), y: 265 * (288/400) },
-    "groundA": { x: 175 * (512/800), y: 85 * (288/400) },
-    "groundB": { x: 175 * (512/800), y: 150 * (288/400) },
-    "groundC": { x: 175 * (512/800), y: 220 * (288/400) },
-    "sourceA": { x: 88 * (512/800), y: 90 * (288/400) },
-    "sourceB": { x: 88 * (512/800), y: 232 * (288/400) }
+    "A": { x: 277, y: 170 },
+    "B": { x: 279, y: 230 },
+    "C": { x: 285, y: 288 },
+    "D": { x: 331, y: 315 },
+    "E": { x: 375, y: 315 },
+    "F": { x: 419, y: 288 },
+    "G": { x: 430, y: 220 },
+    "H": { x: 430, y: 170 },
+    "I": { x: 418, y: 105 },
+    "J": { x: 374, y: 80 },
+    "K": { x: 330, y: 80 },
+    "L": { x: 284, y: 105 },
+    "processor": { x: 388, y: 375 },
+    "groundA": { x: 173, y: 110 },
+    "groundB": { x: 176, y: 210 },
+    "groundC": { x: 175, y: 300 },
+    "sourceA": { x: 88, y: 120 },
+    "sourceB": { x: 86, y: 300 },
 };
 
 class ReplaySystem {
@@ -34,122 +37,28 @@ class ReplaySystem {
         
         this.initializeCanvas();
         this.setupEventListeners();
-        this.selectedPoint = null;
-        this.isDragging = false;
-        this.positions = JSON.parse(JSON.stringify(fieldPositions)); // Clone positions
-        this.enableDragMode();
-    }
-
-    enableDragMode() {
-        // Add print button
-        const printButton = document.createElement('button');
-        printButton.textContent = 'Print Positions';
-        printButton.style.position = 'absolute';
-        printButton.style.top = '10px';
-        printButton.style.left = '10px';
-        printButton.style.padding = '10px';
-        printButton.style.backgroundColor = '#007bff';
-        printButton.style.color = '#fff';
-        printButton.style.border = 'none';
-        printButton.style.borderRadius = '5px';
-        printButton.style.cursor = 'pointer';
-        printButton.onclick = () => this.printPositions();
-        document.body.appendChild(printButton);
-    
-        // Mouse event listeners
-        this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-        this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-        this.canvas.addEventListener('mouseup', () => this.handleMouseUp());
-    
-        // Start rendering loop
-        this.renderCalibrationView();
-    }
-
-    getMousePos(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        return {
-            x: (e.clientX - rect.left) * (this.canvas.width / rect.width),
-            y: (e.clientY - rect.top) * (this.canvas.height / rect.height)
-        };
-    }
-
-    handleMouseDown(e) {
-        const mousePos = this.getMousePos(e);
-        const hitRadius = 10;
-
-        // Check if we clicked on a point
-        for (const [key, pos] of Object.entries(this.positions)) {
-            const dx = mousePos.x - pos.x;
-            const dy = mousePos.y - pos.y;
-            if (dx * dx + dy * dy < hitRadius * hitRadius) {
-                this.selectedPoint = key;
-                this.isDragging = true;
-                break;
-            }
-        }
-    }
-
-    handleMouseMove(e) {
-        if (this.isDragging && this.selectedPoint) {
-            const mousePos = this.getMousePos(e);
-            this.positions[this.selectedPoint] = {
-                x: Math.round(mousePos.x),
-                y: Math.round(mousePos.y)
-            };
-        }
-    }
-
-    handleMouseUp() {
-        this.isDragging = false;
-        this.selectedPoint = null;
-    }
-
-    renderCalibrationView() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        // Draw all points
-        for (const [key, pos] of Object.entries(this.positions)) {
-            // Draw point
-            this.ctx.beginPath();
-            this.ctx.arc(pos.x, pos.y, 5, 0, 2 * Math.PI);
-            this.ctx.fillStyle = this.selectedPoint === key ? 'red' : 'blue';
-            this.ctx.fill();
-
-            // Draw label
-            this.ctx.fillStyle = 'black';
-            this.ctx.font = '12px Arial';
-            this.ctx.fillText(key, pos.x + 10, pos.y + 10);
-        }
-
-        requestAnimationFrame(() => this.renderCalibrationView());
-    }
-
-    printPositions() {
-        const formattedPositions = {};
-        for (const [key, pos] of Object.entries(this.positions)) {
-            formattedPositions[key] = {
-                x: Math.round(pos.x),
-                y: Math.round(pos.y)
-            };
-        }
-    
-        // Format the output for easy copying
-        let output = 'const fieldPositions = {\n';
-        for (const [key, pos] of Object.entries(formattedPositions)) {
-            output += `    "${key}": { x: ${pos.x}, y: ${pos.y} },\n`;
-        }
-        output += '};';
-    
-        console.log(output); // Log to console
-        alert(output); // Show in an alert for easy copying
     }
 
     initializeCanvas() {
-        this.canvas.width = 512;
-        this.canvas.height = 400;
-        console.log("Canvas initialized:", this.canvas.width, "x", this.canvas.height);
+        const img = document.querySelector("img[alt='Auto Map']");
+        if (img) {
+            this.canvas.width = img.width;
+            this.canvas.height = img.height;
+            console.log("Canvas initialized:", this.canvas.width, "x", this.canvas.height);
+        } else {
+            console.error("Auto Map image not found");
+        }
     }
+
+    getScaledPosition(position) {
+        const scaleX = this.canvas.width / ORIGINAL_CANVAS_WIDTH;
+        const scaleY = this.canvas.height / ORIGINAL_CANVAS_HEIGHT;
     
+        return {
+            x: position.x * scaleX,
+            y: position.y * scaleY
+        };
+    }
 
     setupEventListeners() {
         const pathSelector = document.getElementById('pathSelector');
@@ -157,18 +66,18 @@ class ReplaySystem {
             console.error("Path selector not found");
             return;
         }
-
+    
         pathSelector.addEventListener('change', (e) => {
             const matchNumber = e.target.value;
             if (matchNumber) {
                 this.fetchPathData(matchNumber);
             }
         });
-
+    
         const playButton = document.getElementById('playButton');
         const pauseButton = document.getElementById('pauseButton');
         const resetButton = document.getElementById('resetButton');
-
+    
         if (playButton && pauseButton && resetButton) {
             playButton.addEventListener('click', () => this.play());
             pauseButton.addEventListener('click', () => this.pause());
@@ -176,6 +85,12 @@ class ReplaySystem {
         } else {
             console.error("One or more control buttons not found");
         }
+    
+        // Handle window resizing
+        window.addEventListener('resize', () => {
+            this.initializeCanvas();
+            this.reset(); // Redraw the path and robot
+        });
     }
 
     fetchPathData(matchNumber) {
@@ -255,49 +170,54 @@ class ReplaySystem {
 
     drawPath() {
         if (!this.currentPath.length) return;
-
+    
         this.ctx.beginPath();
         this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
         this.ctx.lineWidth = 2;
-
+    
         this.currentPath.forEach((pos, index) => {
             if (fieldPositions[pos]) {
+                const scaledPos = this.getScaledPosition(fieldPositions[pos]);
                 if (index === 0) {
-                    this.ctx.moveTo(fieldPositions[pos].x, fieldPositions[pos].y);
+                    this.ctx.moveTo(scaledPos.x, scaledPos.y);
                 } else {
-                    this.ctx.lineTo(fieldPositions[pos].x, fieldPositions[pos].y);
+                    this.ctx.lineTo(scaledPos.x, scaledPos.y);
                 }
             }
         });
         this.ctx.stroke();
-
+    
         // Draw points
         this.currentPath.forEach(pos => {
             if (fieldPositions[pos]) {
+                const scaledPos = this.getScaledPosition(fieldPositions[pos]);
                 this.ctx.beginPath();
-                this.ctx.arc(fieldPositions[pos].x, fieldPositions[pos].y, 5, 0, 2 * Math.PI);
+                this.ctx.arc(scaledPos.x, scaledPos.y, 5, 0, 2 * Math.PI);
                 this.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
                 this.ctx.fill();
             }
         });
     }
-
+    
     drawRobot(position) {
         if (!fieldPositions[position]) return;
-
+    
+        const scaledPos = this.getScaledPosition(fieldPositions[position]);
+    
         // Draw robot
         this.ctx.beginPath();
-        this.ctx.arc(fieldPositions[position].x, fieldPositions[position].y, 10, 0, 2 * Math.PI);
+        this.ctx.arc(scaledPos.x, scaledPos.y, 10, 0, 2 * Math.PI);
         this.ctx.fillStyle = 'red';
         this.ctx.fill();
-
+    
         // Draw direction line
         if (this.currentIndex < this.currentPath.length - 1) {
             const nextPos = fieldPositions[this.currentPath[this.currentIndex + 1]];
             if (nextPos) {
+                const scaledNextPos = this.getScaledPosition(nextPos);
                 this.ctx.beginPath();
-                this.ctx.moveTo(fieldPositions[position].x, fieldPositions[position].y);
-                this.ctx.lineTo(nextPos.x, nextPos.y);
+                this.ctx.moveTo(scaledPos.x, scaledPos.y);
+                this.ctx.lineTo(scaledNextPos.x, scaledNextPos.y);
                 this.ctx.strokeStyle = 'red';
                 this.ctx.lineWidth = 2;
                 this.ctx.stroke();
