@@ -14,15 +14,15 @@
         <span><b>Length x Width (Bumper): </b>{{ team.length }} x {{ team.width }}</span> <br> <br>
         <span><b>Weight: </b>{{ team.weight }}</span> <br> <br>
         <span><b>Intake Design: </b>{{ team.intake_design }}</span> <br> <br>
-        <span><b>Under Shallow Coral: </b>{{ team.under_shallow_coral }}</span> <br> <br>
-        <span><b>Ball Remover?: </b>{{ team.removeable }}</span> <br> <br>
+        <span><b>Under Shallow: </b>{{ team.under_shallow }}</span> <br> <br>
+        <span><b>Ball Remover?: </b>{{ team.algae_picker }}</span> <br> <br>
         <span><b>Intake Locations: </b>{{ team.intake_locations }}</span> <br> <br>
         <span><b>Scoring Locations: </b>{{ team.scoring_locations }}</span> <br> <br>
         <span><b>Cage Positions: </b>{{ team.cage_positions }}</span> <br> <br>
         <span><b>Auto Positions: </b>{{ team.auto_positions }}</span> <br> <br>
         <span><b>Auto Leave: </b>{{ team.auto_leave }}</span> <br> <br>
-        <span><b>Auto Total: </b>{{ team.auto_total_notes }}</span> <br> <br>
-        <span><b>Auto Coral: </b>{{ team.auto_coral_notes }}</span> <br> <br>
+        <span><b>Auto Algae_Max: </b>{{ team.auto_algae_max }}</span> <br> <br>
+        <span><b>Auto Coral Max: </b>{{ team.auto_coral_max }}</span> <br> <br>
         <span><b>Additional Info: </b> {{ team.additional_info }}</span> <br> <br>
         <a href="{% url 'pit_scouting' team_number %}?comp={{ request.GET.comp }}">Update Info</a>
     </div>

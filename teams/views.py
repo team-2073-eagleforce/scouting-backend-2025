@@ -146,12 +146,12 @@ def pit_scouting(request, team_number):
                     intake_locations=intake_locations_char,
                     scoring_locations=scoring_locations_char,
                     cage_positions=cage_positions_char,
-                    under_shallow_coral=form.cleaned_data.get('under_shallow_coral'),
-                    removeable=form.cleaned_data.get('removeable'),
+                    under_shallow=form.cleaned_data.get('under_shallow'),
+                    algae_picker=form.cleaned_data.get('algae_picker'),
                     auto_positions=auto_positions_char,
                     auto_leave=form.cleaned_data.get('auto_leave'),
-                    auto_total_notes=form.cleaned_data.get('auto_total_notes'),
-                    auto_coral_notes=form.cleaned_data.get('auto_coral_notes'),
+                    auto_algae_max=form.cleaned_data.get('auto_algae_max'),
+                    auto_coral_max=form.cleaned_data.get('auto_coral_max'),
                     robot_picture=img_url,  # Save the image URL
                     additional_info=form.cleaned_data.get('additional_info'),
                     pit_scout_status=True
@@ -191,7 +191,7 @@ def human_player_submit(request, team_number):
 def get_path_data(request, team_number):
     comp_code = request.GET.get('comp')
     if not comp_code:
-        return JsonResponse({'error': 'Competition code required'}, status=400)
+        return HttpResponse('Competition code required', status=400)
     
     try:
         match_number = request.GET.get('match')
@@ -201,10 +201,6 @@ def get_path_data(request, team_number):
             match_number=match_number
         )
         
-        return JsonResponse({
-            'path': match_data.auto_path,
-            'match_number': match_data.match_number,
-            'quantifier': match_data.quantifier
-        })
+        return HttpResponse(match_data.auto_path, content_type='text/plain')
     except Team_Match_Data.DoesNotExist:
-        return JsonResponse({'error': 'Match data not found'}, status=404)
+        return HttpResponse('Match data not found', status=404)

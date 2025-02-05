@@ -24,13 +24,15 @@ SCORING_LOCATION = (
     ("L3", "L3"),
     ("L4", "L4"),
     ("Net", "Net"),
-    ("Processor", "Processor")
+    ("Processor", "Processor"),
+    ("None", "None")
 )
 
 INTAKE_DESIGN = (
     ("Over Bumper", "Over Bumper"),
     ("Under Bumper", "Under Bumper"),
-    ("Other", "Other")
+    ("Other", "Other"),
+    ("None", "None")
 )
 
 AUTO_POSITIONS = (
@@ -42,6 +44,7 @@ AUTO_POSITIONS = (
 )
 
 PREFERRED_CAGE_POSITION = (
+    ("No Climb", "No Climb"),
     ("Shallow", "Shallow"),
     ("Deep", "Deep")
 )
@@ -72,12 +75,12 @@ class NewPitScoutingData(forms.Form):
         widget=forms.CheckboxSelectMultiple,  # Change to CheckboxSelectMultiple
         required=True
     )
-    under_shallow_coral = forms.ChoiceField(
+    under_shallow = forms.ChoiceField(
         choices=BOOLEAN_VALUES,
         widget=forms.RadioSelect,
         required=True
     )
-    removeable = forms.ChoiceField(
+    algae_picker = forms.ChoiceField(
         choices=BOOLEAN_VALUES,
         widget=forms.RadioSelect
     )
@@ -86,8 +89,8 @@ class NewPitScoutingData(forms.Form):
         widget=forms.RadioSelect,
         required=True
     )
-    auto_total_notes = forms.IntegerField()
-    auto_coral_notes = forms.IntegerField()
+    auto_algae_max = forms.IntegerField()
+    auto_coral_max = forms.IntegerField()
     robot_picture = forms.ImageField()
     additional_info = forms.CharField(
         max_length=512,
@@ -110,12 +113,12 @@ class NewPitScoutingData(forms.Form):
             'intake_locations',
             'scoring_locations',
             'cage_positions',
-            'under_shallow_coral',
-            'removeable',
+            'under_shallow',
+            'algae_picker',
             'auto_leave',
             'auto_positions',
-            'auto_total_notes',
-            'auto_coral_notes',
+            'auto_algae_max',
+            'auto_coral_max',
             'robot_picture',
             'additional_info',
             Submit('submit', 'Submit')

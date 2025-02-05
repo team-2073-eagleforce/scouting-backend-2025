@@ -219,7 +219,7 @@ def fetch_team_match_averages(team_number, comp_code):
         Avg('defense_ranking', default=0)
     )
 
-    auto_total = (
+    auto_algae_max = (
         team_match_averages['auto_L1__avg'] +
         team_match_averages['auto_L2__avg'] +
         team_match_averages['auto_L3__avg'] +
@@ -242,7 +242,7 @@ def fetch_team_match_averages(team_number, comp_code):
 
     return {
         'autoleave': round(team_match_averages['auto_leave__avg'], 3),
-        'auto': round(auto_total, 3),
+        'auto': round(auto_algae_max, 3),
         'L1': round(team_match_averages['auto_L1__avg'] + team_match_averages['teleL1__avg'], 3),
         'L2': round(team_match_averages['auto_L2__avg'] + team_match_averages['teleL2__avg'], 3),
         'L3': round(team_match_averages['auto_L3__avg'] + team_match_averages['teleL3__avg'], 3),
@@ -252,7 +252,7 @@ def fetch_team_match_averages(team_number, comp_code):
         'processor': round(team_match_averages['auto_processor__avg'] + team_match_averages['teleProcessor__avg'], 3),
         'removed': round(team_match_averages['auto_removed__avg'] + team_match_averages['teleRemoved__avg'], 3),
         'climb': round(team_match_averages['climb__avg'], 3),
-        'total': round(auto_total + teleop_total + team_match_averages['climb__avg'], 3),
+        'total': round(auto_algae_max + teleop_total + team_match_averages['climb__avg'], 3),
         'defense': round(team_match_averages['defense_ranking__avg'], 3)
     }
 

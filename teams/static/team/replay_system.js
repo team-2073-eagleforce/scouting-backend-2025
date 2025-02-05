@@ -30,7 +30,7 @@ class ReplaySystem {
         console.log("Initializing Replay System");
         this.canvas = document.getElementById('replayCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.currentPath = [];
+        this.currentPath = ''; // Changed to empty string instead of array
         this.currentIndex = 0;
         this.isPlaying = false;
         this.animationFrame = null;
@@ -41,7 +41,6 @@ class ReplaySystem {
         this.animationDuration = 1000; // Duration in milliseconds
         this.lastTimestamp = 0;
 
-        
         this.initializeCanvas();
         this.setupEventListeners();
     }
@@ -103,129 +102,32 @@ class ReplaySystem {
         });
     }
 
-    fetchPathData(matchNumber) {
-        const teamNumber = document.getElementById('team_number')?.value;
-        const urlParams = new URLSearchParams(window.location.search);
-        const compCode = urlParams.get('comp');
-
-        if (!teamNumber || !compCode) {
-            console.error("Missing team number or competition code");
-            console.log("Team Number:", teamNumber);
-            console.log("Competition Code:", compCode);
+    drawCurrentPosition() {
+        if (!this.currentPath) {
+            console.log("No current path");
             return;
         }
-
-        console.log(`Fetching path data for team ${teamNumber}, match ${matchNumber}`);
-
-        fetch(`/api/get_path_data/${teamNumber}/?comp=${compCode}&match=${matchNumber}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            credentials: 'same-origin'
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log("Received path data:", data);
-            if (data.path) {
-                this.currentPath = Array.isArray(data.path) ? data.path : JSON.parse(data.path);
-                this.currentPath = this.currentPath.map(pos => String(pos).trim()).filter(pos => pos !== '');
-                console.log("Processed path:", this.currentPath);
-                this.reset();
-            } else {
-                console.error("No path data in response");
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching path data:', error);
-        });
-    }
-
-    updatePositionDisplay() {
-        const currentPosition = document.getElementById('currentPosition');
-        const totalPositions = document.getElementById('totalPositions');
-        if (currentPosition && totalPositions) {
-            currentPosition.textContent = this.currentIndex + 1;
-            totalPositions.textContent = this.currentPath.length;
-        }
-    }
-
-    play() {
-        console.log("Play called");
-        if (!this.isPlaying && this.currentPath.length > 0) {
-            this.isPlaying = true;
-            this.lastTimestamp = 0;
-            this.animationProgress = 0;
-            this.animate(performance.now());
-        }
-    }
     
-
-    pause() {
-        console.log("Pause called");
-        this.isPlaying = false;
-        if (this.animationFrame) {
-            cancelAnimationFrame(this.animationFrame);
+        const positions = this.currentPath.split(',').map(pos => pos.trim());
+        const currentPos = positions[this.currentIndex];
+        const nextPos = positions[this.currentIndex + 1];
+    
+        console.log("Drawing position:", currentPos);
+        console.log("Next position:", nextPos);
+        console.log("Field position data:", fieldPositions[currentPos]);
+    
+        if (!fieldPositions[currentPos]) {
+            console.error("Invalid current position:", currentPos);
+            return;
         }
-    }
-
-    reset() {
-        console.log("Reset called");
-        this.currentIndex = 0;
-        this.pause();
-        this.clearCanvas();
-        this.drawCurrentPosition();
-        if (this.currentPath.length > 0) {
-            this.drawRobot(this.currentPath[0]);
-        }
-        this.updatePositionDisplay();
-    }
-
-    stepBack() {
-        if (this.currentIndex > 0) {
-            this.currentIndex--;
-            this.clearCanvas();
-            this.drawCurrentPosition();
-            this.drawRobot(this.currentPath[this.currentIndex]);
-            this.updatePositionDisplay();
-        }
-    }
-
-    stepForward() {
-        if (this.currentIndex < this.currentPath.length - 1) {
-            this.currentIndex++;
-            this.clearCanvas();
-            this.drawCurrentPosition();
-            this.drawRobot(this.currentPath[this.currentIndex]);
-            this.updatePositionDisplay();
-        }
-    }
-
-    clearCanvas() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    }
-
-    drawCurrentPosition() {
-        if (!this.currentPath.length) return;
-
-        const currentPos = this.currentPath[this.currentIndex];
-        const nextPos = this.currentPath[this.currentIndex + 1];
-
-        if (!fieldPositions[currentPos]) return;
-
+    
         // Draw current position
         const scaledCurrentPos = this.getScaledPosition(fieldPositions[currentPos]);
         this.ctx.beginPath();
         this.ctx.arc(scaledCurrentPos.x, scaledCurrentPos.y, 5, 0, 2 * Math.PI);
         this.ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
         this.ctx.fill();
-
+    
         // Draw line to next position if it exists
         if (nextPos && fieldPositions[nextPos]) {
             const scaledNextPos = this.getScaledPosition(fieldPositions[nextPos]);
@@ -235,24 +137,14 @@ class ReplaySystem {
             this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
             this.ctx.lineWidth = 2;
             this.ctx.stroke();
-
+    
             // Draw next position
             this.ctx.beginPath();
             this.ctx.arc(scaledNextPos.x, scaledNextPos.y, 5, 0, 2 * Math.PI);
             this.ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
             this.ctx.fill();
         }
-    }
-
-    drawRobot(position) {
-        if (!fieldPositions[position]) return;
-
-        const scaledPos = this.getScaledPosition(fieldPositions[position]);
-        this.ctx.beginPath();
-        this.ctx.arc(scaledPos.x, scaledPos.y, 10, 0, 2 * Math.PI);
-        this.ctx.fillStyle = 'red';
-        this.ctx.fill();
-    }
+    }    
 
     animate(timestamp) {
         if (!this.isPlaying) return;
@@ -267,9 +159,9 @@ class ReplaySystem {
         // Update animation progress
         this.animationProgress += deltaTime;
         
-        // Get current and next positions
-        const currentPos = fieldPositions[this.currentPath[this.currentIndex]];
-        const nextPos = fieldPositions[this.currentPath[this.currentIndex + 1]];
+        const positions = this.currentPath.split(',');
+        const currentPos = fieldPositions[positions[this.currentIndex]];
+        const nextPos = fieldPositions[positions[this.currentIndex + 1]];
     
         if (currentPos && nextPos) {
             // Calculate interpolation factor (0 to 1)
@@ -321,16 +213,121 @@ class ReplaySystem {
         this.updatePositionDisplay();
     
         // Continue animation if there are more positions
-        if (this.currentIndex < this.currentPath.length - 1) {
+        if (this.currentIndex < this.currentPath.split(',').length - 1) {
             this.animationFrame = requestAnimationFrame((timestamp) => this.animate(timestamp));
         } else {
             this.isPlaying = false;
         }
     }
+
+    fetchPathData(matchNumber) {
+        const teamNumber = document.getElementById('team_number')?.value;
+        const urlParams = new URLSearchParams(window.location.search);
+        const compCode = urlParams.get('comp');
     
+        if (!teamNumber || !compCode) {
+            console.error("Missing team number or competition code");
+            console.log("Team Number:", teamNumber);
+            console.log("Competition Code:", compCode);
+            return;
+        }
+    
+        console.log(`Fetching path data for team ${teamNumber}, match ${matchNumber}`);
+    
+        fetch(`/api/get_path_data/${teamNumber}/?comp=${compCode}&match=${matchNumber}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Received path data:", data);
+            if (data.path) {
+                // Clean up the path string by removing extra spaces after commas
+                this.currentPath = data.path.split(',').map(pos => pos.trim()).join(',');
+                console.log("Path loaded:", this.currentPath);
+                this.reset();
+            } else {
+                console.error("No path data in response");
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching path data:', error);
+        });
+    }      
+    
+    updatePositionDisplay() {
+        const currentPosition = document.getElementById('currentPosition');
+        const totalPositions = document.getElementById('totalPositions');
+        if (currentPosition && totalPositions && this.currentPath) {
+            const positions = this.currentPath.split(',');
+            currentPosition.textContent = this.currentIndex + 1;
+            totalPositions.textContent = positions.length;
+        }
+    }
+
+    play() {
+        console.log("Play called");
+        if (!this.isPlaying && this.currentPath) {
+            const positions = this.currentPath.split(',');
+            if (this.currentIndex < positions.length - 1) {
+                this.isPlaying = true;
+                this.lastTimestamp = 0;
+                this.animationProgress = 0;
+                this.animate(performance.now());
+            }
+        }
+    }
+
+    pause() {
+        console.log("Pause called");
+        this.isPlaying = false;
+        if (this.animationFrame) {
+            cancelAnimationFrame(this.animationFrame);
+        }
+    }
+
+    reset() {
+        console.log("Reset called");
+        this.currentIndex = 0;
+        this.pause();
+        this.clearCanvas();
+        this.drawCurrentPosition();
+        this.updatePositionDisplay();
+    }
+
+    stepBack() {
+        if (this.currentIndex > 0) {
+            this.currentIndex--;
+            this.clearCanvas();
+            this.drawCurrentPosition();
+            this.updatePositionDisplay();
+        }
+    }
+
+    stepForward() {
+        const positions = this.currentPath.split(',');
+        if (this.currentIndex < positions.length - 1) {
+            this.currentIndex++;
+            this.clearCanvas();
+            this.drawCurrentPosition();
+            this.updatePositionDisplay();
+        }
+    }
+
+    clearCanvas() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
 }
 
-// Initialize when the page loads
 if (window.replaySystemInitialized) {
     console.warn('Replay System already initialized');
 } else {
