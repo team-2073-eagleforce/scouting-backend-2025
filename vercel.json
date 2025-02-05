@@ -23,10 +23,6 @@
       "dest": "/static/$1"
     },
     {
-      "src": "/media/(.*)",
-      "dest": "/media/$1"
-    },
-    {
       "src": "/(.*)",
       "dest": "scouting_backend/wsgi.py"
     }
