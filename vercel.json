@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "scouting_backend/wsgi.py",
+      "src": "vercel_app.py",
       "use": "@vercel/python",
       "config": { 
         "maxLambdaSize": "15mb", 
@@ -24,7 +24,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "scouting_backend/wsgi.py"
+      "dest": "vercel_app.py"
     }
   ]
 }

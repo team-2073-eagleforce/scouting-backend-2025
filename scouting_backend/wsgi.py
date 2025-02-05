@@ -1,18 +1,15 @@
-"""
-WSGI config for scouting_backend project.
-
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/4.1/howto/deployment/wsgi/
-"""
-
+# scouting_backend/wsgi.py
 import os
+import sys
 from django.core.wsgi import get_wsgi_application
+from django.conf import settings
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'scouting_backend.settings')
 
-application = get_wsgi_application()
-
-# Add this for Vercel
-app = application
+# Add error handling
+try:
+    application = get_wsgi_application()
+    app = application  # Vercel needs this
+except Exception as e:
+    print(f"Error loading application: {e}")
+    raise e
