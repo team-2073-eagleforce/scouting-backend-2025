@@ -23,6 +23,7 @@ def scanner(request):
                                               match_number=data_from_post["matchNumber"],
                                               start_pos=data_from_post["startPos"],
                                               quantifier=data_from_post["quantifier"],
+                                              missed=data_from_post["missed"],
 
                                               auto_leave=data_from_post["autoLeave"],
                                               auto_net=data_from_post["autoNet"],
