@@ -15,20 +15,21 @@
       "config": {
         "distDir": "staticfiles"
       }
-    },
-    {
-      "src": "static/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/staticfiles/(.*)",
       "dest": "/staticfiles/$1"
     },
     {
       "src": "/(.*)",
       "dest": "vercel_app.py"
     }
-  ]
+  ],
+  "outputDirectory": "staticfiles"
 }
