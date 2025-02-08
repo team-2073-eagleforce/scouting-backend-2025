@@ -103,6 +103,26 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
+    ## find another path?
+
+    '''
+
+        STATICFILES_DIRS = [
+
+        BASE_DIR / 'static',
+
+        BASE_DIR / 'app1/static',
+
+        BASE_DIR / 'app2/static',
+
+    ]
+
+    import mimetypes
+
+    mimetypes.add_type('image/svg+xml', '.svg') 
+
+
+    '''
 ]
 
 # Media files configuration
