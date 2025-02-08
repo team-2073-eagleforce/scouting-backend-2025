@@ -19,13 +19,12 @@
   ],
   "routes": [
     {
-      "src": "/staticfiles/(.*)",
-      "dest": "/staticfiles/$1"
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
     },
     {
       "src": "/(.*)",
       "dest": "vercel_app.py"
     }
-  ],
-  "outputDirectory": "staticfiles"
+  ]
 }
