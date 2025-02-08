@@ -13,7 +13,6 @@ load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-BASE_DIR / "scanner/static",
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -107,26 +106,6 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'scanner', 'static'),
     os.path.join(BASE_DIR, 'teams', 'static'),
     os.path.join(BASE_DIR, 'strategy', 'static'),
-    ## find another path?
-
-    '''
-
-        STATICFILES_DIRS = [
-
-        BASE_DIR / 'static',
-
-        BASE_DIR / 'app1/static',
-
-        BASE_DIR / 'app2/static',
-
-    ]
-
-    import mimetypes
-
-    mimetypes.add_type('image/svg+xml', '.svg') 
-
-
-    '''
 ]
 
 # Media files configuration
@@ -135,7 +114,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Whitenoise configuration
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
