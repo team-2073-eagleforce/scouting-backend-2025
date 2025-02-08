@@ -20,7 +20,7 @@ if not SECRET_KEY:
     SECRET_KEY = ''.join(random.choice(string.ascii_lowercase) for i in range(32))
 
 # Set DEBUG based on environment
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+DEBUG = False
 
 # Hosts configuration
 ALLOWED_HOSTS = [
