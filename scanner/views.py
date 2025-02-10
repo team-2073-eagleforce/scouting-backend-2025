@@ -9,50 +9,74 @@ from teams.models import Teams, Team_Match_Data
 
 
 # @login_required
+import json
+from django.http import JsonResponse
+from django.shortcuts import render
+from teams.models import Teams, Team_Match_Data
+
 def scanner(request):
-    # Receive fetch from scanner.js
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        data_from_post = json.load(request)
+    if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
+        try:
+            # Safely parse JSON data
+            data_from_post = json.loads(request.body.decode("utf-8"))
 
-        Teams.objects.get_or_create(team_number=int(data_from_post["teamNumber"]), event=data_from_post["comp_code"])
-        # Creates a new Team_Match_Data with given data if it doesn't exist
-        Team_Match_Data.objects.get_or_create(team_number=int(data_from_post["teamNumber"]),
-                                              ## name=data_from_post["name"],
-                                              scout_name=data_from_post["name"],
-                                              event=data_from_post["comp_code"],
-                                              match_number=data_from_post["matchNumber"],
-                                              start_pos=data_from_post["startPos"],
-                                              quantifier=data_from_post["quantifier"],
-                                              missed=data_from_post["missed"],
+            # Ensure required keys exist
+            required_keys = [
+                "teamNumber", "comp_code", "name", "matchNumber", "startPos", "quantifier", "missed",
+                "autoLeave", "autoNet", "autoProcessor", "autoRemoved", "autoPath", "autoL1", "autoL2",
+                "autoL3", "autoL4", "telenet", "teleProcessor", "teleRemoved", "teleL1", "teleL2", "teleL3",
+                "teleL4", "endClimb", "driverRanking", "defenseRanking", "comment", "isBroken", "isDisabled", "isTipped"
+            ]
 
-                                              auto_leave=data_from_post["autoLeave"],
-                                              auto_net=data_from_post["autoNet"],
-                                              auto_processor=data_from_post["autoProcessor"],
-                                              auto_removed=data_from_post["autoRemoved"],
-                                              auto_path=data_from_post["autoPath"],
-                                              auto_L1=data_from_post["autoL1"],
-                                              auto_L2=data_from_post["autoL2"],
-                                              auto_L3=data_from_post["autoL3"],
-                                              auto_L4=data_from_post["autoL4"], 
+            # Check if any required key is missing
+            missing_keys = [key for key in required_keys if key not in data_from_post]
+            if missing_keys:
+                return JsonResponse({"error": f"Missing keys: {', '.join(missing_keys)}"}, status=400)
 
-                                              telenet=data_from_post["telenet"],
-                                              teleProcessor=data_from_post["teleProcessor"],
-                                              teleRemoved=data_from_post["teleRemoved"],
-                                              teleL1=data_from_post["teleL1"],
-                                              teleL2=data_from_post["teleL2"],
-                                              teleL3=data_from_post["teleL3"],
-                                              teleL4=data_from_post["teleL4"],
+            # Ensure team exists
+            Teams.objects.get_or_create(team_number=int(data_from_post["teamNumber"]), event=data_from_post["comp_code"])
 
-                                              climb=data_from_post["endClimb"],
+            # Create team match data entry
+            Team_Match_Data.objects.get_or_create(
+                team_number=int(data_from_post["teamNumber"]),
+                scout_name=data_from_post["name"],
+                event=data_from_post["comp_code"],
+                match_number=data_from_post["matchNumber"],
+                start_pos=data_from_post["startPos"],
+                quantifier=data_from_post["quantifier"],
+                missed=data_from_post["missed"],
+                auto_leave=data_from_post["autoLeave"],
+                auto_net=data_from_post["autoNet"],
+                auto_processor=data_from_post["autoProcessor"],
+                auto_removed=data_from_post["autoRemoved"],
+                auto_path=data_from_post["autoPath"],
+                auto_L1=data_from_post["autoL1"],
+                auto_L2=data_from_post["autoL2"],
+                auto_L3=data_from_post["autoL3"],
+                auto_L4=data_from_post["autoL4"], 
+                telenet=data_from_post["telenet"],
+                teleProcessor=data_from_post["teleProcessor"],
+                teleRemoved=data_from_post["teleRemoved"],
+                teleL1=data_from_post["teleL1"],
+                teleL2=data_from_post["teleL2"],
+                teleL3=data_from_post["teleL3"],
+                teleL4=data_from_post["teleL4"],
+                climb=data_from_post["endClimb"],
+                driver_ranking=data_from_post["driverRanking"],
+                defense_ranking=data_from_post["defenseRanking"],
+                comment=data_from_post["comment"],
+                is_broken=data_from_post["isBroken"],
+                is_disabled=data_from_post["isDisabled"],
+                is_tipped=data_from_post["isTipped"]
+            )
 
-                                              driver_ranking=data_from_post["driverRanking"],
-                                              defense_ranking=data_from_post["defenseRanking"],
-                                              comment=data_from_post["comment"],
-                                              is_broken=data_from_post["isBroken"],
-                                              is_disabled=data_from_post["isDisabled"],
-                                              is_tipped=data_from_post["isTipped"])
+            return JsonResponse({"confirmation": "Successfully Sent"}, status=200)
 
-        response = {"confirmation": "Successfully Sent"}
-        return JsonResponse(response)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON format"}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
 
-    return render(request, 'qr_scanner.html')
+    # If it's not an AJAX request, serve the HTML page
+    return render(request, "qr_scanner.html")
+
