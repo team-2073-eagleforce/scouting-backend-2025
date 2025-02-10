@@ -168,22 +168,43 @@ def picklist_submit(request):
 @csrf_exempt
 def dashboard(request):
     comp_code = request.GET.get('comp')
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        match_number = json.load(request)
-        match = get_single_match(comp_code, "qm" + str(match_number))
-        red_json = {}
-        red_teams = []
-        blue_json = {}
-        blue_teams = []
-        for red_team in match['red']:
-            red_json[red_team] = fetch_team_match_averages(red_team, comp_code)
-            red_teams.append(red_team)
-        for blue_team in match['blue']:
-            blue_json[blue_team] = fetch_team_match_averages(blue_team, comp_code)
-            blue_teams.append(blue_team)
 
-        response = {'red': red_json, 'blue': blue_json, 'red_teams': red_teams, 'blue_teams': blue_teams}
-        return JsonResponse(response)
+    if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
+        try:
+            # ✅ Correctly parse JSON from request body
+            data_from_post = json.loads(request.body.decode("utf-8"))
+            match_number = data_from_post.get("match_number")  # Extract match number
+
+            if match_number is None:
+                return JsonResponse({"error": "Missing match_number"}, status=400)
+
+            match = get_single_match(comp_code, "qm" + str(match_number))
+
+            red_json = {}
+            red_teams = []
+            blue_json = {}
+            blue_teams = []
+
+            for red_team in match['red']:
+                red_json[red_team] = fetch_team_match_averages(red_team, comp_code)
+                red_teams.append(red_team)
+
+            for blue_team in match['blue']:
+                blue_json[blue_team] = fetch_team_match_averages(blue_team, comp_code)
+                blue_teams.append(blue_team)
+
+            response = {
+                'red': red_json,
+                'blue': blue_json,
+                'red_teams': red_teams,
+                'blue_teams': blue_teams
+            }
+            return JsonResponse(response)
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON format"}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
 
     return render(request, "strategy/dashboard.html")
 
