@@ -1,6 +1,6 @@
 console.log("Script loaded");
 
-const scoringFields = ["auto", "autoleave", "L1", "L2", "L3", "L4", "net", "processor", "removed", "climb", "defense", "start_pos"];
+const scoringFields = ["auto", "autoleave", "L1", "L2", "L3", "L4", "net", "missed_auto", "missed_teleop", "processor", "removed", "climb", "defense", "start_pos"];
 
 // Add a flag to track initialization
 if (window.dashboardInitialized) {
