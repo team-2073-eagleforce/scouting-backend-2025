@@ -29,6 +29,8 @@
                     <th onclick="sortTable(6, 'L3')">L3 Total</th>
                     <th onclick="sortTable(7, 'L4')">L4 Total</th>
                     <th onclick="sortTable(8, 'net')">Net Total</th>
+                    <th onclick="sortTable(14, 'missed_auto')">Auto Missed</th>
+                    <th onclick="sortTable(14, 'missed_teleop')">Teleop Missed</th>
                     <th onclick="sortTable(9, 'processor')">Processor</th>
                     <th onclick="sortTable(10, 'removed')">Removed</th>
                     <th onclick="sortTable(11, 'climb')">Climb</th>
@@ -49,6 +51,8 @@
                         <td class="L3">{{ team_stats.L3 }}</td>
                         <td class="L4">{{ team_stats.L4 }}</td>
                         <td class="net">{{ team_stats.net }}</td>
+                        <td class="missed_auto">{{ team_stats.missed_auto }}</td>
+                        <td class="missed_teleop">{{ team_stats.missed_teleop }}</td>
                         <td class="processor">{{ team_stats.processor }}</td>
                         <td class="removed">{{ team_stats.removed }}</td>
                         <td class="climb">{{ team_stats.climb }}</td>
