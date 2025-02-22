@@ -22,7 +22,7 @@ def scanner(request):
 
             # Ensure required keys exist
             required_keys = [
-                "teamNumber", "comp_code", "name", "matchNumber", "startPos", "quantifier", "missed_auto","missed_teleop",
+                "teamNumber", "comp_code", "name", "matchNumber", "startPos", "quantifier", "missed_auto",
                 "autoLeave", "autoNet", "autoProcessor", "autoRemoved", "autoPath", "autoL1", "autoL2",
                 "autoL3", "autoL4", "telenet", "teleProcessor", "teleRemoved", "teleL1", "teleL2", "teleL3",
                 "teleL4", "endClimb", "driverRanking", "defenseRanking", "comment", "isBroken", "isDisabled", "isTipped"
@@ -45,7 +45,6 @@ def scanner(request):
                 start_pos=data_from_post["startPos"],
                 quantifier=data_from_post["quantifier"],
                 missed_auto=data_from_post["missed_auto"],
-                missed_teleop=data_from_post["missed_teleop"],
                 auto_leave=data_from_post["autoLeave"],
                 auto_net=data_from_post["autoNet"],
                 auto_processor=data_from_post["autoProcessor"],

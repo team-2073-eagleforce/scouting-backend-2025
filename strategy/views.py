@@ -261,7 +261,6 @@ def fetch_team_match_averages(team_number, comp_code):
     match_data = team_match_data.first()  # Gets the specific match data
     start_pos = match_data.start_pos if match_data else 0
     missed_auto = match_data.missed_auto if match_data else 0
-    missed_teleop = match_data.missed_teleop if match_data else 0
 
     return {
         'autoleave': round(team_match_averages['auto_leave__avg'], 3),
@@ -273,7 +272,6 @@ def fetch_team_match_averages(team_number, comp_code):
         'net': round(team_match_averages['auto_net__avg'] + team_match_averages['telenet__avg'], 3),
         'start_pos': start_pos,
         'missed_auto': missed_auto,
-        'missed_teleop': missed_teleop,
         'processor': round(team_match_averages['auto_processor__avg'] + team_match_averages['teleProcessor__avg'], 3),
         'removed': round(team_match_averages['auto_removed__avg'] + team_match_averages['teleRemoved__avg'], 3),
         'climb': round(team_match_averages['climb__avg'], 3),

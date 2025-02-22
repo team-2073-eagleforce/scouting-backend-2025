@@ -33,7 +33,6 @@ class Team_Match_Data(models.Model):
     quantifier = models.CharField(max_length=10)
     start_pos = models.IntegerField(default=0)
     missed_auto = models.IntegerField(default=0)
-    missed_teleop = models.IntegerField(default=0)
 
     # Auto Period
     auto_leave = models.IntegerField()
