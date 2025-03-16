@@ -72,11 +72,13 @@ class ReplaySystem {
             console.error("Path selector not found");
             return;
         }
-    
+
         pathSelector.addEventListener('change', (e) => {
-            const matchNumber = e.target.value;
-            if (matchNumber) {
-                this.fetchPathData(matchNumber);
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            if (selectedOption.value) {
+                const matchNumber = selectedOption.value;
+                const scoutName = selectedOption.getAttribute('data-scout');
+                this.fetchPathData(matchNumber, scoutName);
             }
         });
     
@@ -220,21 +222,25 @@ class ReplaySystem {
         }
     }
 
-    fetchPathData(matchNumber) {
+    fetchPathData(matchNumber, scoutName = '') {
         const teamNumber = document.getElementById('team_number')?.value;
         const urlParams = new URLSearchParams(window.location.search);
         const compCode = urlParams.get('comp');
     
         if (!teamNumber || !compCode) {
             console.error("Missing team number or competition code");
-            console.log("Team Number:", teamNumber);
-            console.log("Competition Code:", compCode);
             return;
         }
     
-        console.log(`Fetching path data for team ${teamNumber}, match ${matchNumber}`);
+        console.log(`Fetching path data for team ${teamNumber}, match ${matchNumber}, scout ${scoutName}`);
     
-        fetch(`/api/get_path_data/${teamNumber}/?comp=${compCode}&match=${matchNumber}`, {
+        // Add scout_name parameter if provided
+        let url = `/api/get_path_data/${teamNumber}/?comp=${compCode}&match=${matchNumber}`;
+        if (scoutName) {
+            url += `&scout=${encodeURIComponent(scoutName)}`;
+        }
+        
+        fetch(url, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -255,6 +261,16 @@ class ReplaySystem {
                 this.currentPath = data.path.split(',').map(pos => pos.trim()).join(',');
                 console.log("Path loaded:", this.currentPath);
                 this.reset();
+                
+                // Display scout info
+                if (data.scout_name) {
+                    this.updateScoutInfo(`Scout: ${data.scout_name}`);
+                }
+                
+                // Handle multiple records case
+                if (data.multiple_records && data.all_scouts && !scoutName) {
+                    this.showScoutOptions(data.all_scouts, matchNumber);
+                }
             } else {
                 console.error("No path data in response");
             }
@@ -262,6 +278,65 @@ class ReplaySystem {
         .catch(error => {
             console.error('Error fetching path data:', error);
         });
+    }
+    
+    // Add methods to display scout info and options
+    updateScoutInfo(message) {
+        let infoDiv = document.getElementById('scout-info');
+        if (!infoDiv) {
+            infoDiv = document.createElement('div');
+            infoDiv.id = 'scout-info';
+            infoDiv.className = 'alert alert-info mt-2';
+            
+            // Insert it after the path selector
+            const pathSelector = document.getElementById('pathSelector');
+            pathSelector.parentNode.insertBefore(infoDiv, pathSelector.nextSibling);
+        }
+        
+        infoDiv.textContent = message;
+    }
+    
+    showScoutOptions(scouts, matchNumber) {
+        let optionsDiv = document.getElementById('scout-options');
+        if (!optionsDiv) {
+            optionsDiv = document.createElement('div');
+            optionsDiv.id = 'scout-options';
+            optionsDiv.className = 'alert alert-warning mt-2';
+            
+            // Insert after scout-info or path selector
+            const scoutInfo = document.getElementById('scout-info');
+            if (scoutInfo) {
+                scoutInfo.parentNode.insertBefore(optionsDiv, scoutInfo.nextSibling);
+            } else {
+                const pathSelector = document.getElementById('pathSelector');
+                pathSelector.parentNode.insertBefore(optionsDiv, pathSelector.nextSibling);
+            }
+        }
+        
+        // Clear previous content
+        optionsDiv.innerHTML = '';
+        
+        // Add message about multiple scouts
+        const message = document.createElement('p');
+        message.textContent = "Multiple scout records found. Select a scout:";
+        optionsDiv.appendChild(message);
+        
+        // Add buttons for each scout
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'd-flex gap-2';
+        
+        scouts.forEach(scout => {
+            const button = document.createElement('button');
+            button.className = 'btn btn-sm btn-outline-primary';
+            button.textContent = scout || 'Unknown Scout';
+            button.onclick = () => {
+                this.fetchPathData(matchNumber, scout);
+                optionsDiv.style.display = 'none';
+            };
+            buttonContainer.appendChild(button);
+        });
+        
+        optionsDiv.appendChild(buttonContainer);
     }      
     
     updatePositionDisplay() {

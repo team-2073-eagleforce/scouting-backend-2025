@@ -118,17 +118,18 @@
 
 <!-- Replay System Section -->
 <h3>Auto Path Replay</h3>
-<div class="replay-container">
     <select id="pathSelector" class="form-control mb-2">
         <option value="">Select a match to replay</option>
         {% for match in all_team_match_data %}
             {% if match.auto_path %}
-                <option value="{{ match.match_number }}">
-                    Match {{ match.match_number }}{% if match.quantifier %}-{{ match.quantifier }}{% endif %}-{{match.scout_name}}
+                <option value="{{ match.match_number }}" data-scout="{{ match.scout_name }}">
+                    Match {{ match.match_number }}
+                    {% if match.quantifier %}-{{ match.quantifier }}{% endif %}
+                    {% if match.scout_name %} (Scout: {{ match.scout_name }}){% endif %}
                 </option>
             {% endif %}
         {% endfor %}
-    </select>    
+    </select>
 
     <div class="d-flex">
         <div class="replay-canvas-container">

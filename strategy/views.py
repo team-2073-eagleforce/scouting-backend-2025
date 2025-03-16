@@ -283,21 +283,59 @@ def get_path_data(request, team_number):
     """API endpoint for retrieving auto path data"""
     comp_code = request.GET.get('comp')
     match_number = request.GET.get('match')
+    scout_name = request.GET.get('scout')  # Add this parameter
     
     if not comp_code:
         return JsonResponse({'error': 'Competition code required'}, status=400)
     
     try:
-        match_data = Team_Match_Data.objects.get(
-            team_number=team_number,
-            event=comp_code,
-            match_number=match_number
-        )
+        # Start with basic filters
+        filters = {
+            'team_number': team_number,
+            'event': comp_code,
+            'match_number': match_number
+        }
+        
+        # Add scout name filter if provided
+        if scout_name:
+            filters['scout_name'] = scout_name
+            match_data = Team_Match_Data.objects.get(**filters)
+            return JsonResponse({
+                'path': match_data.auto_path,
+                'match_number': match_data.match_number,
+                'quantifier': match_data.quantifier,
+                'scout_name': match_data.scout_name
+            })
+        
+        # If no scout name provided, check how many records exist
+        match_data_records = Team_Match_Data.objects.filter(**filters)
+        
+        if match_data_records.count() == 0:
+            return JsonResponse({
+                'error': f'Match data not found for team {team_number}, match {match_number}'
+            }, status=404)
+        
+        # If only one record exists, return it
+        if match_data_records.count() == 1:
+            match_data = match_data_records.first()
+            return JsonResponse({
+                'path': match_data.auto_path,
+                'match_number': match_data.match_number,
+                'quantifier': match_data.quantifier,
+                'scout_name': match_data.scout_name
+            })
+        
+        # If multiple records exist, return the first one and notify about multiple records
+        match_data = match_data_records.first()
+        scouts = [record.scout_name for record in match_data_records]
         
         return JsonResponse({
             'path': match_data.auto_path,
             'match_number': match_data.match_number,
-            'quantifier': match_data.quantifier
+            'quantifier': match_data.quantifier,
+            'scout_name': match_data.scout_name,
+            'multiple_records': True,
+            'all_scouts': scouts
         })
     except Team_Match_Data.DoesNotExist:
         return JsonResponse({
