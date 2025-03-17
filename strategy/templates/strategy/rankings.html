@@ -5,17 +5,24 @@
 
 {% block Styles %}
     <style>
-        td {
-            white-space: nowrap;
-        }
-
-        th {
+        td, th {
             white-space: nowrap;
         }
     </style>
 {% endblock %}
 
 {% block Content %}
+    <form method="get" action="{% url 'rankings' %}">
+        <label for="quantifier">Select Match Type:</label>
+        <select name="quantifier" id="quantifier" onchange="this.form.submit()">
+            <option value="all" {% if selected_quantifier == 'all' %}selected{% endif %}>All Matches</option>
+            <option value="practice" {% if selected_quantifier == 'practice' %}selected{% endif %}>Practice</option>
+            <option value="qualifiers" {% if selected_quantifier == 'qualifiers' %}selected{% endif %}>Qualifiers</option>
+            <option value="playoffs" {% if selected_quantifier == 'playoffs' %}selected{% endif %}>Playoffs</option>
+        </select>
+        <input type="hidden" name="comp" value="{{ request.GET.comp }}">
+    </form>
+
     <div class="table-responsive">
         <table class="table" id="rankings_table">
             <thead>

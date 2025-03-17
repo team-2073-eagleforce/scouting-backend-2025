@@ -55,12 +55,13 @@ def write_json_picklist(comp_code, data):
 # @login_required
 def rankings(request):
     comp_code = request.GET.get('comp')
+    quantifier = request.GET.get('quantifier', 'all')  # Default to 'all' if not specified
     teams = models.Teams.objects.filter(event=comp_code).order_by("team_number")
     team_averages = {}
     for team in teams:
-        team_averages[team.team_number] = fetch_team_match_averages(team.team_number, comp_code)
+        team_averages[team.team_number] = fetch_team_match_averages(team.team_number, comp_code, quantifier)
 
-    return render(request, "strategy/rankings.html", {'team_averages': team_averages})
+    return render(request, "strategy/rankings.html", {'team_averages': team_averages, 'selected_quantifier': quantifier})
 
 # @login_required
 def picklist(request):
@@ -208,13 +209,16 @@ def dashboard(request):
 
     return render(request, "strategy/dashboard.html")
 
-def fetch_team_match_averages(team_number, comp_code):
+def fetch_team_match_averages(team_number, comp_code, quantifier):
+    # Filter match data based on team number, event code, and quantifier
     team_match_data = models.Team_Match_Data.objects.filter(
         team_number=team_number,
         event=comp_code,
-        match_number__lt=100
+        match_number__lt=100,
+        quantifier=quantifier  # Filter by quantifier
     )
-    
+
+    # Calculate averages
     team_match_averages = team_match_data.aggregate(
         # Auto Period
         Avg('auto_leave', default=0),
