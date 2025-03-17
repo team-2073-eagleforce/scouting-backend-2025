@@ -13,14 +13,13 @@
 
 {% block Content %}
     <form method="get" action="{% url 'rankings' %}">
+        <input type="hidden" name="comp" value="{{ comp_code }}">
         <label for="quantifier">Select Match Type:</label>
         <select name="quantifier" id="quantifier" onchange="this.form.submit()">
-            <option value="all" {% if selected_quantifier == 'all' %}selected{% endif %}>All Matches</option>
-            <option value="practice" {% if selected_quantifier == 'practice' %}selected{% endif %}>Practice</option>
-            <option value="qualifiers" {% if selected_quantifier == 'qualifiers' %}selected{% endif %}>Qualifiers</option>
-            <option value="playoffs" {% if selected_quantifier == 'playoffs' %}selected{% endif %}>Playoffs</option>
+            <option value="Prac" {% if selected_quantifier == 'Prac' %}selected{% endif %}>Prac</option>
+            <option value="Quals" {% if selected_quantifier == 'Quals' %}selected{% endif %}>Quals</option>
+            <option value="Play Off" {% if selected_quantifier == 'Play Off' %}selected{% endif %}>Play Off</option>
         </select>
-        <input type="hidden" name="comp" value="{{ request.GET.comp }}">
     </form>
 
     <div class="table-responsive">
@@ -49,7 +48,7 @@
                 {% for team_number, team_stats in team_averages.items %}
                     <tr class="data">
                         <td class="rank">{{ forloop.counter }}</td>
-                        <td><a href="{% url "team_page" team_number %}">{{ team_number }}</a></td>
+                        <td><a href="{% url 'team_page' team_number %}">{{ team_number }}</a></td>
                         <td class="autoleave">{{ team_stats.autoleave }}</td>
                         <td class="auto">{{ team_stats.auto }}</td>
                         <td class="L1">{{ team_stats.L1 }}</td>
@@ -72,5 +71,5 @@
 {% endblock %}
 
 {% block Scripts %}
-    <script src="{% static "/strategy/ranking.js" %}"></script>
+    <script src="{% static '/strategy/ranking.js' %}"></script>
 {% endblock %}
