@@ -56,10 +56,22 @@ def write_json_picklist(comp_code, data):
 def rankings(request):
     comp_code = request.GET.get('comp')
     quantifier = request.GET.get('quantifier', 'Quals')  # default to Quals if not provided
+    
+    # Get distinct team numbers that have match data for this competition and quantifier
+    teams_with_data = models.Team_Match_Data.objects.filter(
+        event=comp_code,
+        quantifier=quantifier
+    ).values_list('team_number', flat=True).distinct()
+    
+    # Alternative approach using your Teams model
     teams = models.Teams.objects.filter(event=comp_code).order_by("team_number")
+    
     team_averages = {}
     for team in teams:
-        team_averages[team.team_number] = fetch_team_match_averages(team.team_number, comp_code, quantifier)
+        # Check if this team has match data for this competition
+        if team.team_number in teams_with_data:
+            team_averages[team.team_number] = fetch_team_match_averages(team.team_number, comp_code, quantifier)
+            
     return render(request, "strategy/rankings.html", {
         'team_averages': team_averages,
         'comp_code': comp_code,
