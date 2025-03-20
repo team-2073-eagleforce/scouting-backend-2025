@@ -7,6 +7,23 @@
 <h2>Team {{ team_number }}</h2>
 <input type="hidden" id="team_number" value="{{ team_number }}">
 
+<style>
+    /* Add sticky headers CSS */
+    #match_data thead th {
+        position: -webkit-sticky; /* For Safari */
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .table-responsive {
+        max-height: 600px; /* Optional: Limit table height for scrolling */
+        overflow: auto;
+    }
+</style>
+
 {% if team.pit_scout_status == True %}
 <div class="row">
     <div class="col-8">
