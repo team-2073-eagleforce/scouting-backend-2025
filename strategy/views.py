@@ -184,12 +184,14 @@ def picklist_submit(request):
 @csrf_exempt
 def dashboard(request):
     comp_code = request.GET.get('comp')
-
+    
     if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
         try:
-            # ✅ Correctly parse JSON from request body
+            print("Raw request body:", request.body)  # 👈 Debug raw input
             data_from_post = json.loads(request.body.decode("utf-8"))
-            match_number = data_from_post.get("match_number")  # Extract match number
+            print("Parsed JSON data:", data_from_post)  # 👈 Debug parsed data
+            
+            match_number = data_from_post.get("match_number")
 
             if match_number is None:
                 return JsonResponse({"error": "Missing match_number"}, status=400)

@@ -43,10 +43,13 @@ if (window.dashboardInitialized) {
                 mode: 'same-origin',
                 headers: {
                     'Accept': 'application/json',
+                    'Content-Type': 'application/json', // 👈 REQUIRED for JSON handling
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRFToken': getCookie('csrftoken'),
                 },
-                body: JSON.stringify({ match_number: match })
+                body: JSON.stringify({ 
+                    match_number: parseInt(match) || 0 // 👈 Ensure numeric value
+                })
             })
             .then(response => response.json())
             .then(data => {
