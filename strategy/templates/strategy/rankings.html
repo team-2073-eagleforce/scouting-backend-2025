@@ -8,6 +8,19 @@
         td, th {
             white-space: nowrap;
         }
+        #rankings_table thead th {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            z-index: 10;
+            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .table-responsive {
+            max-height: 600px;
+            overflow: auto;
+        }
     </style>
 {% endblock %}
 
