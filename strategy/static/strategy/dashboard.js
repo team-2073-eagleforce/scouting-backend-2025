@@ -46,7 +46,7 @@ if (window.dashboardInitialized) {
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRFToken': getCookie('csrftoken'),
                 },
-                body: JSON.stringify(match)
+                body: JSON.stringify({ match_number: match })
             })
             .then(response => response.json())
             .then(data => {
