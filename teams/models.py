@@ -30,7 +30,15 @@ class Team_Match_Data(models.Model):
     team_number = models.IntegerField()
     event = models.CharField(max_length=16, default="testing")
     match_number = models.IntegerField()
-    quantifier = models.CharField(max_length=10)
+    quantifier = models.CharField(
+    max_length=10,
+    choices=[
+        ('Quals', 'Qualifications'),
+        ('Playoff', 'Play Off'),
+        ('Prac', 'Practice')
+    ],
+    default='Quals'
+)
     start_pos = models.IntegerField(default=0)
     missed_auto = models.IntegerField(default=0)
 

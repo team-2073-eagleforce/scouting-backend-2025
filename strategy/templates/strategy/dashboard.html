@@ -4,10 +4,22 @@
 {% block Content %}
     <div class="container">
         <h1>Dashboard</h1>
-
         <form>
-            <label for="match"></label><input id="match" placeholder="Match" type="text">
-            <button id="match_button" type="button">Submit</button>
+            <div class="row">
+                <div class="col-md-3">
+                    <select id="quantifier" class="form-select">
+                        <option value="Prac">Practice</option>
+                        <option value="Quals" selected>Qualifications</option>
+                        <option value="Playoff">Play Off</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input id="match" class="form-control" placeholder="Match Number" type="text">
+                </div>
+                <div class="col-md-3">
+                    <button id="match_button" class="btn btn-primary" type="button">Load Data</button>
+                </div>
+            </div>
         </form>
         <br>
         <table class="table">

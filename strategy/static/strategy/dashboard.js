@@ -47,8 +47,9 @@ if (window.dashboardInitialized) {
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRFToken': getCookie('csrftoken'),
                 },
-                body: JSON.stringify({ 
-                    match_number: parseInt(match) || 0
+                body: JSON.stringify({
+                    match_number: parseInt(match) || 0,
+                    quantifier: document.getElementById('quantifier').value
                 })
             })
             .then(response => {

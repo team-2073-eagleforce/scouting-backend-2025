@@ -187,46 +187,48 @@ def dashboard(request):
     
     if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
         try:
-            print("Raw request body:", request.body)
             data_from_post = json.loads(request.body.decode("utf-8"))
-            print("Parsed JSON data:", data_from_post)
-            
             match_number = data_from_post.get("match_number")
+            quantifier = data_from_post.get("quantifier", "Quals")
 
-            if match_number is None:
-                return JsonResponse({"error": "Missing match_number"}, status=400)
+            # Map quantifier to TBA comp_level
+            comp_level = {
+                "Quals": "qm",
+                "Playoff": "sf",
+                "Prac": "pm"
+            }.get(quantifier, "qm")
 
-            match = get_single_match(comp_code, "qm" + str(match_number))
-            
-            # Add validation to check if match is a dictionary
-            if not isinstance(match, dict):
-                return JsonResponse({
-                    "error": f"Invalid match data format. Expected dictionary, got {type(match).__name__}"
-                }, status=500)
-            
-            if 'red' not in match or 'blue' not in match:
-                return JsonResponse({
-                    "error": "Match data is missing required 'red' or 'blue' fields"
-                }, status=500)
+            # Get match with proper comp_level
+            match = get_single_match(comp_code, f"{comp_level}{match_number}")
 
+            # Existing team processing with quantifier passthrough
             red_json = {}
             red_teams = []
             blue_json = {}
             blue_teams = []
 
             for red_team in match['red']:
-                red_json[red_team] = fetch_team_match_averages(red_team, comp_code)
+                red_json[red_team] = fetch_team_match_averages(
+                    red_team, 
+                    comp_code,
+                    quantifier  # Pass through without changing fetch_team_match_averages
+                )
                 red_teams.append(red_team)
 
             for blue_team in match['blue']:
-                blue_json[blue_team] = fetch_team_match_averages(blue_team, comp_code)
+                blue_json[blue_team] = fetch_team_match_averages(
+                    blue_team, 
+                    comp_code,
+                    quantifier  # Pass through without changing fetch_team_match_averages
+                )
                 blue_teams.append(blue_team)
 
             response = {
                 'red': red_json,
                 'blue': blue_json,
                 'red_teams': red_teams,
-                'blue_teams': blue_teams
+                'blue_teams': blue_teams,
+                'quantifier': quantifier
             }
             return JsonResponse(response)
 
