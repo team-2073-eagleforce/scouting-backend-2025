@@ -10,6 +10,7 @@ from api.tba import get_teams_list, get_team_events
 from helpers import login_required
 from teams.models import Teams, Team_Match_Data, Human_Player_Match
 from .forms import NewPitScoutingData, NewHumanScoutingData
+from django.db.models import Case, When, Value, IntegerField
 
 cloudinary.config(
     cloud_name=os.environ.get("CLOUD_NAME"),
