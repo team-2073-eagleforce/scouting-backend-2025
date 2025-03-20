@@ -43,16 +43,26 @@ if (window.dashboardInitialized) {
                 mode: 'same-origin',
                 headers: {
                     'Accept': 'application/json',
-                    'Content-Type': 'application/json', // 👈 REQUIRED for JSON handling
+                    'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRFToken': getCookie('csrftoken'),
                 },
                 body: JSON.stringify({ 
-                    match_number: parseInt(match) || 0 // 👈 Ensure numeric value
+                    match_number: parseInt(match) || 0
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Server error');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
+                if (!data.red || !data.blue) {
+                    throw new Error('Invalid data format received from server');
+                }
                 console.log("Processing data for match:", match);
 
                 // Process red alliance
@@ -89,7 +99,10 @@ if (window.dashboardInitialized) {
             })
             .catch(error => {
                 console.error('Error:', error);
-                dashboardTable.innerHTML = '<tr><td colspan="14">Error loading data</td></tr>';
+                const dashboardTable = document.getElementById("dashboardTable");
+                if (dashboardTable) {
+                    dashboardTable.innerHTML = `<tr><td colspan="14">Error: ${error.message}</td></tr>`;
+                }
             });
         };
     });

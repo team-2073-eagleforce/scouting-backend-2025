@@ -187,9 +187,9 @@ def dashboard(request):
     
     if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
         try:
-            print("Raw request body:", request.body)  # 👈 Debug raw input
+            print("Raw request body:", request.body)
             data_from_post = json.loads(request.body.decode("utf-8"))
-            print("Parsed JSON data:", data_from_post)  # 👈 Debug parsed data
+            print("Parsed JSON data:", data_from_post)
             
             match_number = data_from_post.get("match_number")
 
@@ -197,6 +197,17 @@ def dashboard(request):
                 return JsonResponse({"error": "Missing match_number"}, status=400)
 
             match = get_single_match(comp_code, "qm" + str(match_number))
+            
+            # Add validation to check if match is a dictionary
+            if not isinstance(match, dict):
+                return JsonResponse({
+                    "error": f"Invalid match data format. Expected dictionary, got {type(match).__name__}"
+                }, status=500)
+            
+            if 'red' not in match or 'blue' not in match:
+                return JsonResponse({
+                    "error": "Match data is missing required 'red' or 'blue' fields"
+                }, status=500)
 
             red_json = {}
             red_teams = []
