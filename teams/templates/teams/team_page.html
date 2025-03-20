@@ -38,11 +38,13 @@
 <a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}">Pit Scout</a>
 {% endif %}
 
-<!-- Match Data Table -->
+<!-- Match Data Table with Button in Separate Section -->
+<div class="button-section">
+    <button id="toggleComments" class="btn btn-sm btn-secondary">Show All Comments</button>
+    <button id="togglePaths" class="btn btn-sm btn-secondary">Show All Paths</button>
+</div>
+
 <div class="table-responsive">
-    <div class="sticky-button-container">
-        <button id="toggleComments" class="btn btn-sm btn-secondary mb-2">Show All Comments</button>
-    </div>
     <table id="match_data" class="table table-bordered">
         <thead>
             <tr>
@@ -67,7 +69,7 @@
                 <th>Defense</th>
                 <th>Start Position</th>
                 <th>Missed-Auto</th>
-                <th>Auto Path</th>
+                <th id="path_column">Auto Path</th>
                 <th id="comments_column">Comments</th>
                 <th>Scout Name</th>
             </tr>
@@ -98,13 +100,12 @@
                 <td>{{ match.missed_auto }}</td>
                 <td>
                     {% if match.auto_path %}
-                        <a href="#" class="auto-path-link" data-match="{{ match.match_number }}" 
-                           data-quantifier="{{ match.quantifier }}" data-scout="{{ match.scout_name }}">
-                            View Path
-                        </a>
-                        <div class="auto-path-popup" style="display: none;">
+                    <div class="path-container">
+                        <a href="#" class="path-toggle">View Path</a>
+                        <div class="path-content" style="display: none;">
                             {{ match.auto_path }}
                         </div>
+                    </div>
                     {% endif %}
                 </td>
                 <td>
@@ -183,30 +184,31 @@
         position: relative;
     }
 
-    /* Sticky Button Container */
-    .sticky-button-container {
+    /* Button Section */
+    .button-section {
         position: sticky;
         top: 0;
-        left: 0;
         z-index: 20;
-        padding: 5px 0;
-        background-color: rgba(255, 255, 255, 0.9);
-        margin-bottom: 10px;
+        background-color: white;
+        padding: 10px 0;
         border-bottom: 1px solid #dee2e6;
+        margin-bottom: 0;
+        display: flex;
+        gap: 10px;
     }
 
-    /* Comment Styles */
-    .comment-toggle {
+    /* Comment and Path Styles */
+    .comment-toggle, .path-toggle {
         color: #007bff;
         text-decoration: none;
         cursor: pointer;
     }
     
-    .comment-toggle:hover {
+    .comment-toggle:hover, .path-toggle:hover {
         text-decoration: underline;
     }
     
-    .comment-content {
+    .comment-content, .path-content {
         margin-top: 5px;
         padding: 5px;
         background-color: #f8f9fa;
@@ -214,34 +216,11 @@
         border-left: 3px solid #6c757d;
         word-wrap: break-word;
     }
-    
-    /* Popup Styles for Auto Path */
-    .auto-path-link {
-        color: #007bff;
-        text-decoration: none;
-        cursor: pointer;
-    }
-    
-    .auto-path-link:hover {
-        text-decoration: underline;
-    }
-    
-    .auto-path-popup {
-        position: absolute;
-        background: white;
-        border: 1px solid #ddd;
-        padding: 15px;
-        border-radius: 5px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        z-index: 1000;
-        max-width: 400px;
-        word-wrap: break-word;
-    }
 
     /* Replay System Styles */
     .replay-container {
         max-width: 800px;
-        margin: 0 auto;
+        margin: 20px auto;
     }
     
     .replay-canvas-container {
@@ -266,27 +245,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let currentAutopathPopup = null;
-
-    // Auto Path Popups
-    document.querySelectorAll('.auto-path-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            closeAutopathPopups();
-            
-            const popup = this.nextElementSibling.cloneNode(true);
-            popup.style.display = 'block';
-            popup.className = 'auto-path-popup';
-            
-            const rect = this.getBoundingClientRect();
-            popup.style.top = `${rect.bottom + window.scrollY + 5}px`;
-            popup.style.left = `${rect.left}px`;
-            
-            document.body.appendChild(popup);
-            currentAutopathPopup = popup;
-        });
-    });
-
     // Comment Toggle - In-place expansion
     document.querySelectorAll('.comment-toggle').forEach(toggle => {
         toggle.addEventListener('click', function(e) {
@@ -303,11 +261,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Path Toggle - In-place expansion (same functionality as comments)
+    document.querySelectorAll('.path-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const pathContent = this.nextElementSibling;
+            if (pathContent.style.display === 'none' || !pathContent.style.display) {
+                pathContent.style.display = 'block';
+                this.textContent = 'Hide Path';
+            } else {
+                pathContent.style.display = 'none';
+                this.textContent = 'View Path';
+            }
+        });
+    });
+
     // Toggle All Comments
-    const toggleButton = document.getElementById('toggleComments');
+    const toggleCommentsButton = document.getElementById('toggleComments');
     let showAllComments = false;
     
-    toggleButton.addEventListener('click', function(e) {
+    toggleCommentsButton.addEventListener('click', function(e) {
         e.preventDefault();
         showAllComments = !showAllComments;
         
@@ -322,20 +296,24 @@ document.addEventListener('DOMContentLoaded', function() {
         this.textContent = showAllComments ? 'Hide All Comments' : 'Show All Comments';
     });
 
-    // Close Auto Path Popups when clicking elsewhere
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.auto-path-link') && 
-            !e.target.closest('.auto-path-popup')) {
-            closeAutopathPopups();
-        }
+    // Toggle All Paths
+    const togglePathsButton = document.getElementById('togglePaths');
+    let showAllPaths = false;
+    
+    togglePathsButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        showAllPaths = !showAllPaths;
+        
+        document.querySelectorAll('.path-content').forEach(content => {
+            content.style.display = showAllPaths ? 'block' : 'none';
+        });
+        
+        document.querySelectorAll('.path-toggle').forEach(toggle => {
+            toggle.textContent = showAllPaths ? 'Hide Path' : 'View Path';
+        });
+        
+        this.textContent = showAllPaths ? 'Hide All Paths' : 'Show All Paths';
     });
-
-    function closeAutopathPopups() {
-        if (currentAutopathPopup) {
-            currentAutopathPopup.remove();
-            currentAutopathPopup = null;
-        }
-    }
 });
 </script>
 
