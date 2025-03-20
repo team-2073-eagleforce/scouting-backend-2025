@@ -52,7 +52,15 @@ def team_page(request, team_number):
         all_team_match_data = Team_Match_Data.objects.filter(
             team_number=team_number, 
             event=comp_code
-        ).order_by("-quantifier", "-match_number")
+        ).annotate(
+            custom_order=Case(
+                When(quantifier='Play Off', then=Value(1)),
+                When(quantifier='Quals', then=Value(2)),
+                When(quantifier='Prac', then=Value(3)),
+                default=Value(4),
+                output_field=IntegerField(),
+            )
+        ).order_by('custom_order', '-match_number')
         
         # Debug: Print auto_path data
         for match in all_team_match_data:
