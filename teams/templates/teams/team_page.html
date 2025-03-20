@@ -40,7 +40,9 @@
 
 <!-- Match Data Table -->
 <div class="table-responsive">
-    <button id="toggleComments" class="btn btn-sm btn-secondary mb-2">Show All Comments</button>
+    <div class="sticky-button-container">
+        <button id="toggleComments" class="btn btn-sm btn-secondary mb-2">Show All Comments</button>
+    </div>
     <table id="match_data" class="table table-bordered">
         <thead>
             <tr>
@@ -107,10 +109,12 @@
                 </td>
                 <td>
                     {% if match.comment %}
-                    <a href="#" class="comment-link" data-comment="{{ match.comment }}">
-                        View Comment
-                    </a>
-                    <span class="full-comment" style="display: none;">{{ match.comment }}</span>
+                    <div class="comment-container">
+                        <a href="#" class="comment-toggle">View Comment</a>
+                        <div class="comment-content" style="display: none;">
+                            {{ match.comment }}
+                        </div>
+                    </div>
                     {% endif %}
                 </td>
                 <td>{{ match.scout_name }}</td>
@@ -176,20 +180,53 @@
     .table-responsive {
         max-height: 600px;
         overflow: auto;
+        position: relative;
     }
 
-    /* Popup Styles */
-    .auto-path-link, .comment-link {
+    /* Sticky Button Container */
+    .sticky-button-container {
+        position: sticky;
+        top: 0;
+        left: 0;
+        z-index: 20;
+        padding: 5px 0;
+        background-color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 10px;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    /* Comment Styles */
+    .comment-toggle {
         color: #007bff;
         text-decoration: none;
         cursor: pointer;
     }
     
-    .auto-path-link:hover, .comment-link:hover {
+    .comment-toggle:hover {
         text-decoration: underline;
     }
     
-    .auto-path-popup, .comment-popup {
+    .comment-content {
+        margin-top: 5px;
+        padding: 5px;
+        background-color: #f8f9fa;
+        border-radius: 3px;
+        border-left: 3px solid #6c757d;
+        word-wrap: break-word;
+    }
+    
+    /* Popup Styles for Auto Path */
+    .auto-path-link {
+        color: #007bff;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    
+    .auto-path-link:hover {
+        text-decoration: underline;
+    }
+    
+    .auto-path-popup {
         position: absolute;
         background: white;
         border: 1px solid #ddd;
@@ -225,23 +262,17 @@
         justify-content: center;
         margin-top: 10px;
     }
-    
-    #toggleComments {
-        position: sticky;
-        left: 20px;
-        z-index: 20;
-    }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let currentPopup = null;
+    let currentAutopathPopup = null;
 
     // Auto Path Popups
     document.querySelectorAll('.auto-path-link').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            closePopups();
+            closeAutopathPopups();
             
             const popup = this.nextElementSibling.cloneNode(true);
             popup.style.display = 'block';
@@ -252,30 +283,27 @@ document.addEventListener('DOMContentLoaded', function() {
             popup.style.left = `${rect.left}px`;
             
             document.body.appendChild(popup);
-            currentPopup = popup;
+            currentAutopathPopup = popup;
         });
     });
 
-    // Comment Popups
-    document.querySelectorAll('.comment-link').forEach(link => {
-        link.addEventListener('click', function(e) {
+    // Comment Toggle - In-place expansion
+    document.querySelectorAll('.comment-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
             e.preventDefault();
-            closePopups();
             
-            const popup = document.createElement('div');
-            popup.className = 'comment-popup';
-            popup.textContent = this.dataset.comment;
-            
-            const rect = this.getBoundingClientRect();
-            popup.style.top = `${rect.bottom + window.scrollY + 5}px`;
-            popup.style.left = `${rect.left}px`;
-            
-            document.body.appendChild(popup);
-            currentPopup = popup;
+            const commentContent = this.nextElementSibling;
+            if (commentContent.style.display === 'none' || !commentContent.style.display) {
+                commentContent.style.display = 'block';
+                this.textContent = 'Hide Comment';
+            } else {
+                commentContent.style.display = 'none';
+                this.textContent = 'View Comment';
+            }
         });
     });
 
-    // Toggle Comments
+    // Toggle All Comments
     const toggleButton = document.getElementById('toggleComments');
     let showAllComments = false;
     
@@ -283,29 +311,29 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         showAllComments = !showAllComments;
         
-        document.querySelectorAll('.full-comment').forEach(span => {
-            span.style.display = showAllComments ? 'inline' : 'none';
+        document.querySelectorAll('.comment-content').forEach(content => {
+            content.style.display = showAllComments ? 'block' : 'none';
         });
         
-        document.querySelectorAll('.comment-link').forEach(link => {
-            link.style.display = showAllComments ? 'none' : 'inline';
+        document.querySelectorAll('.comment-toggle').forEach(toggle => {
+            toggle.textContent = showAllComments ? 'Hide Comment' : 'View Comment';
         });
         
-        this.textContent = showAllComments ? 'Hide Comments' : 'Show All Comments';
+        this.textContent = showAllComments ? 'Hide All Comments' : 'Show All Comments';
     });
 
-    // Close Popups
+    // Close Auto Path Popups when clicking elsewhere
     document.addEventListener('click', function(e) {
-        if (!e.target.closest('.auto-path-link, .comment-link') && 
-            !e.target.closest('.auto-path-popup, .comment-popup')) {
-            closePopups();
+        if (!e.target.closest('.auto-path-link') && 
+            !e.target.closest('.auto-path-popup')) {
+            closeAutopathPopups();
         }
     });
 
-    function closePopups() {
-        if (currentPopup) {
-            currentPopup.remove();
-            currentPopup = null;
+    function closeAutopathPopups() {
+        if (currentAutopathPopup) {
+            currentAutopathPopup.remove();
+            currentAutopathPopup = null;
         }
     }
 });
