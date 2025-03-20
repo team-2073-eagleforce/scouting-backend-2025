@@ -7,23 +7,6 @@
 <h2>Team {{ team_number }}</h2>
 <input type="hidden" id="team_number" value="{{ team_number }}">
 
-<style>
-    /* Add sticky headers CSS */
-    #match_data thead th {
-        position: -webkit-sticky; /* For Safari */
-        position: sticky;
-        top: 0;
-        background: white;
-        z-index: 10;
-        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-    }
-    
-    .table-responsive {
-        max-height: 600px; /* Optional: Limit table height for scrolling */
-        overflow: auto;
-    }
-</style>
-
 {% if team.pit_scout_status == True %}
 <div class="row">
     <div class="col-8">
@@ -57,6 +40,7 @@
 
 <!-- Match Data Table -->
 <div class="table-responsive">
+    <button id="toggleComments" class="btn btn-sm btn-secondary mb-2">Show All Comments</button>
     <table id="match_data" class="table table-bordered">
         <thead>
             <tr>
@@ -120,8 +104,15 @@
                             {{ match.auto_path }}
                         </div>
                     {% endif %}
-                </td>                
-                <td>{{ match.comment }}</td>
+                </td>
+                <td>
+                    {% if match.comment %}
+                    <a href="#" class="comment-link" data-comment="{{ match.comment }}">
+                        View Comment
+                    </a>
+                    <span class="full-comment" style="display: none;">{{ match.comment }}</span>
+                    {% endif %}
+                </td>
                 <td>{{ match.scout_name }}</td>
             </tr>
             {% empty %}
@@ -135,6 +126,7 @@
 
 <!-- Replay System Section -->
 <h3>Auto Path Replay</h3>
+<div class="replay-container">
     <select id="pathSelector" class="form-control mb-2">
         <option value="">Select a match to replay</option>
         {% for match in all_team_match_data %}
@@ -171,6 +163,45 @@
 <script src="{% static 'team/replay_system.js' %}"></script>
 
 <style>
+    /* Table Styles */
+    #match_data thead th {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .table-responsive {
+        max-height: 600px;
+        overflow: auto;
+    }
+
+    /* Popup Styles */
+    .auto-path-link, .comment-link {
+        color: #007bff;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    
+    .auto-path-link:hover, .comment-link:hover {
+        text-decoration: underline;
+    }
+    
+    .auto-path-popup, .comment-popup {
+        position: absolute;
+        background: white;
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+        max-width: 400px;
+        word-wrap: break-word;
+    }
+
+    /* Replay System Styles */
     .replay-container {
         max-width: 800px;
         margin: 0 auto;
@@ -195,72 +226,89 @@
         margin-top: 10px;
     }
     
-    .btn {
-        min-width: 80px;
+    #toggleComments {
+        position: sticky;
+        left: 20px;
+        z-index: 20;
     }
-
-    .auto-path-popup {
-        position: absolute;
-        background: white;
-        border: 1px solid #ddd;
-        padding: 10px;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        z-index: 1000;
-        max-width: 300px;
-        white-space: pre-wrap;
-    }
-    
-    .auto-path-link {
-        color: #007bff;
-        text-decoration: none;
-        cursor: pointer;
-    }
-    
-    .auto-path-link:hover {
-        text-decoration: underline;
-    }
-
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const pathLinks = document.querySelectorAll('.auto-path-link');
-        let currentPopup = null;
-    
-        pathLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Close any open popup
-                if (currentPopup) {
-                    currentPopup.style.display = 'none';
-                }
-                
-                // Get the popup div
-                const popup = this.nextElementSibling;
-                
-                // Position the popup near the link
-                const rect = this.getBoundingClientRect();
-                popup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
-                popup.style.left = rect.left + 'px';
-                
-                // Show the popup
-                popup.style.display = 'block';
-                currentPopup = popup;
-            });
-        });
-    
-        // Close popup when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.auto-path-link') && !e.target.closest('.auto-path-popup')) {
-                if (currentPopup) {
-                    currentPopup.style.display = 'none';
-                    currentPopup = null;
-                }
-            }
+document.addEventListener('DOMContentLoaded', function() {
+    let currentPopup = null;
+
+    // Auto Path Popups
+    document.querySelectorAll('.auto-path-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            closePopups();
+            
+            const popup = this.nextElementSibling.cloneNode(true);
+            popup.style.display = 'block';
+            popup.className = 'auto-path-popup';
+            
+            const rect = this.getBoundingClientRect();
+            popup.style.top = `${rect.bottom + window.scrollY + 5}px`;
+            popup.style.left = `${rect.left}px`;
+            
+            document.body.appendChild(popup);
+            currentPopup = popup;
         });
     });
-    </script>
+
+    // Comment Popups
+    document.querySelectorAll('.comment-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            closePopups();
+            
+            const popup = document.createElement('div');
+            popup.className = 'comment-popup';
+            popup.textContent = this.dataset.comment;
+            
+            const rect = this.getBoundingClientRect();
+            popup.style.top = `${rect.bottom + window.scrollY + 5}px`;
+            popup.style.left = `${rect.left}px`;
+            
+            document.body.appendChild(popup);
+            currentPopup = popup;
+        });
+    });
+
+    // Toggle Comments
+    const toggleButton = document.getElementById('toggleComments');
+    let showAllComments = false;
+    
+    toggleButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        showAllComments = !showAllComments;
+        
+        document.querySelectorAll('.full-comment').forEach(span => {
+            span.style.display = showAllComments ? 'inline' : 'none';
+        });
+        
+        document.querySelectorAll('.comment-link').forEach(link => {
+            link.style.display = showAllComments ? 'none' : 'inline';
+        });
+        
+        this.textContent = showAllComments ? 'Hide Comments' : 'Show All Comments';
+    });
+
+    // Close Popups
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.auto-path-link, .comment-link') && 
+            !e.target.closest('.auto-path-popup, .comment-popup')) {
+            closePopups();
+        }
+    });
+
+    function closePopups() {
+        if (currentPopup) {
+            currentPopup.remove();
+            currentPopup = null;
+        }
+    }
+});
+</script>
 
 {% endblock %}
