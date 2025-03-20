@@ -48,7 +48,8 @@ if (window.dashboardInitialized) {
                     'X-CSRFToken': getCookie('csrftoken'),
                 },
                 body: JSON.stringify({ 
-                    match_number: parseInt(match) || 0
+                    match_number: parseInt(match) || 0,
+                    quantifier: document.getElementById('quantifier').value  // Add this line
                 })
             })
             .then(response => {
