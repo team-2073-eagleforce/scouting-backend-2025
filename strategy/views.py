@@ -1,24 +1,20 @@
 import json
 import os
 from pathlib import Path
-
 from time import time
 
-from django.db.models import Avg
+from django.db.models import Avg, Count
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 from api.tba import get_single_match, get_teams_list
 from teams import models
-
 from helpers import login_required
-
 from django.shortcuts import render, redirect
 from strategy.models import PickList_Data
-
-from django.http import JsonResponse
 from teams.models import Team_Match_Data
+from utils import config_loader
 
 def get_json_path(comp_code):
     # Get the project root directory
@@ -240,108 +236,77 @@ def dashboard(request):
     return render(request, "strategy/dashboard.html")
 
 def fetch_team_match_averages(team_number, comp_code, quantifier):
-    # Filter match data based on team number, event code, and quantifier
+    """Dynamic calculation of team averages based on game_config.json"""
+    config = config_loader.get_config()
+    
+    # Get all match data for this team
     team_match_data = models.Team_Match_Data.objects.filter(
         team_number=team_number,
         event=comp_code,
         match_number__lt=100,
-        quantifier=quantifier  # Filter by quantifier
+        quantifier=quantifier
     )
-
-    # Calculate averages
-    team_match_averages = team_match_data.aggregate(
-        # Auto Period
-        Avg('auto_leave', default=0),
-        Avg('auto_L1', default=0),
-        Avg('auto_L2', default=0),
-        Avg('auto_L3', default=0),
-        Avg('auto_L4', default=0),
-        Avg('auto_net', default=0),
-        Avg('auto_processor', default=0),
-        Avg('auto_removed', default=0),
-        Avg('start_pos', default=0),
-        # Teleop Period
-        Avg('teleL1', default=0),
-        Avg('teleL2', default=0),
-        Avg('teleL3', default=0),
-        Avg('teleL4', default=0),
-        Avg('telenet', default=0),
-        Avg('teleProcessor', default=0),
-        Avg('teleRemoved', default=0),
-        # End Game
-        Avg('climb', default=0),
-        # Rankings
-        Avg('defense_ranking', default=0)
-    )
-
-    auto_algae_max = (
-        team_match_averages['auto_L1__avg'] +
-        team_match_averages['auto_L2__avg'] +
-        team_match_averages['auto_L3__avg'] +
-        team_match_averages['auto_L4__avg'] +
-        team_match_averages['auto_net__avg'] +
-        team_match_averages['auto_processor__avg']
-    )
-
-    teleop_total = (
-        team_match_averages['teleL1__avg'] +
-        team_match_averages['teleL2__avg'] +
-        team_match_averages['teleL3__avg'] +
-        team_match_averages['teleL4__avg'] +
-        team_match_averages['telenet__avg'] +
-        team_match_averages['teleProcessor__avg']
-    )
-
-    match_data = team_match_data.first()  # Gets the specific match data
-    start_pos = match_data.start_pos if match_data else 0
-    missed_auto = match_data.missed_auto if match_data else 0
-
-    return {
-        'autoleave': round(team_match_averages['auto_leave__avg'], 3),
-        'auto': round(auto_algae_max, 3),
-        'L1': round(team_match_averages['auto_L1__avg'] + team_match_averages['teleL1__avg'], 3),
-        'L2': round(team_match_averages['auto_L2__avg'] + team_match_averages['teleL2__avg'], 3),
-        'L3': round(team_match_averages['auto_L3__avg'] + team_match_averages['teleL3__avg'], 3),
-        'L4': round(team_match_averages['auto_L4__avg'] + team_match_averages['teleL4__avg'], 3),
-        'net': round(team_match_averages['auto_net__avg'] + team_match_averages['telenet__avg'], 3),
-        'start_pos': start_pos,
-        'missed_auto': missed_auto,
-        'processor': round(team_match_averages['auto_processor__avg'] + team_match_averages['teleProcessor__avg'], 3),
-        'removed': round(team_match_averages['auto_removed__avg'] + team_match_averages['teleRemoved__avg'], 3),
-        'climb': round(team_match_averages['climb__avg'], 3),
-        'total': round(auto_algae_max + teleop_total + team_match_averages['climb__avg'], 3),
-        'defense': round(team_match_averages['defense_ranking__avg'], 3)
-    }
+    
+    if not team_match_data.exists():
+        return {}
+    
+    # Calculate averages dynamically
+    result = {}
+    
+    for metric in config['metrics']:
+        key = metric['key']
+        aggregation = metric.get('aggregation', 'avg')
+        
+        # Extract values from data JSONField
+        values = []
+        for match in team_match_data:
+            value = match.data.get(key)
+            if value is not None:
+                values.append(float(value))
+        
+        if values:
+            if aggregation == 'avg':
+                result[key] = round(sum(values) / len(values), 3)
+            elif aggregation == 'sum':
+                result[key] = round(sum(values), 3)
+            elif aggregation == 'percent':
+                result[key] = round((sum(values) / len(values)) * 100, 1)
+        else:
+            result[key] = 0
+    
+    # Add anchor field averages
+    first_match = team_match_data.first()
+    result['start_pos'] = first_match.start_pos if first_match else 0
+    
+    # Calculate composite metrics
+    auto_total = sum(result.get(f'auto_{suffix}', 0) for suffix in ['L1', 'L2', 'L3', 'L4', 'net', 'processor'])
+    teleop_total = sum(result.get(f'tele{suffix}', 0) for suffix in ['L1', 'L2', 'L3', 'L4', 'net', 'Processor'])
+    
+    result['auto_total'] = round(auto_total, 3)
+    result['teleop_total'] = round(teleop_total, 3)
+    result['total'] = round(auto_total + teleop_total + result.get('climb', 0), 3)
+    
+    return result
 
 def get_path_data(request, team_number):
-    """API endpoint for retrieving auto path data"""
+    """API endpoint for retrieving match data - auto_path removed"""
     comp_code = request.GET.get('comp')
     match_number = request.GET.get('match')
-    scout_name = request.GET.get('scout')  # Add this parameter
+    scout_name = request.GET.get('scout')
     
     if not comp_code:
         return JsonResponse({'error': 'Competition code required'}, status=400)
     
     try:
-        # Start with basic filters
         filters = {
             'team_number': team_number,
             'event': comp_code,
             'match_number': match_number
         }
         
-        # Add scout name filter if provided
         if scout_name:
             filters['scout_name'] = scout_name
-            match_data = Team_Match_Data.objects.get(**filters)
-            return JsonResponse({
-                'path': match_data.auto_path,
-                'match_number': match_data.match_number,
-                'quantifier': match_data.quantifier,
-                'scout_name': match_data.scout_name
-            })
         
-        # If no scout name provided, check how many records exist
         match_data_records = Team_Match_Data.objects.filter(**filters)
         
         if match_data_records.count() == 0:
@@ -349,33 +314,20 @@ def get_path_data(request, team_number):
                 'error': f'Match data not found for team {team_number}, match {match_number}'
             }, status=404)
         
-        # If only one record exists, return it
-        if match_data_records.count() == 1:
-            match_data = match_data_records.first()
-            return JsonResponse({
-                'path': match_data.auto_path,
-                'match_number': match_data.match_number,
-                'quantifier': match_data.quantifier,
-                'scout_name': match_data.scout_name
-            })
-        
-        # If multiple records exist, return the first one and notify about multiple records
         match_data = match_data_records.first()
-        scouts = [record.scout_name for record in match_data_records]
         
-        return JsonResponse({
-            'path': match_data.auto_path,
+        response = {
+            'data': match_data.data,
             'match_number': match_data.match_number,
             'quantifier': match_data.quantifier,
-            'scout_name': match_data.scout_name,
-            'multiple_records': True,
-            'all_scouts': scouts
-        })
-    except Team_Match_Data.DoesNotExist:
-        return JsonResponse({
-            'error': f'Match data not found for team {team_number}, match {match_number}'
-        }, status=404)
+            'scout_name': match_data.scout_name
+        }
+        
+        if match_data_records.count() > 1:
+            response['multiple_records'] = True
+            response['all_scouts'] = [record.scout_name for record in match_data_records]
+        
+        return JsonResponse(response)
+        
     except Exception as e:
-        return JsonResponse({
-            'error': f'Server error: {str(e)}'
-        }, status=500)
+        return JsonResponse({'error': f'Server error: {str(e)}'}, status=500)

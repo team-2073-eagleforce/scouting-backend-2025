@@ -2,109 +2,93 @@ import json
 from django.http import JsonResponse
 from django.shortcuts import render
 from teams.models import Teams, Team_Match_Data
-
-# We don't need numpy or login_required for this view
-# @login_required 
+from utils import config_loader
 
 def scanner(request):
     if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
         try:
-            # Safely parse JSON data
             data_from_post = json.loads(request.body.decode("utf-8"))
+            config = config_loader.get_config()
 
-            # --- Robust Data Handling and Validation ---
-
-            # 1. Get the key identifying fields. We must fail if these are invalid.
+            # Extract anchor fields
             try:
                 team_num = int(data_from_post["teamNumber"])
                 event_code = data_from_post["comp_code"]
                 match_num = int(data_from_post["matchNumber"])
+                scout_name = data_from_post.get("name", "")
             except (KeyError, ValueError, TypeError) as e:
                 return JsonResponse({"error": f"Missing or invalid key identifier: {e}"}, status=400)
 
-            # 2. Ensure team exists
+            # Ensure team exists
             Teams.objects.get_or_create(team_number=team_num, event=event_code)
 
-            # 3. Helper function to get an integer from the data or return a default
-            def get_int_default(key, default_val=0):
-                """Safely gets an integer from the POST data, or returns a default."""
-                try:
-                    # Check for None or empty string before int conversion
-                    val = data_from_post.get(key)
-                    if val is None or val == "":
-                        return default_val
-                    return int(val)
-                except (ValueError, TypeError):
-                    return default_val
+            # Helper to safely get values
+            def get_value(key, default=None):
+                val = data_from_post.get(key)
+                return val if val not in [None, ""] else default
 
-            # 4. Get quantifier, falling back to the model's default
+            # Build anchor fields
             quantifier_val = data_from_post.get("quantifier")
-            if not quantifier_val in ['Quals', 'Playoff', 'Prac']:
-                quantifier_val = 'Quals' # Default from model
+            if quantifier_val not in ['Quals', 'Playoff', 'Prac']:
+                quantifier_val = 'Quals'
 
-            # 5. Build the 'defaults' dictionary for all other data fields
-            #    This is everything we want to update if the match is found.
             match_data_defaults = {
-                'scout_name': data_from_post.get("name", ""),
+                'scout_name': scout_name,
                 'quantifier': quantifier_val,
-                'start_pos': get_int_default("startPos", 0),
-                'missed_auto': get_int_default("missed_auto", 0),
-                
-                'auto_leave': get_int_default("autoLeave"),
-                'auto_L1': get_int_default("autoL1"),
-                'auto_L2': get_int_default("autoL2"),
-                'auto_L3': get_int_default("autoL3"),
-                'auto_L4': get_int_default("autoL4"),
-                'auto_net': get_int_default("autoNet"),
-                'auto_processor': get_int_default("autoProcessor"),
-                'auto_removed': get_int_default("autoRemoved"),
-                
-                'auto_path': data_from_post.get("autoPath", list), # Uses model default
-                
-                'teleL1': get_int_default("teleL1"),
-                'teleL2': get_int_default("teleL2"),
-                'teleL3': get_int_default("teleL3"),
-                'teleL4': get_int_default("teleL4"),
-                'telenet': get_int_default("telenet"),
-                'teleProcessor': get_int_default("teleProcessor"),
-                'teleRemoved': get_int_default("teleRemoved"),
-                
-                'climb': get_int_default("endClimb"),
-                'driver_ranking': get_int_default("driverRanking"),
-                'defense_ranking': get_int_default("defenseRanking"),
-                
-                'comment': data_from_post.get("comment", ""),
-                
-                'is_broken': get_int_default("isBroken", 0),
-                'is_disabled': get_int_default("isDisabled", 0),
-                'is_tipped': get_int_default("isTipped", 0),
+                'start_pos': int(get_value("startPos", 0)),
+                'comment': get_value("comment", ""),
+                'is_broken': bool(int(get_value("isBroken", 0))),
+                'is_disabled': bool(int(get_value("isDisabled", 0))),
+                'is_tipped': bool(int(get_value("isTipped", 0))),
             }
 
-            # 6. Use update_or_create
-            #    This finds a match based on the key fields (team, event, match).
-            #    If found, it UPDATES it with the 'defaults' dict.
-            #    If not found, it CREATES a new entry.
+            # Dynamic data bucket - loop through config metrics
+            data_bucket = {}
+            validation_errors = []
+            
+            for metric in config['metrics']:
+                key = metric['key']
+                value = get_value(key)
+                
+                if value is not None:
+                    # Validate
+                    is_valid, error_msg = config_loader.validate_data({key: value}, key)
+                    if not is_valid:
+                        validation_errors.append(error_msg)
+                        continue
+                    
+                    # Type conversion
+                    if metric['type'] == 'number':
+                        try:
+                            data_bucket[key] = float(value)
+                        except (ValueError, TypeError):
+                            data_bucket[key] = 0
+                    elif metric['type'] == 'boolean':
+                        data_bucket[key] = bool(int(value)) if isinstance(value, (int, str)) else bool(value)
+                    else:
+                        data_bucket[key] = value
+
+            if validation_errors:
+                return JsonResponse({"error": "; ".join(validation_errors)}, status=400)
+
+            match_data_defaults['data'] = data_bucket
+
+            # Save to database
             obj, created = Team_Match_Data.objects.update_or_create(
                 team_number=team_num,
                 event=event_code,
                 match_number=match_num,
+                scout_name=scout_name,
                 defaults=match_data_defaults
             )
 
-            confirmation_msg = "Successfully Updated"
-            if created:
-                confirmation_msg = "Successfully Sent (New)"
-
-            # Return the ID of the object that was created or updated
+            confirmation_msg = "Successfully Updated" if not created else "Successfully Sent (New)"
             return JsonResponse({"confirmation": confirmation_msg, "id": obj.id}, status=200)
 
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON format"}, status=400)
         except Exception as e:
-            # Log the error for easier debugging
             print(f"Error in scanner view: {e}")
-            print(f"Failing data: {request.body.decode('utf-8', 'ignore')}")
             return JsonResponse({"error": f"An unexpected error occurred: {e}"}, status=500)
 
-    # If it's not an AJAX request, serve the HTML page
     return render(request, "qr_scanner.html")

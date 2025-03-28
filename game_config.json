@@ -1,0 +1,263 @@
+{
+  "version": "2025_reefscape",
+  "metrics": [
+    {
+      "key": "auto_leave",
+      "type": "number",
+      "category": "auto",
+      "aggregation": "avg",
+      "display_name": "Auto Leave",
+      "min": 0,
+      "max": 1
+    },
+    {
+      "key": "auto_L1",
+      "type": "number",
+      "category": "auto",
+      "aggregation": "avg",
+      "display_name": "Auto L1",
+      "min": 0,
+      "max": 12
+    },
+    {
+      "key": "auto_L2",
+      "type": "number",
+      "category": "auto",
+      "aggregation": "avg",
+      "display_name": "Auto L2",
+      "min": 0,
+      "max": 12
+    },
+    {
+      "key": "auto_L3",
+      "type": "number",
+      "category": "auto",
+      "aggregation": "avg",
+      "display_name": "Auto L3",
+      "min": 0,
+      "max": 12
+    },
+    {
+      "key": "auto_L4",
+      "type": "number",
+      "category": "auto",
+      "aggregation": "avg",
+      "display_name": "Auto L4",
+      "min": 0,
+      "max": 12
+    },
+    {
+      "key": "auto_net",
+      "type": "number",
+      "category": "auto",
+      "aggregation": "avg",
+      "display_name": "Auto Net",
+      "min": 0,
+      "max": 12
+    },
+    {
+      "key": "auto_processor",
+      "type": "number",
+      "category": "auto",
+      "aggregation": "avg",
+      "display_name": "Auto Processor",
+      "min": 0,
+      "max": 12
+    },
+    {
+      "key": "auto_removed",
+      "type": "number",
+      "category": "auto",
+      "aggregation": "avg",
+      "display_name": "Auto Removed",
+      "min": 0,
+      "max": 12
+    },
+    {
+      "key": "teleL1",
+      "type": "number",
+      "category": "teleop",
+      "aggregation": "avg",
+      "display_name": "Teleop L1",
+      "min": 0,
+      "max": 50
+    },
+    {
+      "key": "teleL2",
+      "type": "number",
+      "category": "teleop",
+      "aggregation": "avg",
+      "display_name": "Teleop L2",
+      "min": 0,
+      "max": 50
+    },
+    {
+      "key": "teleL3",
+      "type": "number",
+      "category": "teleop",
+      "aggregation": "avg",
+      "display_name": "Teleop L3",
+      "min": 0,
+      "max": 50
+    },
+    {
+      "key": "teleL4",
+      "type": "number",
+      "category": "teleop",
+      "aggregation": "avg",
+      "display_name": "Teleop L4",
+      "min": 0,
+      "max": 50
+    },
+    {
+      "key": "telenet",
+      "type": "number",
+      "category": "teleop",
+      "aggregation": "avg",
+      "display_name": "Teleop Net",
+      "min": 0,
+      "max": 50
+    },
+    {
+      "key": "teleProcessor",
+      "type": "number",
+      "category": "teleop",
+      "aggregation": "avg",
+      "display_name": "Teleop Processor",
+      "min": 0,
+      "max": 50
+    },
+    {
+      "key": "teleRemoved",
+      "type": "number",
+      "category": "teleop",
+      "aggregation": "avg",
+      "display_name": "Teleop Removed",
+      "min": 0,
+      "max": 50
+    },
+    {
+      "key": "climb",
+      "type": "number",
+      "category": "endgame",
+      "aggregation": "avg",
+      "display_name": "Climb",
+      "min": 0,
+      "max": 12
+    },
+    {
+      "key": "driver_ranking",
+      "type": "number",
+      "category": "subjective",
+      "aggregation": "avg",
+      "display_name": "Driver Skill",
+      "min": 1,
+      "max": 5
+    },
+    {
+      "key": "defense_ranking",
+      "type": "number",
+      "category": "subjective",
+      "aggregation": "avg",
+      "display_name": "Defense",
+      "min": 1,
+      "max": 5
+    }
+  ],
+  "pit_questions": [
+    {
+      "key": "drivetrain",
+      "type": "select",
+      "display_name": "Drivetrain Type",
+      "options": ["Swerve", "Tank", "Mecanum", "Other"],
+      "required": true
+    },
+    {
+      "key": "weight",
+      "type": "number",
+      "display_name": "Weight (lbs)",
+      "min": 0,
+      "max": 125
+    },
+    {
+      "key": "length",
+      "type": "number",
+      "display_name": "Length (inches)",
+      "min": 0,
+      "max": 48
+    },
+    {
+      "key": "width",
+      "type": "number",
+      "display_name": "Width (inches)",
+      "min": 0,
+      "max": 48
+    },
+    {
+      "key": "intake_design",
+      "type": "text",
+      "display_name": "Intake Design"
+    },
+    {
+      "key": "intake_locations",
+      "type": "multiselect",
+      "display_name": "Intake Locations",
+      "options": ["Ground", "Source", "Reef"]
+    },
+    {
+      "key": "scoring_locations",
+      "type": "multiselect",
+      "display_name": "Scoring Locations",
+      "options": ["L1", "L2", "L3", "L4", "Net", "Processor"]
+    },
+    {
+      "key": "cage_positions",
+      "type": "multiselect",
+      "display_name": "Cage Positions",
+      "options": ["Shallow", "Deep"]
+    },
+    {
+      "key": "under_shallow",
+      "type": "select",
+      "display_name": "Can Go Under Shallow Reef?",
+      "options": ["Yes", "No"]
+    },
+    {
+      "key": "algae_picker",
+      "type": "select",
+      "display_name": "Has Algae Picker?",
+      "options": ["Yes", "No"]
+    },
+    {
+      "key": "auto_positions",
+      "type": "multiselect",
+      "display_name": "Auto Starting Positions",
+      "options": ["1", "2", "3", "4", "5"]
+    },
+    {
+      "key": "auto_leave",
+      "type": "select",
+      "display_name": "Can Leave in Auto?",
+      "options": ["Yes", "No"]
+    },
+    {
+      "key": "auto_algae_max",
+      "type": "number",
+      "display_name": "Max Auto Algae",
+      "min": 0,
+      "max": 12
+    },
+    {
+      "key": "auto_coral_max",
+      "type": "number",
+      "display_name": "Max Auto Coral",
+      "min": 0,
+      "max": 12
+    },
+    {
+      "key": "additional_info",
+      "type": "textarea",
+      "display_name": "Additional Notes"
+    }
+  ]
+}
