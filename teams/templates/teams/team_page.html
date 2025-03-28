@@ -175,6 +175,37 @@
 <script src="{% static 'team/replay_system.js' %}"></script>
 
 <style>
+
+    .status-container {
+        margin-bottom: 5px;
+    }
+
+    .status-broken, .status-disabled, .status-tipped {
+        padding: 2px 5px;
+        border-radius: 3px;
+        font-size: 0.8em;
+        margin-right: 3px;
+        display: inline-block;
+    }
+
+    .status-broken {
+        background-color: #ffcccc;
+        color: #cc0000;
+        border: 1px solid #cc0000;
+    }
+
+    .status-disabled {
+        background-color: #ffffcc;
+        color: #666600;
+        border: 1px solid #666600;
+    }
+
+    .status-tipped {
+        background-color: #ccffcc;
+        color: #006600;
+        border: 1px solid #006600;
+    }
+
     /* Table Styles */
     #match_data thead th {
         position: -webkit-sticky;
@@ -248,37 +279,6 @@
         justify-content: center;
         margin-top: 10px;
     }
-
-    .status-container {
-    margin-bottom: 5px;
-    }
-
-    .status-broken, .status-disabled, .status-tipped {
-        padding: 2px 5px;
-        border-radius: 3px;
-        font-size: 0.8em;
-        margin-right: 3px;
-        display: inline-block;
-    }
-
-    .status-broken {
-        background-color: #ffcccc;
-        color: #cc0000;
-        border: 1px solid #cc0000;
-    }
-
-    .status-disabled {
-        background-color: #ffffcc;
-        color: #666600;
-        border: 1px solid #666600;
-    }
-
-    .status-tipped {
-        background-color: #ccffcc;
-        color: #006600;
-        border: 1px solid #006600;
-    }
-
 </style>
 
 <script>
