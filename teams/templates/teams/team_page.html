@@ -109,11 +109,11 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% if match.is_broken == "1" or match.is_disabled == "1" or match.is_tipped == "1" %}
+                    {% if match.is_broken == 1 or match.is_disabled == 1 or match.is_tipped == 1 %}
                     <div class="status-container">
-                        {% if match.is_broken == "1" %}<span class="status-broken">Broken</span>{% endif %}
-                        {% if match.is_disabled == "1" %}<span class="status-disabled">Disabled</span>{% endif %}
-                        {% if match.is_tipped == "1" %}<span class="status-tipped">Tipped</span>{% endif %}
+                        {% if match.is_broken == 1 %}<span class="status-broken">Broken</span>{% endif %}
+                        {% if match.is_disabled == 1 %}<span class="status-disabled">Disabled</span>{% endif %}
+                        {% if match.is_tipped == 1 %}<span class="status-tipped">Tipped</span>{% endif %}
                     </div>
                     {% endif %}
                     {% if match.comment %}
