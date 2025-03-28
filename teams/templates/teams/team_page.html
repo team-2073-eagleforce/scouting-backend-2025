@@ -109,6 +109,13 @@
                     {% endif %}
                 </td>
                 <td>
+                    {% if match.is_broken == "1" or match.is_disabled == "1" or match.is_tipped == "1" %}
+                    <div class="status-container">
+                        {% if match.is_broken == "1" %}<span class="status-broken">Broken</span>{% endif %}
+                        {% if match.is_disabled == "1" %}<span class="status-disabled">Disabled</span>{% endif %}
+                        {% if match.is_tipped == "1" %}<span class="status-tipped">Tipped</span>{% endif %}
+                    </div>
+                    {% endif %}
                     {% if match.comment %}
                     <div class="comment-container">
                         <a href="#" class="comment-toggle">View Comment</a>
@@ -241,6 +248,37 @@
         justify-content: center;
         margin-top: 10px;
     }
+
+    .status-container {
+    margin-bottom: 5px;
+    }
+
+    .status-broken, .status-disabled, .status-tipped {
+        padding: 2px 5px;
+        border-radius: 3px;
+        font-size: 0.8em;
+        margin-right: 3px;
+        display: inline-block;
+    }
+
+    .status-broken {
+        background-color: #ffcccc;
+        color: #cc0000;
+        border: 1px solid #cc0000;
+    }
+
+    .status-disabled {
+        background-color: #ffffcc;
+        color: #666600;
+        border: 1px solid #666600;
+    }
+
+    .status-tipped {
+        background-color: #ccffcc;
+        color: #006600;
+        border: 1px solid #006600;
+    }
+
 </style>
 
 <script>
