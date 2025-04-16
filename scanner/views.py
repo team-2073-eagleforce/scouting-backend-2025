@@ -40,7 +40,7 @@ def scanner(request):
             Team_Match_Data.objects.get_or_create(
                 team_number=int(data_from_post["teamNumber"]),
                 scout_name=data_from_post["name"],
-                event=data_from_post["comp_code"],
+                event="2025joh",
                 match_number=data_from_post["matchNumber"],
                 start_pos=data_from_post["startPos"],
                 quantifier=data_from_post["quantifier"],
