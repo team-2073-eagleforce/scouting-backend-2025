@@ -2,7 +2,8 @@
 super skibidi backend ngl whoever is reading this, get a life.
 
 # WARNING
-picklist does NAWT work, will add CORS websocket implementation, BUT NOT THIS SEASON !!!
+picklist does NAWT work, will add CORS websocket implementation, BUT NOT THIS SEASON !!!<br>
+if there is a issue with database migrations it's probably because thigns like supabase don't have ipv4 connection (do it locally or something)
 
 # documentation
 - prior to reading this make sure you know how to use Postgres and Django or you are stupid (no complaining allowed)
