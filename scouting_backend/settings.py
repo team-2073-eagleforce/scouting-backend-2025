@@ -102,6 +102,7 @@ DATABASES = {
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'frontend', 'dist'),  # Built assets from webpack
     os.path.join(BASE_DIR, 'static'),
     os.path.join(BASE_DIR, 'scanner', 'static'),
     os.path.join(BASE_DIR, 'teams', 'static'),
