@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from api.tba import get_single_match, get_teams_list
 from teams import models
 
-from helpers import login_required
+from helpers import login_required, authorized_only, view_only_for_team2073
 
 from django.shortcuts import render, redirect
 from strategy.models import PickList_Data
@@ -52,7 +52,7 @@ def write_json_picklist(comp_code, data):
     with open(json_path, 'w') as f:
         json.dump(json_data, f)
 
-# @login_required
+@view_only_for_team2073
 def rankings(request):
     comp_code = request.GET.get('comp')
     quantifier = request.GET.get('quantifier', 'Quals')  # default to Quals if not provided
@@ -78,7 +78,7 @@ def rankings(request):
         'selected_quantifier': quantifier,
     })
 
-# @login_required
+@view_only_for_team2073
 def picklist(request):
     comp_code = request.GET.get('comp')
     teams = []
@@ -180,7 +180,7 @@ def picklist_submit(request):
         'message': 'Invalid request method'
     }, status=405)
 
-# @login_required
+@view_only_for_team2073
 @csrf_exempt
 def dashboard(request):
     comp_code = request.GET.get('comp')

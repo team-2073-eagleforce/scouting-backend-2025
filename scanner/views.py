@@ -4,16 +4,11 @@ import numpy as np
 from django.http import JsonResponse
 from django.shortcuts import render
 
-from helpers import login_required
+from helpers import authorized_only
 from teams.models import Teams, Team_Match_Data
 
 
-# @login_required
-import json
-from django.http import JsonResponse
-from django.shortcuts import render
-from teams.models import Teams, Team_Match_Data
-
+@authorized_only
 def scanner(request):
     if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
         try:

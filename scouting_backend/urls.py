@@ -2,6 +2,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
+from django.shortcuts import render
 from teams import views as team_views
 from scanner import views as scanner_views
 from strategy import views as strategy_views
@@ -22,6 +23,7 @@ urlpatterns = [
     path('strategy/picklist/submit/', strategy_views.picklist_submit, name='picklist_submit'),
     path('api/get_path_data/<int:team_number>/', strategy_views.get_path_data, name='get_path_data'),
     path("auth/", include("authenticate.urls")),
+    path('unauthorized/', lambda request: render(request, 'authenticate/unauthorized.html'), name='unauthorized'),
 ]
 
 if settings.DEBUG:

@@ -3,11 +3,11 @@ import os
 import cloudinary
 import cloudinary.api
 import cloudinary.uploader
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
 
 from api.tba import get_teams_list, get_team_events
-from helpers import login_required
+from helpers import login_required, view_only_for_team2073
 from teams.models import Teams, Team_Match_Data, Human_Player_Match
 from .forms import NewPitScoutingData, NewHumanScoutingData
 from django.db.models import Case, When, Value, IntegerField
@@ -27,7 +27,7 @@ def get_events(request):
     return JsonResponse(get_team_events())
 
 
-# @login_required
+@view_only_for_team2073
 def display_teams(request):
     comp_code = request.GET.get('comp', "testing")
     pit_scouted = []
@@ -45,7 +45,7 @@ def display_teams(request):
 
     return render(request, 'teams/view_teams.html', {'all_teams': all_teams, "pit_scouted": pit_scouted})
 
-# @login_required
+@view_only_for_team2073
 def team_page(request, team_number):
     comp_code = request.GET.get('comp')
     if comp_code is not None:
@@ -93,6 +93,7 @@ def team_page(request, team_number):
     return render(request, 'teams/team_page.html', {'team_number': team_number})
 
 
+@view_only_for_team2073
 def pit_scouting(request, team_number):
     comp_code = request.GET.get('comp')
     print(f"Method: {request.method}")  # Check if POST
@@ -180,7 +181,7 @@ def pit_scouting(request, team_number):
     
     return render(request, "teams/pit_scouting.html", {'form': form, 'team_number': team_number})
     
-# @login_required
+@view_only_for_team2073
 def human_player_submit(request, team_number):
     comp_code = request.GET.get('comp')
     if request.method == 'POST':

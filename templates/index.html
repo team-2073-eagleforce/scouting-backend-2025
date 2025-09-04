@@ -41,9 +41,14 @@
                         <li class="nav-item">
                             <select class="form-select" id="comp"></select>
                         </li>
-                        {% if not request.session.name %}
+                        {% if request.session.name %}
+                        <div class="d-flex align-items-center">
+                            <span class="me-3">Welcome, {{ request.session.name }}</span>
+                            <a href="/auth/logout/" class="btn btn-outline-danger btn-sm">Logout</a>
+                        </div>
+                        {% else %}
                         <form class="d-flex" role="search">
-                            <button class="btn btn-outline-primary" onclick="location.assign('/auth')" type="button">
+                            <button class="btn btn-outline-primary" onclick="location.assign('/auth/?login=true')" type="button">
                                 Login with Google
                             </button>
                         </form>
