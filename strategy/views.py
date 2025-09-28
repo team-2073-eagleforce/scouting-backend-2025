@@ -87,36 +87,50 @@ def picklist(request):
     second_pick_teams = []
     third_pick_teams = []
     dn_pick_teams = []
-    if comp_code == None or comp_code == 'Testing':
+
+    if comp_code is None or comp_code == 'Testing':
         return render(request, "strategy/picklist.html", {'teams': teams})
     else:
-        if len(PickList_Data.objects.filter(event=comp_code)) == 0:
+        # If no picklist exists in the database for this event, fetch from TBA
+        if not PickList_Data.objects.filter(event=comp_code).exists():
             teams_data = get_teams_list(comp_code)
-            for team in teams_data:
-                teams.append(team["team_number"])
-            teams.sort()
-            return render(request, "strategy/picklist.html", {'teams': teams,
-                                                          'comp_code' : comp_code,
-                                                          'no_pick_teams' : no_pick_teams,
-                                                          'first_pick_teams' : first_pick_teams,
-                                                          'second_pick_teams' : second_pick_teams,
-                                                          'third_pick_teams' : third_pick_teams,
-                                                          'dn_pick_teams' : dn_pick_teams,})
-        
+            if isinstance(teams_data, list):
+                for team in teams_data:
+                    if isinstance(team, dict) and 'team_number' in team:
+                        teams.append(team["team_number"])
+                teams.sort()
+            
+            # This will now render correctly even if the API returns an error
+            return render(request, "strategy/picklist.html", {
+                'teams': teams,
+                'comp_code': comp_code,
+                'no_pick_teams': no_pick_teams,
+                'first_pick_teams': first_pick_teams,
+                'second_pick_teams': second_pick_teams,
+                'third_pick_teams': third_pick_teams,
+                'dn_pick_teams': dn_pick_teams,
+            })
+
+        # If a picklist does exist, load the data from it
         picklist_obj = PickList_Data.objects.filter(event=comp_code).first()
-        no_pick_teams = picklist_obj.no_pick if picklist_obj.no_pick else []
-        first_pick_teams = picklist_obj.first_pick if picklist_obj.first_pick else []
-        second_pick_teams = picklist_obj.second_pick if picklist_obj.second_pick else []
-        third_pick_teams = picklist_obj.third_pick if picklist_obj.third_pick else []
-        dn_pick_teams = picklist_obj.dn_pick if picklist_obj.dn_pick else []
-        return render(request, "strategy/picklist.html", {'teams': teams,
-                                                          'comp_code' : comp_code,
-                                                          'no_pick_teams' : no_pick_teams,
-                                                          'first_pick_teams' : first_pick_teams,
-                                                          'second_pick_teams' : second_pick_teams,
-                                                          'third_pick_teams' : third_pick_teams,
-                                                          'dn_pick_teams' : dn_pick_teams})
         
+        if picklist_obj:
+            no_pick_teams = picklist_obj.no_pick or []
+            first_pick_teams = picklist_obj.first_pick or []
+            second_pick_teams = picklist_obj.second_pick or []
+            third_pick_teams = picklist_obj.third_pick or []
+            dn_pick_teams = picklist_obj.dn_pick or []
+        
+        return render(request, "strategy/picklist.html", {
+            'teams': teams,
+            'comp_code': comp_code,
+            'no_pick_teams': no_pick_teams,
+            'first_pick_teams': first_pick_teams,
+            'second_pick_teams': second_pick_teams,
+            'third_pick_teams': third_pick_teams,
+            'dn_pick_teams': dn_pick_teams,
+        })
+    
 @csrf_exempt
 def picklist_submit(request):
     comp_code = request.GET.get('comp')
