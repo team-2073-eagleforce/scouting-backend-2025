@@ -27,15 +27,14 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 ALLOWED_HOSTS = [
     'localhost', 
     '127.0.0.1', 
-    "scouting-app-2024.vercel.app",
-    ".vercel.app",  # Allow all Vercel deployments
+    'scouting.chrisccluk.live',
+    # Allow all Vercel deployments
 ]
 
 # CSRF configuration
 CSRF_TRUSTED_ORIGINS = [
     'https://localhost:8000',
-    'https://scouting-app-2024.vercel.app',
-    'https://*.vercel.app'
+    'https://scouting.chrisccluk.live',
 ]
 
 # Application definition

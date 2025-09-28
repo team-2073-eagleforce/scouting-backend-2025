@@ -25,14 +25,12 @@ client_config = {
         "redirect_uris": [
             "http://localhost:8000/auth/oauth2callback",
             "http://127.0.0.1:8000/auth/oauth2callback",
-            "https://silver-chainsaw-4w5jqgp7xw4fjx96-8000.app.github.dev/auth/oauth2callback",
-            "https://scouting-app-2024.vercel.app/auth/oauth2callback"
+            "https://scouting.chrisccluk.live/oauth2callback",
         ],
         "javascript_origins": [
             "http://localhost:8000",
             "http://127.0.0.1:8000",
-            "https://silver-chainsaw-4w5jqgp7xw4fjx96-8000.app.github.dev",
-            "https://scouting-app-2024.vercel.app"
+            "https://scouting.chrisccluk.live",
         ]
     }
 }
