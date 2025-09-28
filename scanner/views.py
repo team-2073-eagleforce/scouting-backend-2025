@@ -12,7 +12,7 @@ from teams.models import Teams, Team_Match_Data
 
 
 @csrf_exempt  # Only for API endpoint - consider implementing proper CSRF for production
-@login_required
+@authorized_only
 @require_http_methods(["GET", "POST"])
 def scanner(request):
     if request.method == "POST":
