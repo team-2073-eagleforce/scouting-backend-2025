@@ -103,12 +103,12 @@ def picklist(request):
                                                           'third_pick_teams' : third_pick_teams,
                                                           'dn_pick_teams' : dn_pick_teams,})
         
-        picklist_data = PickList_Data.objects.filter(event=comp_code).values()[0]
-        no_pick_teams = picklist_data['no_pick']
-        first_pick_teams = picklist_data['first_pick']
-        second_pick_teams = picklist_data['second_pick']
-        third_pick_teams = picklist_data['third_pick']
-        dn_pick_teams = picklist_data['dn_pick']
+        picklist_obj = PickList_Data.objects.filter(event=comp_code).first()
+        no_pick_teams = picklist_obj.no_pick if picklist_obj.no_pick else []
+        first_pick_teams = picklist_obj.first_pick if picklist_obj.first_pick else []
+        second_pick_teams = picklist_obj.second_pick if picklist_obj.second_pick else []
+        third_pick_teams = picklist_obj.third_pick if picklist_obj.third_pick else []
+        dn_pick_teams = picklist_obj.dn_pick if picklist_obj.dn_pick else []
         return render(request, "strategy/picklist.html", {'teams': teams,
                                                           'comp_code' : comp_code,
                                                           'no_pick_teams' : no_pick_teams,

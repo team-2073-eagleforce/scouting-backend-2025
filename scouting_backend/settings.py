@@ -100,12 +100,11 @@ if DATABASE_URL:
             default=DATABASE_URL,
             conn_max_age=600,
             conn_health_checks=True,
-            options={
-                'MAX_CONNS': 20,
-                'MIN_CONNS': 5,
-            }
         )
     }
+    # Add SSL requirement for production databases
+    if 'postgres' in DATABASE_URL:
+        DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
 else:
     DATABASES = {
         'default': {
@@ -144,6 +143,8 @@ LOGIN_REDIRECT_URL = '/'
 # Crispy Forms settings
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
+
+LOGIN_URL= '/auth/'
 
 # Security settings for production
 if not DEBUG and os.environ.get('ENVIRONMENT') == 'production':
