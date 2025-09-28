@@ -1,0 +1,33 @@
+{
+  "name": "scouting-backend-2025",
+  "version": "1.0.0",
+  "description": "FRC Team 2073 Scouting Backend with modern JavaScript tooling",
+  "main": "frontend/src/index.js",
+  "scripts": {
+    "build": "webpack --mode=production",
+    "dev": "webpack serve --mode=development",
+    "watch": "webpack --mode=development --watch",
+    "lint": "eslint frontend/src/**/*.js",
+    "lint:fix": "eslint frontend/src/**/*.js --fix",
+    "format": "prettier --write frontend/src/**/*.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["frc", "scouting", "robotics", "django", "javascript"],
+  "author": "Team 2073 EagleForce",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.28.3",
+    "@babel/preset-env": "^7.28.3",
+    "babel-loader": "^10.0.0",
+    "css-loader": "^7.1.2",
+    "eslint": "^9.33.0",
+    "eslint-config-prettier": "^10.1.8",
+    "html-webpack-plugin": "^5.6.4",
+    "mini-css-extract-plugin": "^2.9.4",
+    "prettier": "^3.6.2",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.101.2",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.2"
+  }
+}

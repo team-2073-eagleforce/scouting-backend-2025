@@ -16,8 +16,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
-if not SECRET_KEY:
-    SECRET_KEY = ''.join(random.choice(string.ascii_lowercase) for i in range(32))
+if not SECRET_KEY or not SECRET_KEY.strip():
+    SECRET_KEY = ''.join(random.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(50))
+    print("WARNING: Using auto-generated SECRET_KEY. Set SECRET_KEY environment variable for production.")
 
 # Set DEBUG based on environment
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
@@ -92,17 +93,35 @@ TEMPLATES = [
 WSGI_APPLICATION = 'scouting_backend.wsgi.application'
 
 # Database configuration
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
-        conn_max_age=600
-    )
-}
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+            options={
+                'MAX_CONNS': 20,
+                'MIN_CONNS': 5,
+            }
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+            'OPTIONS': {
+                'timeout': 20,
+            }
+        }
+    }
 
 # Static files configuration
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'frontend', 'dist'),  # Built assets from webpack
     os.path.join(BASE_DIR, 'static'),
     os.path.join(BASE_DIR, 'scanner', 'static'),
     os.path.join(BASE_DIR, 'teams', 'static'),
