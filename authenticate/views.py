@@ -5,6 +5,7 @@ import google_auth_oauthlib.flow
 import requests
 
 from constants import AUTHORIZED_EMAIL
+from .models import AuthorizedUser
 
 # Create your views here.
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
@@ -15,45 +16,47 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapi
 
 client_config = {
     "web": {
-        "client_id": "351274848173-0eepc6g5hc4ri03l67rql056p7e6g8nv.apps.googleusercontent.com",
+        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
         "project_id": "scouting-excel-test",
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
         "token_uri": "https://oauth2.googleapis.com/token",
         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
         "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
         "redirect_uris": [
-            "https://silver-chainsaw-4w5jqgp7xw4fjx96-8000.app.github.dev/auth/oauth2callback",
-            "https://scouting-app-2024.vercel.app/auth/oauth2callback"
+            "http://localhost:8000/auth/oauth2callback/",
+            "http://127.0.0.1:8000/auth/oauth2callback/",
+            "https://scouting.chrisccluk.live/"
         ],
         "javascript_origins": [
-            "https://silver-chainsaw-4w5jqgp7xw4fjx96-8000.app.github.dev",
-            "https://scouting-app-2024.vercel.app"
+            "http://localhost:8000",
+            "http://127.0.0.1:8000",
+            "https://scouting.chrisccluk.live"
         ]
     }
 }
 
 
 def authorize(request):
-    flow = google_auth_oauthlib.flow.Flow.from_client_config(
-        client_config=client_config, scopes=SCOPES)
+    # If user is already authenticated, redirect to home
+    if request.session.get('email'):
+        return redirect('/')
+    
+    # Check if this is a direct auth request (from login button)
+    if request.GET.get('login') == 'true':
+        flow = google_auth_oauthlib.flow.Flow.from_client_config(
+            client_config=client_config, scopes=SCOPES)
 
-    # The URI created here must exactly match one of the authorized redirect URIs
-    # for the OAuth 2.0 client, which you configured in the API Console. If this
-    # value doesn't match an authorized URI, you will get a 'redirect_uri_mismatch'
-    # error.
-    flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback')) #"https://silver-chainsaw-4w5jqgp7xw4fjx96-8000.app.github.dev/auth/oauth2callback" #
+        flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
+        print(f"Redirect URI: {flow.redirect_uri}")  # Debug line
 
-    authorization_url, state = flow.authorization_url(
-        # Enable offline access so that you can refresh an access token without
-        # re-prompting the user for permission. Recommended for web server apps.
-        access_type='offline',
-        # Enable incremental authorization. Recommended as a best practice.
-        include_granted_scopes='true')
+        authorization_url, state = flow.authorization_url(
+            access_type='offline',
+            include_granted_scopes='true')
 
-    # Store the state so the callback can verify the auth server response.
-    # session['state'] = state
-
-    return redirect(authorization_url)
+        return redirect(authorization_url)
+    
+    # Otherwise show login page
+    return render(request, 'authenticate/login.html')
 
 
 def oauth2callback(request):
@@ -76,12 +79,28 @@ def oauth2callback(request):
 
     request.session["name"] = r["given_name"] + " " + r["family_name"]
 
-    if r["email"] not in AUTHORIZED_EMAIL: #and r["email"] not in PIT_SCOUT_EMAIL:
-        return "405 UNAUTHORIZED"
-
-    request.session["email"] = r["email"]
-
+    email = r["email"]
+    
+    # Check database for authorization
+    try:
+        AuthorizedUser.objects.get(email=email)
+        is_authorized = True
+    except AuthorizedUser.DoesNotExist:
+        # Fallback to constants file and team2073 check
+        if email in AUTHORIZED_EMAIL or email.endswith('@team2073.com'):
+            is_authorized = email in AUTHORIZED_EMAIL
+        else:
+            return render(request, 'authenticate/unauthorized.html', {'email': email})
+    
+    request.session["email"] = email
+    request.session["is_authorized"] = is_authorized
+    
     return redirect('/')
+
+
+def logout(request):
+    request.session.flush()
+    return redirect('/auth/')
 
 
 def credentials_to_dict(credentials):
