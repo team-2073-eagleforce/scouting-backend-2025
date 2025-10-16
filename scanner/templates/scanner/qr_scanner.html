@@ -14,13 +14,16 @@
     <h6><b>Last Scan Result: </b> <span id="cam-qr-result">None</span></h6>
     
     <div class="my-3">
-        <b id="cache-indicator" class="text-primary">Cached Scans: 0</b>
         <p id="scan-feedback" class="mt-2 font-weight-bold"></p>
     </div>
+    
+    <div class="mb-3">
+        <label for="camera-select" class="form-label">Camera:</label>
+        <select id="camera-select" class="form-select"></select>
+    </div>
+    
     <button class="btn btn-success" id="start-button">Start</button>
     <button class="btn btn-danger" id="stop-button">Stop</button>
-
-    <button class="btn btn-info" id="manual-sync-button">Sync Data</button>
     <hr>
 {% endblock %}
 

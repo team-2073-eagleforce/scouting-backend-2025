@@ -1,152 +1,159 @@
 import QrScanner from "/static/scanner/qr-scanner.min.js";
 
-// --- Global Variables ---
 const video = document.getElementById('qr-video');
 const camQrResult = document.getElementById('cam-qr-result');
-let prevResult = ""; // Used to prevent duplicate processing of the same QR code
+let prevResult = "";
+const pendingScans = new Set();
 
-let scanCache = [];
-const CACHE_LIMIT = 10; // How many scans to hold before sending automatically
-
-// --- Caching Logic ---
-
-/**
- * Saves the current scan cache to the browser's localStorage.
- */
-function saveCache() {
-    localStorage.setItem('scanCache', JSON.stringify(scanCache));
-    updateCacheIndicator();
-}
-
-/**
- * Loads any existing cache from localStorage when the page loads.
- */
-function loadCache() {
-    const cachedData = localStorage.getItem('scanCache');
-    if (cachedData) {
-        scanCache = JSON.parse(cachedData);
-        console.log(`Loaded ${scanCache.length} scans from a previous session.`);
-        // If there's old data, try to send it immediately
-        if (scanCache.length > 0) {
-            sendCachedScans();
+// Validation functions
+function validateScanData(scanData) {
+    const errors = [];
+    
+    const required = ['teamNumber', 'matchNumber', 'name', 'comp_code'];
+    for (const field of required) {
+        if (!scanData[field] || String(scanData[field]).trim() === '') {
+            errors.push(`Missing ${field}`);
         }
     }
-    updateCacheIndicator();
-}
-
-/**
- * Updates the UI element showing the number of cached scans.
- * Make sure you have an element with id="cache-indicator" in your HTML.
- */
-function updateCacheIndicator() {
-    const indicator = document.getElementById('cache-indicator');
-    if (indicator) {
-        indicator.textContent = `Cached Scans: ${scanCache.length}`;
+    
+    const teamNum = parseInt(scanData.teamNumber);
+    if (isNaN(teamNum) || teamNum <= 0 || teamNum > 99999) {
+        errors.push('Invalid team number');
     }
+    
+    const matchNum = parseInt(scanData.matchNumber);
+    if (isNaN(matchNum) || matchNum <= 0 || matchNum > 999) {
+        errors.push('Invalid match number');
+    }
+    
+    const name = String(scanData.name).trim();
+    if (name.length < 2 || name.length > 32) {
+        errors.push('Scout name must be 2-32 characters');
+    }
+    
+    return errors;
 }
 
-/**
- * Handles the result of a successful QR code scan.
- * @param {string} decodedText - The JSON string data from the QR code.
- */
-function handleSuccessfulScan(decodedText) {
-    try {
-        // Prevent processing the same scan multiple times in a row
-        if (decodedText === prevResult) {
-            return;
-        }
-        prevResult = decodedText;
-        camQrResult.textContent = 'Successful Scan!';
+function showValidationDialog(errors, scanData) {
+    const message = `Scan validation failed:\n${errors.join('\n')}\n\nOptions:\n1. Skip this scan\n2. Edit data manually`;
+    
+    if (confirm(message + '\n\nClick OK to edit manually, Cancel to skip')) {
+        return showEditDialog(scanData);
+    }
+    return null;
+}
 
+function showEditDialog(scanData) {
+    const teamNumber = prompt('Team Number:', scanData.teamNumber || '');
+    if (teamNumber === null) return null;
+    
+    const matchNumber = prompt('Match Number:', scanData.matchNumber || '');
+    if (matchNumber === null) return null;
+    
+    const name = prompt('Scout Name:', scanData.name || '');
+    if (name === null) return null;
+    
+    const comp_code = prompt('Competition Code:', scanData.comp_code || '');
+    if (comp_code === null) return null;
+    
+    return {
+        ...scanData,
+        teamNumber: teamNumber.trim(),
+        matchNumber: matchNumber.trim(),
+        name: name.trim(),
+        comp_code: comp_code.trim()
+    };
+}
 
-        const scanData = JSON.parse(decodedText);
-        scanCache.push(scanData);
-        saveCache(); // Save to localStorage after every successful scan
-
-        console.log(`Scan cached. Total cached: ${scanCache.length}`);
-
-        // Provide user feedback
-        const feedbackEl = document.getElementById('scan-feedback');
-        if (feedbackEl) {
-            feedbackEl.textContent = `Scan successful! Cached: ${scanCache.length}`;
-            feedbackEl.style.color = 'green';
-        }
-
-        // If the cache has reached its limit, send the data
-        if (scanCache.length >= CACHE_LIMIT) {
-            sendCachedScans();
-        }
-    } catch (error) {
-        console.error("Failed to parse QR code JSON:", error);
-        const feedbackEl = document.getElementById('scan-feedback');
-        if (feedbackEl) {
-            feedbackEl.textContent = "Error: Invalid QR Code Data.";
-            feedbackEl.style.color = 'red';
-        }
+function showMessage(message, color = 'inherit') {
+    if (camQrResult) {
+        camQrResult.textContent = message;
+        camQrResult.style.color = color;
+        
+        setTimeout(() => {
+            camQrResult.style.color = 'inherit';
+        }, 3000);
+    }
+    
+    const feedbackEl = document.getElementById('scan-feedback');
+    if (feedbackEl) {
+        feedbackEl.textContent = message;
+        feedbackEl.style.color = color;
     }
 }
 
-/**
- * Sends the entire batch of cached scans to the server.
- */
-function sendCachedScans() {
-    if (scanCache.length === 0) {
-        return; // Don't send if there's nothing to send
-    }
-
-    // Get the CSRF token from the Django template
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    if (!csrfToken) {
-        console.error("CSRF token not found!");
+async function handleSuccessfulScan(decodedText) {
+    if (decodedText === prevResult || pendingScans.has(decodedText)) {
         return;
     }
 
-    const feedbackEl = document.getElementById('scan-feedback');
-    if (feedbackEl) {
-        feedbackEl.textContent = `Syncing ${scanCache.length} scans...`;
-        feedbackEl.style.color = 'blue';
+    prevResult = decodedText;
+    pendingScans.add(decodedText);
+    
+    try {
+        const scanData = JSON.parse(decodedText);
+        const errors = validateScanData(scanData);
+        
+        let finalData = scanData;
+        if (errors.length > 0) {
+            showMessage(`Validation errors: ${errors.join(', ')}`, 'red');
+            finalData = showValidationDialog(errors, scanData);
+            
+            if (!finalData) {
+                showMessage('Scan skipped', 'orange');
+                return;
+            }
+            
+            const newErrors = validateScanData(finalData);
+            if (newErrors.length > 0) {
+                showMessage(`Still invalid: ${newErrors.join(', ')}`, 'red');
+                return;
+            }
+        }
+        
+        await sendToServer(finalData);
+        showMessage('Scan successful!', 'green');
+        
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+        
+    } catch (error) {
+        console.error('Failed to process scan:', error);
+        showMessage('Invalid QR code format', 'red');
+    } finally {
+        pendingScans.delete(decodedText);
+    }
+}
+
+async function sendToServer(data) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    if (!csrfToken) {
+        throw new Error('CSRF token not found');
     }
 
-
-    fetch('/scanner/', { // The URL to your Django view
+    const response = await fetch('/scanner/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': csrfToken // Crucial for Django POST requests
+            'X-CSRFToken': csrfToken
         },
-        body: JSON.stringify(scanCache) // Send the entire cache array
-    })
-    .then(response => {
-        if (!response.ok) {
-            // If the server returns an error, we throw an error to keep the data cached
-            throw new Error(`Server responded with status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Successfully sent cached scans:', data);
-        if (feedbackEl) {
-            feedbackEl.textContent = data.confirmation;
-            feedbackEl.style.color = 'green';
-        }
-
-        // If the send was successful, clear the cache
-        scanCache = [];
-        localStorage.removeItem('scanCache');
-        updateCacheIndicator();
-    })
-    .catch((error) => {
-        console.error('Error sending cached scans:', error);
-        if (feedbackEl) {
-            feedbackEl.textContent = "Error sending data. Scans are saved and will be sent later.";
-            feedbackEl.style.color = 'red';
-        }
-        // If there's an error (e.g., no network), the data remains safely in the cache to be sent later
+        body: JSON.stringify(data)
     });
-}
 
-// --- QR Scanner Initialization ---
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        if (response.status === 400 && errorData.error === 'Validation failed') {
+            showMessage('Server rejected data - validation failed', 'red');
+        } else {
+            showMessage('Server error - please try again', 'red');
+        }
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+}
 
 const qrScanner = new QrScanner(video, result => handleSuccessfulScan(result.data), {
     highlightScanRegion: true,
@@ -154,34 +161,22 @@ const qrScanner = new QrScanner(video, result => handleSuccessfulScan(result.dat
 });
 
 qrScanner.start().then(() => {
-    // Optional: Populate a camera dropdown list
     QrScanner.listCameras(true).then(cameras => cameras.forEach(camera => {
         const option = document.createElement('option');
         option.value = camera.id;
         option.text = camera.label;
-        document.getElementById('camera-select')?.appendChild(option); // Add a <select id="camera-select"></select> to your HTML
+        document.getElementById('camera-select')?.appendChild(option);
     }));
 });
 
-
-// --- Event Listeners ---
-
-// When the page first loads, load any data from previous sessions
-window.addEventListener('load', loadCache);
-
-// Also try to send any remaining data when the user closes or navigates away from the page
-// This is a failsafe; the load event is the primary mechanism for data recovery.
-window.addEventListener('beforeunload', sendCachedScans);
-
-// Button listeners
-document.getElementById('start-button').addEventListener('click', () => {
+document.getElementById('start-button')?.addEventListener('click', () => {
     qrScanner.start();
 });
 
-document.getElementById('stop-button').addEventListener('click', () => {
+document.getElementById('stop-button')?.addEventListener('click', () => {
     qrScanner.stop();
 });
 
-// Add a manual sync button in case the user wants to force an upload
-// Make sure you have a <button id="manual-sync-button">Sync Data</button> in your HTML
-document.getElementById('manual-sync-button')?.addEventListener('click', sendCachedScans);
+document.getElementById('camera-select')?.addEventListener('change', (event) => {
+    qrScanner.setCamera(event.target.value);
+});
