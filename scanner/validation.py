@@ -88,10 +88,13 @@ def sanitize_scan_data(scan_data):
     sanitized = {}
     
     # Copy and sanitize string fields
-    string_fields = ['name', 'comp_code', 'comment', 'quantifier']
+    string_fields = ['name', 'comp_code', 'comment']
     for field in string_fields:
         if field in scan_data:
             sanitized[field] = str(scan_data[field]).strip()
+    
+    # Handle quantifier with default
+    sanitized['quantifier'] = str(scan_data.get('quantifier', 'Prac')).strip() or 'Prac'
     
     # Copy and validate numeric fields
     numeric_fields = [
