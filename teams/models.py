@@ -26,6 +26,7 @@ class Teams(models.Model):
         unique_together = ('team_number', 'event')
 
 class Team_Match_Data(models.Model):
+    id = models.AutoField(primary_key=True)
     # Meta Information
     team_number = models.IntegerField()
     event = models.CharField(max_length=16, default="testing")
