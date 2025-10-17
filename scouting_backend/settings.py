@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'teams',
     'strategy',
     'authenticate',
+    'scanner',
 ]
 
 MIDDLEWARE = [
