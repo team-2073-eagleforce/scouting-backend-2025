@@ -80,6 +80,9 @@ class Team_Match_Data(models.Model):
     # Scout Information
     scout_name = models.CharField(max_length=32)
 
+    class Meta:
+        unique_together = ('team_number', 'event', 'match_number')
+
 class Human_Player_Match(models.Model):
     team_number = models.IntegerField()
     match_number = models.IntegerField(default=0)
