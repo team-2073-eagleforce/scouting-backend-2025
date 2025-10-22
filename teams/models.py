@@ -43,30 +43,30 @@ class Team_Match_Data(models.Model):
     missed_auto = models.IntegerField(default=0)
 
     # Auto Period
-    auto_leave = models.IntegerField()
-    auto_L1 = models.IntegerField()
-    auto_L2 = models.IntegerField()
-    auto_L3 = models.IntegerField()
-    auto_L4 = models.IntegerField()
-    auto_net = models.IntegerField()
-    auto_processor = models.IntegerField()
-    auto_removed = models.IntegerField()
+    auto_leave = models.IntegerField(default=0)
+    auto_L1 = models.IntegerField(default=0)
+    auto_L2 = models.IntegerField(default=0)
+    auto_L3 = models.IntegerField(default=0)
+    auto_L4 = models.IntegerField(default=0)
+    auto_net = models.IntegerField(default=0)
+    auto_processor = models.IntegerField(default=0)
+    auto_removed = models.IntegerField(default=0)
 
     # Teleop Period
-    teleL1 = models.IntegerField()
-    teleL2 = models.IntegerField()
-    teleL3 = models.IntegerField()
-    teleL4 = models.IntegerField()
-    telenet = models.IntegerField()
-    teleProcessor = models.IntegerField()
-    teleRemoved = models.IntegerField()
+    teleL1 = models.IntegerField(default=0)
+    teleL2 = models.IntegerField(default=0)
+    teleL3 = models.IntegerField(default=0)
+    teleL4 = models.IntegerField(default=0)
+    telenet = models.IntegerField(default=0)
+    teleProcessor = models.IntegerField(default=0)
+    teleRemoved = models.IntegerField(default=0)
 
     # End Game
-    climb = models.IntegerField()
+    climb = models.IntegerField(default=0)
 
     # Rankings and Comments
-    driver_ranking = models.IntegerField()
-    defense_ranking = models.IntegerField()
+    driver_ranking = models.IntegerField(default=0)
+    defense_ranking = models.IntegerField(default=0)
     comment = models.CharField(max_length=256)
     
     # Status Flags
