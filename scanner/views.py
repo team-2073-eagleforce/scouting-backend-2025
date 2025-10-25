@@ -12,13 +12,16 @@ def scanner(request):
             # Safely parse JSON data
             data_from_post = json.loads(request.body.decode("utf-8"))
 
-            # --- Robust Data Handling and Validation ---
-
             # 1. Get the key identifying fields. We must fail if these are invalid.
             try:
                 team_num = int(data_from_post["teamNumber"])
                 event_code = data_from_post["comp_code"]
                 match_num = int(data_from_post["matchNumber"])
+                
+                scout_name = data_from_post.get("name")
+                if not scout_name:
+                    return JsonResponse({"error": "Missing or empty 'name' field from scout"}, status=400)
+                
             except (KeyError, ValueError, TypeError) as e:
                 return JsonResponse({"error": f"Missing or invalid key identifier: {e}"}, status=400)
 
@@ -44,8 +47,8 @@ def scanner(request):
 
             # 5. Build the 'defaults' dictionary for all other data fields
             #    This is everything we want to update if the match is found.
+            #    Notice 'scout_name' is REMOVED from this dictionary.
             match_data_defaults = {
-                'scout_name': data_from_post.get("name", ""),
                 'quantifier': quantifier_val,
                 'start_pos': get_int_default("startPos", 0),
                 'missed_auto': get_int_default("missed_auto", 0),
@@ -81,13 +84,13 @@ def scanner(request):
             }
 
             # 6. Use update_or_create
-            #    This finds a match based on the key fields (team, event, match).
-            #    If found, it UPDATES it with the 'defaults' dict.
-            #    If not found, it CREATES a new entry.
+            #    This now finds a match based on all four key fields.
+            #    If a different scout scans, it will create a new entry.
             obj, created = Team_Match_Data.objects.update_or_create(
                 team_number=team_num,
                 event=event_code,
                 match_number=match_num,
+                scout_name=scout_name, # <-- THIS IS THE CHANGE
                 defaults=match_data_defaults
             )
 
