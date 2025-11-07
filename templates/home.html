@@ -19,37 +19,83 @@
 <div style="text-align:center">
     <h1>EagleScout</h1>
     <img src="/static/images/EagleForceLogo.png" alt="EagleForce Logo">
-    <h1 id="result"><span id="days"></span> <span id="hours"></span> <span id="mins"></span> <span id="secs"></span> <span id="end"></span> until World Championships!</h1>
+        <h1 id="result"><span id="days"></span> <span id="hours"></span> <span id="mins"></span> <span id="secs"></span> <span id="end"></span> until World Championships!</h1>
     <p id="Exclamation">Einsteinizing!!!</p>
 </div>
 {% endblock %}
 
 {% block Scripts %}
     <script>
-        const countDownDate = new Date("May 06, 2025 12:00:00").getTime();
+        // --- Define all target dates ---
+        const worldsStartDate = new Date("May 06, 2025 12:00:00").getTime();
+        // **NOTE:** Assuming Worlds lasts 4 days (May 6, 7, 8, 9). It's "over" on May 10.
+        // You can change this date to match the actual end of Worlds.
+        const worldsEndDate = new Date("May 10, 2025 00:00:00").getTime(); 
+        const kickoffDate = new Date("January 10, 2026 00:00:00").getTime();
+
+        // Get the elements we need to update
+        const resultEl = document.getElementById("result");
+        const exclamationEl = document.getElementById("Exclamation");
 
         const myfunc = setInterval(function () {
 
             const now = new Date().getTime();
-            const timeleft = countDownDate - now;
 
-            const days = Math.floor(timeleft / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((timeleft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((timeleft % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((timeleft % (1000 * 60)) / 1000);
+            // --- Case 1: Before Worlds Start ---
+            // Show countdown to Worlds
+            if (now < worldsStartDate) {
+                const timeleft = worldsStartDate - now;
+                const days = Math.floor(timeleft / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeleft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeleft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeleft % (1000 * 60)) / 1000);
 
-            document.getElementById("days").innerHTML = days + "d "
-            document.getElementById("hours").innerHTML = hours + "h "
-            document.getElementById("mins").innerHTML = minutes + "m "
-            document.getElementById("secs").innerHTML = seconds + "s "
+                // Update the H1 with the countdown
+                resultEl.innerHTML = 
+                    `<span id="days">${days}d </span>` +
+                    `<span id="hours">${hours}h </span>` +
+                    `<span id="mins">${minutes}m </span>` +
+                    `<span id="secs">${seconds}s </span>` +
+                    `<span id="end"></span> until World Championships!`;
+                
+                // Keep the original exclamation
+                exclamationEl.innerHTML = "Einsteinizing!!!";
+            } 
+            
+            // --- Case 2: During Worlds ---
+            // Show "Good Luck" message
+            else if (now >= worldsStartDate && now < worldsEndDate) {
+                resultEl.innerHTML = "Good Luck at Worlds!";
+                exclamationEl.innerHTML = "Einsteinizing!!!";
+            } 
+            
+            // --- Case 3: After Worlds, Before Kickoff (Off-Season) ---
+            // Show "Off Season" message and countdown to Kickoff
+            else if (now >= worldsEndDate && now < kickoffDate) {
+                const timeleft = kickoffDate - now;
+                const days = Math.floor(timeleft / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeleft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeleft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeleft % (1000 * 60)) / 1000);
 
-            if (timeleft < 0) {
+                // Update H1 with the *new* countdown
+                resultEl.innerHTML = 
+                    `<span id="days">${days}d </span>` +
+                    `<span id="hours">${hours}h </span>` +
+                    `<span id="mins">${minutes}m </span>` +
+                    `<span id="secs">${seconds}s </span>` +
+                    `<span id="end"></span> until Kickoff!`;
+                
+                // Update the exclamation to the "Off Season" message
+                exclamationEl.innerHTML = "Good Luck in Off Season!";
+            } 
+            
+            // --- Case 4: After Kickoff ---
+            // Stop the timer and show a final message
+            else {
                 clearInterval(myfunc);
-                document.getElementById("days").innerHTML = ""
-                document.getElementById("hours").innerHTML = ""
-                document.getElementById("mins").innerHTML = ""
-                document.getElementById("secs").innerHTML = ""
-                document.getElementById("result").innerHTML = "Good Luck at Worlds!";
+                resultEl.innerHTML = "Good luck this season!";
+                exclamationEl.innerHTML = ""; // Clear the exclamation
             }
         }, 1000);
     </script>
