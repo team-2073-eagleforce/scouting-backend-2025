@@ -23,8 +23,9 @@ def admin_panel(request):
     # Get all authorized users
     users = AuthorizedUser.objects.all().order_by('email')
     
-    # Get unique competitions from Team_Match_Data
-    competitions = Team_Match_Data.objects.values_list('event', flat=True).distinct().order_by('event')
+    # Get unique competitions with names
+    from api.tba import get_team_events
+    event_map = get_team_events()  # Returns {code: name}
     
     # Get scout leaderboard for the competition
     leaderboard = Team_Match_Data.objects.filter(event=comp_code).values('scout_name').annotate(
@@ -35,7 +36,7 @@ def admin_panel(request):
         'users': users,
         'leaderboard': leaderboard,
         'comp_code': comp_code,
-        'competitions': competitions
+        'event_map': event_map
     })
 
 @admin_required

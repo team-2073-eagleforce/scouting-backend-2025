@@ -182,8 +182,8 @@
             <form method="GET">
                 <label for="comp">Competition:</label>
                 <select name="comp" id="comp" onchange="this.form.submit()">
-                    {% for comp in competitions %}
-                    <option value="{{ comp }}" {% if comp == comp_code %}selected{% endif %}>{{ comp }}</option>
+                    {% for code, name in event_map.items %}
+                    <option value="{{ code }}" {% if code == comp_code %}selected{% endif %}>{{ name }}</option>
                     {% endfor %}
                 </select>
             </form>
