@@ -2,15 +2,16 @@ import os
 
 import requests
 
-import constants
+from utils import config_loader
 
 TEAM_KEY = "frc2073"
-YEAR = str(constants.CONST_YEAR)
 X_TBA_Auth_Key = os.environ.get("X_TBA_AUTH_KEY")
 
 
 def get_team_events():
-    team_events = requests.get(f"https://www.thebluealliance.com/api/v3/team/{TEAM_KEY}/events/{YEAR}",
+    config = config_loader.get_config()
+    year = str(config.get('year', 2025))
+    team_events = requests.get(f"https://www.thebluealliance.com/api/v3/team/{TEAM_KEY}/events/{year}",
                                headers={"X-TBA-Auth-Key": X_TBA_Auth_Key})
     events = {}
     for event in team_events.json():

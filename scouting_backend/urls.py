@@ -7,9 +7,10 @@ from teams import views as team_views
 from scanner import views as scanner_views
 from strategy import views as strategy_views
 from authenticate import views as auth_views
+from authenticate import views_admin as admin_views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # path('admin/', admin.site.urls),  # Disabled Django admin
     path('', team_views.home, name='home'),
     path('scanner/', scanner_views.scanner, name='scanner'),
     path('teams/', team_views.display_teams, name='teams'),
@@ -23,4 +24,7 @@ urlpatterns = [
     path('strategy/picklist/submit/', strategy_views.picklist_submit, name='picklist_submit'),
     path('api/get_path_data/<int:team_number>/', strategy_views.get_path_data, name='get_path_data'),
     path("auth/", include("authenticate.urls")),
+    path('admin-panel/', admin_views.admin_panel, name='admin_panel'),
+    path('admin-panel/add-user/', admin_views.add_user, name='add_user'),
+    path('admin-panel/remove-user/<int:user_id>/', admin_views.remove_user, name='remove_user'),
 ]

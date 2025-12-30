@@ -1,5 +1,7 @@
 {
   "version": "2025_reefscape",
+  "home_team": 2073,
+  "year": 2025,
   "metrics": [
     {
       "key": "auto_leave",

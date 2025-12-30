@@ -84,15 +84,12 @@ def oauth2callback(request):
     email = r["email"]
     
     # Check database for authorization
-    try:
-        AuthorizedUser.objects.get(email=email)
+    if AuthorizedUser.objects.filter(email=email).exists():
         is_authorized = True
-    except AuthorizedUser.DoesNotExist:
-        # Fallback to constants file and team2073 check
-        if email in AUTHORIZED_EMAIL or email.endswith('@team2073.com'):
-            is_authorized = email in AUTHORIZED_EMAIL
-        else:
-            return render(request, 'authenticate/unauthorized.html', {'email': email})
+    elif email in AUTHORIZED_EMAIL or email.endswith('@team2073.com'):
+        is_authorized = True
+    else:
+        return render(request, 'authenticate/unauthorized.html', {'email': email})
     
     request.session["email"] = email
     request.session["is_authorized"] = is_authorized
