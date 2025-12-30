@@ -1,5 +1,6 @@
 {% extends 'index.html' %}
 {% load static %}
+{% load scouting_extras %}
 
 {% block Title %}Rankings{% endblock %}
 
@@ -31,7 +32,7 @@
         <select name="quantifier" id="quantifier" onchange="this.form.submit()">
             <option value="Prac" {% if selected_quantifier == 'Prac' %}selected{% endif %}>Prac</option>
             <option value="Quals" {% if selected_quantifier == 'Quals' %}selected{% endif %}>Quals</option>
-            <option value="Play Off" {% if selected_quantifier == 'Play Off' %}selected{% endif %}>Play Off</option>
+            <option value="Playoff" {% if selected_quantifier == 'Playoff' %}selected{% endif %}>Playoff</option>
         </select>
     </form>
 
@@ -40,42 +41,20 @@
             <thead>
                 <tr class="sticky-top" style="background-color: gray">
                     <th>Rank</th>
-                    <th onclick="sortTable(1, 'team_number')">Team Number</th>
-                    <th onclick="sortTable(2, 'autoleave')">Auto Leave</th>
-                    <th onclick="sortTable(3, 'auto')">Auto Total</th>
-                    <th onclick="sortTable(4, 'L1')">L1 Total</th>
-                    <th onclick="sortTable(5, 'L2')">L2 Total</th>
-                    <th onclick="sortTable(6, 'L3')">L3 Total</th>
-                    <th onclick="sortTable(7, 'L4')">L4 Total</th>
-                    <th onclick="sortTable(8, 'net')">Net Total</th>
-                    <th onclick="sortTable(9, 'missed_auto')">Auto Missed</th>
-                    <th onclick="sortTable(10, 'processor')">Processor</th>
-                    <th onclick="sortTable(11, 'removed')">Removed</th>
-                    <th onclick="sortTable(12, 'climb')">Climb</th>
-                    <th onclick="sortTable(13, 'total')">Total</th>
-                    <th onclick="sortTable(14, 'defense')">Defense</th>
-                    <th onclick="sortTable(15, 'start_pos')">Start Position</th>
+                    <th onclick="sortTable(1, 'team_number')">Team #</th>
+                    {% for metric in config_metrics %}
+                        <th onclick="sortTable({{ forloop.counter|add:1 }}, '{{ metric.key }}')">{{ metric.display_name }}</th>
+                    {% endfor %}
                 </tr>
             </thead>
             <tbody>
-                {% for team_number, team_stats in team_averages.items %}
+                {% for team_number, stats in team_averages.items %}
                     <tr class="data">
                         <td class="rank">{{ forloop.counter }}</td>
-                        <td><a href="{% url 'team_page' team_number %}">{{ team_number }}</a></td>
-                        <td class="autoleave">{{ team_stats.autoleave }}</td>
-                        <td class="auto">{{ team_stats.auto }}</td>
-                        <td class="L1">{{ team_stats.L1 }}</td>
-                        <td class="L2">{{ team_stats.L2 }}</td>
-                        <td class="L3">{{ team_stats.L3 }}</td>
-                        <td class="L4">{{ team_stats.L4 }}</td>
-                        <td class="net">{{ team_stats.net }}</td>
-                        <td class="missed_auto">{{ team_stats.missed_auto }}</td>
-                        <td class="processor">{{ team_stats.processor }}</td>
-                        <td class="removed">{{ team_stats.removed }}</td>
-                        <td class="climb">{{ team_stats.climb }}</td>
-                        <td class="total">{{ team_stats.total }}</td>
-                        <td class="defense">{{ team_stats.defense }}</td>
-                        <td class="start_pos">{{ team_stats.start_pos }}</td>
+                        <td><a href="{% url 'team_page' team_number %}?comp={{ comp_code }}">{{ team_number }}</a></td>
+                        {% for metric in config_metrics %}
+                            <td class="{{ metric.key }}">{{ stats|get_item:metric.key }}</td>
+                        {% endfor %}
                     </tr>
                 {% endfor %}
             </tbody>

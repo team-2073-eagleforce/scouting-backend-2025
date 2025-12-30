@@ -51,27 +51,21 @@ def write_json_picklist(comp_code, data):
 # @login_required
 def rankings(request):
     comp_code = request.GET.get('comp')
-    quantifier = request.GET.get('quantifier', 'Quals')  # default to Quals if not provided
+    quantifier = request.GET.get('quantifier', 'Quals')
+    config = config_loader.get_config()
     
-    # Get distinct team numbers that have match data for this competition and quantifier
-    teams_with_data = models.Team_Match_Data.objects.filter(
-        event=comp_code,
-        quantifier=quantifier
-    ).values_list('team_number', flat=True).distinct()
-    
-    # Alternative approach using your Teams model
     teams = models.Teams.objects.filter(event=comp_code).order_by("team_number")
-    
     team_averages = {}
+    
     for team in teams:
-        # Check if this team has match data for this competition
-        if team.team_number in teams_with_data:
+        if models.Team_Match_Data.objects.filter(team_number=team.team_number, event=comp_code, quantifier=quantifier).exists():
             team_averages[team.team_number] = fetch_team_match_averages(team.team_number, comp_code, quantifier)
             
     return render(request, "strategy/rankings.html", {
         'team_averages': team_averages,
         'comp_code': comp_code,
         'selected_quantifier': quantifier,
+        'config_metrics': config.get('metrics', [])
     })
 
 # @login_required
@@ -236,10 +230,9 @@ def dashboard(request):
     return render(request, "strategy/dashboard.html")
 
 def fetch_team_match_averages(team_number, comp_code, quantifier):
-    """Dynamic calculation of team averages based on game_config.json"""
+    """Dynamic calculation of team averages based on game_config.json with legacy key support"""
     config = config_loader.get_config()
     
-    # Get all match data for this team
     team_match_data = models.Team_Match_Data.objects.filter(
         team_number=team_number,
         event=comp_code,
@@ -250,17 +243,26 @@ def fetch_team_match_averages(team_number, comp_code, quantifier):
     if not team_match_data.exists():
         return {}
     
-    # Calculate averages dynamically
     result = {}
     
     for metric in config['metrics']:
         key = metric['key']
         aggregation = metric.get('aggregation', 'avg')
+        legacy_keys = metric.get('legacy_keys', [])
         
-        # Extract values from data JSONField
+        # Extract values with legacy key fallback
         values = []
         for match in team_match_data:
+            # Try current key first
             value = match.data.get(key)
+            
+            # If not found, try legacy keys
+            if value is None and legacy_keys:
+                for legacy_key in legacy_keys:
+                    value = match.data.get(legacy_key)
+                    if value is not None:
+                        break
+            
             if value is not None:
                 values.append(float(value))
         

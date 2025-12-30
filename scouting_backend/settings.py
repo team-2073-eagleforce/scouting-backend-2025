@@ -21,7 +21,7 @@ if not SECRET_KEY or not SECRET_KEY.strip():
     print("WARNING: Using auto-generated SECRET_KEY. Set SECRET_KEY environment variable for production.")
 
 # Set DEBUG based on environment
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+DEBUG = True  # Temporarily enabled for debugging
 
 ALLOWED_HOSTS = [
     'localhost', 
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'crispy_forms',
     "crispy_bootstrap4",
+    'scouting_backend',
     'teams',
     'strategy',
     'authenticate',
@@ -142,7 +143,8 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # Security settings for production
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    # Disable SSL redirect if behind a proxy that handles HTTPS
+    # SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True

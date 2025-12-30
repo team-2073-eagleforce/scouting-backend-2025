@@ -1,212 +1,90 @@
 {% extends 'index.html' %}
 {% load static %}
+{% load scouting_extras %}
 
-{% block Title %} Team {{ team_number }}{% endblock %}
+{% block Title %}Team {{ team_number }}{% endblock %}
 
 {% block Content %}
 <h2>Team {{ team_number }}</h2>
-<input type="hidden" id="team_number" value="{{ team_number }}">
 
-{% if team.pit_scout_status == True %}
-<div class="row">
-    <div class="col-8">
-        <span><b>Drivetrain: </b>{{ team.drivetrain }}</span> <br> <br>
-        <span><b>Length x Width (Bumper): </b>{{ team.length }} x {{ team.width }}</span> <br> <br>
-        <span><b>Weight: </b>{{ team.weight }}</span> <br> <br>
-        <span><b>Intake Design: </b>{{ team.intake_design }}</span> <br> <br>
-        <span><b>Under Shallow: </b>{{ team.under_shallow }}</span> <br> <br>
-        <span><b>Ball Remover?: </b>{{ team.algae_picker }}</span> <br> <br>
-        <span><b>Intake Locations: </b>{{ team.intake_locations }}</span> <br> <br>
-        <span><b>Scoring Locations: </b>{{ team.scoring_locations }}</span> <br> <br>
-        <span><b>Cage Positions: </b>{{ team.cage_positions }}</span> <br> <br>
-        <span><b>Auto Positions: </b>{{ team.auto_positions }}</span> <br> <br>
-        <span><b>Auto Leave: </b>{{ team.auto_leave }}</span> <br> <br>
-        <span><b>Auto Algae Max: </b>{{ team.auto_algae_max }}</span> <br> <br>
-        <span><b>Auto Coral Max: </b>{{ team.auto_coral_max }}</span> <br> <br>
-        <span><b>Additional Info: </b> {{ team.additional_info }}</span> <br> <br>
-        <a href="{% url 'pit_scouting' team_number %}?comp={{ request.GET.comp }}">Update Info</a>
-    </div>
-    <div class="col-4">
-        {% if team.robot_picture %}
-        <img src="{{ team.robot_picture }}" alt="Robot Picture" class="img-thumbnail">
-        {% else %}
-        <p>No robot picture available.</p>
-        {% endif %}
+{% if team %}
+<div class="card mb-4">
+    <div class="card-header">Pit Data</div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                {% if team.pit_scout_status %}
+                    {% for key, value in team.pit_data.items %}
+                        <p><b>{{ key|title }}:</b> 
+                        {% if value is not None %}
+                            {% if value is iterable and value is not string %}
+                                {{ value|join:", " }}
+                            {% else %}
+                                {{ value }}
+                            {% endif %}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                        </p>
+                    {% empty %}
+                        <p>No Pit Data Collected</p>
+                    {% endfor %}
+                    <a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}" class="btn btn-sm btn-warning">Edit Pit Data</a>
+                {% else %}
+                    <p>No Pit Data Collected</p>
+                    <a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}" class="btn btn-sm btn-primary">Pit Scout</a>
+                {% endif %}
+            </div>
+            <div class="col-md-4">
+                {% if team.robot_picture %}
+                    <img src="{{ team.robot_picture }}" class="img-fluid rounded" alt="Robot Picture">
+                {% else %}
+                    <p>No robot picture available.</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
-{% else %}
-<a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}">Pit Scout</a>
 {% endif %}
 
-<!-- Match Data Table with Button in Separate Section -->
-<div class="button-section">
-    <button id="toggleComments" class="btn btn-sm btn-secondary">Show All Comments</button>
-    <button id="togglePaths" class="btn btn-sm btn-secondary">Show All Paths</button>
-</div>
-
+<h3>Match History</h3>
 <div class="table-responsive">
-    <table id="match_data" class="table table-bordered">
-        <thead>
+    <table class="table table-bordered table-sm" id="match_data">
+        <thead class="thead-light">
             <tr>
                 <th>Match</th>
-                <th>Leave</th>
-                <th>A-L1</th>
-                <th>A-L2</th>
-                <th>A-L3</th>
-                <th>A-L4</th>
-                <th>A-Net</th>
-                <th>A-Proc</th>
-                <th>A-Rem</th>
-                <th>T-L1</th>
-                <th>T-L2</th>
-                <th>T-L3</th>
-                <th>T-L4</th>
-                <th>T-Net</th>
-                <th>T-Proc</th>
-                <th>T-Rem</th>
-                <th>Climb</th>
-                <th>Driver</th>
-                <th>Defense</th>
-                <th>Start Position</th>
-                <th>Missed-Auto</th>
-                <th id="path_column">Auto Path</th>
-                <th id="comments_column">Comments</th>
-                <th>Scout Name</th>
+                {% for metric in config_metrics %}
+                    <th>{{ metric.display_name }}</th>
+                {% endfor %}
+                <th>Scout</th>
+                <th>Comments</th>
             </tr>
         </thead>
         <tbody>
             {% for match in all_team_match_data %}
             <tr>
-                <td>{{ match.match_number }}{% if match.quantifier %}-{{ match.quantifier }}{% endif %}</td>
-                <td>{{ match.auto_leave }}</td>
-                <td>{{ match.auto_L1 }}</td>
-                <td>{{ match.auto_L2 }}</td>
-                <td>{{ match.auto_L3 }}</td>
-                <td>{{ match.auto_L4 }}</td>
-                <td>{{ match.auto_net }}</td>
-                <td>{{ match.auto_processor }}</td>
-                <td>{{ match.auto_removed }}</td>
-                <td>{{ match.teleL1 }}</td>
-                <td>{{ match.teleL2 }}</td>
-                <td>{{ match.teleL3 }}</td>
-                <td>{{ match.teleL4 }}</td>
-                <td>{{ match.telenet }}</td>
-                <td>{{ match.teleProcessor }}</td>
-                <td>{{ match.teleRemoved }}</td>
-                <td>{{ match.climb }}</td>
-                <td>{{ match.driver_ranking }}</td>
-                <td>{{ match.defense_ranking }}</td>
-                <td>{{ match.start_pos }}</td>
-                <td>{{ match.missed_auto }}</td>
-                <td>
-                    {% if match.auto_path %}
-                    <div class="path-container">
-                        <a href="#" class="path-toggle">View Path</a>
-                        <div class="path-content" style="display: none;">
-                            {{ match.auto_path }}
-                        </div>
-                    </div>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if match.is_broken == 1 or match.is_disabled == 1 or match.is_tipped == 1 %}
-                    <div class="status-container">
-                        {% if match.is_broken == 1 %}<span class="status-broken">Broken</span>{% endif %}
-                        {% if match.is_disabled == 1 %}<span class="status-disabled">Disabled</span>{% endif %}
-                        {% if match.is_tipped == 1 %}<span class="status-tipped">Tipped</span>{% endif %}
-                    </div>
-                    {% endif %}
-                    {% if match.comment %}
-                    <div class="comment-container">
-                        <a href="#" class="comment-toggle">View Comment</a>
-                        <div class="comment-content" style="display: none;">
-                            {{ match.comment }}
-                        </div>
-                    </div>
-                    {% endif %}
-                </td>
+                <td>{{ match.match_number }} ({{ match.quantifier }})</td>
+                
+                {% for metric in config_metrics %}
+                    <td>{{ match.data|get_item:metric.key|default:"0" }}</td>
+                {% endfor %}
+                
                 <td>{{ match.scout_name }}</td>
+                <td>
+                    {% if match.is_broken %}<span class="badge bg-danger">Broken</span>{% endif %}
+                    {% if match.is_disabled %}<span class="badge bg-warning">Disabled</span>{% endif %}
+                    {% if match.is_tipped %}<span class="badge bg-info">Tipped</span>{% endif %}
+                    {{ match.comment }}
+                </td>
             </tr>
             {% empty %}
-            <tr>
-                <td colspan="23" class="text-center">No match data available</td>
-            </tr>
+            <tr><td colspan="100%" class="text-center">No match data found.</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
-<!-- Replay System Section -->
-<h3>Auto Path Replay</h3>
-<div class="replay-container">
-    <select id="pathSelector" class="form-control mb-2">
-        <option value="">Select a match to replay</option>
-        {% for match in all_team_match_data %}
-            {% if match.auto_path %}
-                <option value="{{ match.match_number }}" data-scout="{{ match.scout_name }}">
-                    Match {{ match.match_number }}
-                    {% if match.quantifier %}-{{ match.quantifier }}{% endif %}
-                    {% if match.scout_name %} (Scout: {{ match.scout_name }}){% endif %}
-                </option>
-            {% endif %}
-        {% endfor %}
-    </select>
-
-    <div class="d-flex">
-        <div class="replay-canvas-container">
-            <img src="{% static 'images/replays.png' %}" alt="Auto Map" style="width: 100%; max-width: 800px;">
-            <canvas id="replayCanvas" style="position: absolute; top: 0; left: 0; width: 100%; max-width: 800px; height: auto;"></canvas>
-        </div>
-        <div class="path-info ms-3">
-            <p>Position: <span id="currentPosition">0</span> / <span id="totalPositions">0</span></p>
-        </div>
-    </div>
-
-    <div class="controls mt-2">
-        <button id="backButton" class="btn btn-secondary">Back</button>
-        <button id="playButton" class="btn btn-primary">Play</button>
-        <button id="pauseButton" class="btn btn-secondary">Pause</button>
-        <button id="forwardButton" class="btn btn-secondary">Forward</button>
-        <button id="resetButton" class="btn btn-warning">Reset</button>
-    </div>
-</div>
-
-<!-- Include the external JavaScript file -->
-<script src="{% static 'team/replay_system.js' %}"></script>
-
 <style>
-
-    .status-container {
-        margin-bottom: 5px;
-    }
-
-    .status-broken, .status-disabled, .status-tipped {
-        padding: 2px 5px;
-        border-radius: 3px;
-        font-size: 0.8em;
-        margin-right: 3px;
-        display: inline-block;
-    }
-
-    .status-broken {
-        background-color: #ffcccc;
-        color: #cc0000;
-        border: 1px solid #cc0000;
-    }
-
-    .status-disabled {
-        background-color: #ffffcc;
-        color: #666600;
-        border: 1px solid #666600;
-    }
-
-    .status-tipped {
-        background-color: #ccffcc;
-        color: #006600;
-        border: 1px solid #006600;
-    }
-
-    /* Table Styles */
     #match_data thead th {
         position: -webkit-sticky;
         position: sticky;
@@ -219,140 +97,7 @@
     .table-responsive {
         max-height: 600px;
         overflow: auto;
-        position: relative;
-    }
-
-    /* Button Section */
-    .button-section {
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        background-color: white;
-        padding: 10px 0;
-        border-bottom: 1px solid #dee2e6;
-        margin-bottom: 0;
-        display: flex;
-        gap: 10px;
-    }
-
-    /* Comment and Path Styles */
-    .comment-toggle, .path-toggle {
-        color: #007bff;
-        text-decoration: none;
-        cursor: pointer;
-    }
-    
-    .comment-toggle:hover, .path-toggle:hover {
-        text-decoration: underline;
-    }
-    
-    .comment-content, .path-content {
-        margin-top: 5px;
-        padding: 5px;
-        background-color: #f8f9fa;
-        border-radius: 3px;
-        border-left: 3px solid #6c757d;
-        word-wrap: break-word;
-    }
-
-    /* Replay System Styles */
-    .replay-container {
-        max-width: 800px;
-        margin: 20px auto;
-    }
-    
-    .replay-canvas-container {
-        position: relative;
-        flex: 1;
-    }
-    
-    .path-info {
-        width: 150px;
-        padding: 10px;
-        background-color: #f8f9fa;
-        border-radius: 5px;
-    }
-    
-    .controls {
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-        margin-top: 10px;
     }
 </style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Comment Toggle - In-place expansion
-    document.querySelectorAll('.comment-toggle').forEach(toggle => {
-        toggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const commentContent = this.nextElementSibling;
-            if (commentContent.style.display === 'none' || !commentContent.style.display) {
-                commentContent.style.display = 'block';
-                this.textContent = 'Hide Comment';
-            } else {
-                commentContent.style.display = 'none';
-                this.textContent = 'View Comment';
-            }
-        });
-    });
-
-    // Path Toggle - In-place expansion (same functionality as comments)
-    document.querySelectorAll('.path-toggle').forEach(toggle => {
-        toggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const pathContent = this.nextElementSibling;
-            if (pathContent.style.display === 'none' || !pathContent.style.display) {
-                pathContent.style.display = 'block';
-                this.textContent = 'Hide Path';
-            } else {
-                pathContent.style.display = 'none';
-                this.textContent = 'View Path';
-            }
-        });
-    });
-
-    // Toggle All Comments
-    const toggleCommentsButton = document.getElementById('toggleComments');
-    let showAllComments = false;
-    
-    toggleCommentsButton.addEventListener('click', function(e) {
-        e.preventDefault();
-        showAllComments = !showAllComments;
-        
-        document.querySelectorAll('.comment-content').forEach(content => {
-            content.style.display = showAllComments ? 'block' : 'none';
-        });
-        
-        document.querySelectorAll('.comment-toggle').forEach(toggle => {
-            toggle.textContent = showAllComments ? 'Hide Comment' : 'View Comment';
-        });
-        
-        this.textContent = showAllComments ? 'Hide All Comments' : 'Show All Comments';
-    });
-
-    // Toggle All Paths
-    const togglePathsButton = document.getElementById('togglePaths');
-    let showAllPaths = false;
-    
-    togglePathsButton.addEventListener('click', function(e) {
-        e.preventDefault();
-        showAllPaths = !showAllPaths;
-        
-        document.querySelectorAll('.path-content').forEach(content => {
-            content.style.display = showAllPaths ? 'block' : 'none';
-        });
-        
-        document.querySelectorAll('.path-toggle').forEach(toggle => {
-            toggle.textContent = showAllPaths ? 'Hide Path' : 'View Path';
-        });
-        
-        this.textContent = showAllPaths ? 'Hide All Paths' : 'Show All Paths';
-    });
-});
-</script>
 
 {% endblock %}

@@ -1,33 +1,67 @@
 {% extends 'index.html' %}
-{% load static %}
-
 {% load crispy_forms_tags %}
+{% load scouting_extras %}
 
-{% block Title %} Pit Scouting {% endblock %}
-
-{% block Styles %}
-    <style>
-        .asteriskField {
-            display: none;
-        }
-        .requiredField {
-            font-weight: bold;
-        }
-
-        #auto_map {
-            width: 400px;
-        }
-
-    </style>
-{% endblock %}
+{% block Title %}Pit Scouting - Team {{ team_number }}{% endblock %}
 
 {% block Content %}
-    <h2>Pit Scouting - Team {{ team_number }}</h2>
-    <div class="pit_scout">
-        <form method="POST" enctype="multipart/form-data" action="?comp={{ request.GET.comp }}">
-            {% csrf_token %}
-            {% crispy form %}
-        </form>
+<h2>Pit Scouting - Team {{ team_number }}</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    {% for q in questions %}
+        <div class="form-group mb-3">
+            <label><b>{{ q.display_name }}</b></label>
+            
+            {% if q.type == "text" %}
+                <input type="text" name="{{ q.key }}" class="form-control" 
+                       value="{{ existing_data|get_item:q.key|default:'' }}">
+            
+            {% elif q.type == "number" %}
+                <input type="number" name="{{ q.key }}" class="form-control"
+                       value="{{ existing_data|get_item:q.key|default:'' }}"
+                       {% if q.min %}min="{{ q.min }}"{% endif %}
+                       {% if q.max %}max="{{ q.max }}"{% endif %}>
+
+            {% elif q.type == "select" %}
+                <select name="{{ q.key }}" class="form-control">
+                    <option value="">-- Select --</option>
+                    {% for opt in q.options %}
+                        <option value="{{ opt }}" 
+                            {% if existing_data|get_item:q.key == opt %}selected{% endif %}>
+                            {{ opt }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+            {% elif q.type == "multiselect" %}
+                {% for opt in q.options %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="{{ q.key }}" value="{{ opt }}"
+                            {% if existing_data and opt in existing_data|get_item:q.key %}checked{% endif %}>
+                        <label class="form-check-label">{{ opt }}</label>
+                    </div>
+                {% endfor %}
+
+            {% elif q.type == "textarea" %}
+                <textarea name="{{ q.key }}" class="form-control" rows="3">{{ existing_data|get_item:q.key|default:'' }}</textarea>
+
+            {% elif q.type == "boolean" %}
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="{{ q.key }}"
+                        {% if existing_data|get_item:q.key %}checked{% endif %}>
+                    <label class="form-check-label">Yes</label>
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <div class="form-group mb-3">
+        <label><b>Robot Picture</b></label>
+        <input type="file" name="robot_picture" class="form-control" accept="image/*">
     </div>
-    <img src="/static/images/Auto_Map.jpg" alt="auto_map" id="auto_map">
+
+    <button type="submit" class="btn btn-primary btn-lg">Submit Data</button>
+</form>
 {% endblock %}
