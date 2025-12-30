@@ -51,13 +51,13 @@ echo ""
 # Step 1: Upgrade pip
 echo "[1/6] Upgrading pip..."
 $PYTHON_CMD -m pip install --upgrade pip --quiet
-echo "✓ pip upgraded"
+echo "pip upgraded"
 echo ""
 
 # Step 2: Install Python dependencies
 echo "[2/6] Installing Python dependencies..."
 $PIP_CMD install --no-cache-dir -r requirements.txt --quiet
-echo "✓ Python dependencies installed"
+echo "Python dependencies installed"
 echo ""
 
 # Step 3: Install Node.js dependencies
@@ -67,26 +67,26 @@ if [ -f "package-lock.json" ]; then
 else
     npm install --quiet
 fi
-echo "✓ Node.js dependencies installed"
+echo "Node.js dependencies installed"
 echo ""
 
 # Step 4: Build frontend assets
 echo "[4/6] Building frontend assets with Webpack..."
 npm run build
-echo "✓ Frontend assets built"
+echo "Frontend assets built"
 echo ""
 
 # Step 5: Collect static files
 echo "[5/6] Collecting Django static files..."
 $PYTHON_CMD manage.py collectstatic --no-input
-echo "✓ Static files collected"
+echo "Static files collected"
 echo ""
 
 # Step 6: Run database migrations (optional, can be disabled)
 if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
     echo "[6/6] Running database migrations..."
     $PYTHON_CMD manage.py migrate --no-input
-    echo "✓ Migrations applied"
+    echo "Migrations applied"
 else
     echo "[6/6] Skipping migrations (RUN_MIGRATIONS=false)"
 fi

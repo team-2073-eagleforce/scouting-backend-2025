@@ -364,7 +364,10 @@ python manage.py collectstatic --no-input
 
 Ensure `STATIC_ROOT` is set in `settings.py`.
 
-## Contributing
+## Documentation
+
+- [Configuration Guide](CONFIG_GUIDE.md) - Complete guide to creating game configurations
+- [Phase 4 Complete](PHASE4_COMPLETE.md) - Final implementation summary
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
