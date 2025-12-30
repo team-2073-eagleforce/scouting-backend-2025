@@ -364,10 +364,7 @@ python manage.py collectstatic --no-input
 
 Ensure `STATIC_ROOT` is set in `settings.py`.
 
-## Documentation
-
-- [Configuration Guide](CONFIG_GUIDE.md) - Complete guide to creating game configurations
-- [Phase 4 Complete](PHASE4_COMPLETE.md) - Final implementation summary
+## Contributions
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -388,4 +385,4 @@ Developed by FRC Team 2073 EagleForce
 For issues or questions:
 - Open a GitHub issue
 - Contact team leadership
-- Check documentation links above
+- ChatGPT
