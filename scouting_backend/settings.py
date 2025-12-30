@@ -21,7 +21,7 @@ if not SECRET_KEY or not SECRET_KEY.strip():
     print("WARNING: Using auto-generated SECRET_KEY. Set SECRET_KEY environment variable for production.")
 
 # Set DEBUG based on environment
-DEBUG = True  # Temporarily enabled for debugging
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = [
     'localhost', 
@@ -32,7 +32,7 @@ ALLOWED_HOSTS = [
 # CSRF configuration
 CSRF_TRUSTED_ORIGINS = [
     'https://localhost:8000',
-    'https://scouting.chrisccluk.live/'
+    'https://scouting.chrisccluk.live'
 ]
 
 # Application definition
@@ -143,8 +143,9 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 # Security settings for production
 if not DEBUG:
-    # Disable SSL redirect if behind a proxy that handles HTTPS
-    # SECURE_SSL_REDIRECT = True
+    # Proxy SSL configuration - fixes OAuth redirect_uri_mismatch
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True

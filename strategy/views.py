@@ -48,7 +48,7 @@ def write_json_picklist(comp_code, data):
     with open(json_path, 'w') as f:
         json.dump(json_data, f)
 
-# @login_required
+@login_required
 def rankings(request):
     comp_code = request.GET.get('comp')
     quantifier = request.GET.get('quantifier', 'Quals')
@@ -68,7 +68,7 @@ def rankings(request):
         'config_metrics': config.get('metrics', [])
     })
 
-# @login_required
+@login_required
 def picklist(request):
     comp_code = request.GET.get('comp')
     teams = []
@@ -170,7 +170,7 @@ def picklist_submit(request):
         'message': 'Invalid request method'
     }, status=405)
 
-# @login_required
+@login_required
 @csrf_exempt
 def dashboard(request):
     comp_code = request.GET.get('comp')

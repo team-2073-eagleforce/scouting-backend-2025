@@ -28,7 +28,7 @@ def get_events(request):
     return JsonResponse(get_team_events())
 
 
-# @login_required
+@login_required
 def display_teams(request):
     comp_code = request.GET.get('comp', "testing")
     pit_scouted = []
@@ -46,7 +46,7 @@ def display_teams(request):
 
     return render(request, 'teams/view_teams.html', {'all_teams': all_teams, "pit_scouted": pit_scouted})
 
-# @login_required
+@login_required
 def team_page(request, team_number):
     comp_code = request.GET.get('comp')
     config = config_loader.get_config()
@@ -72,6 +72,7 @@ def team_page(request, team_number):
     return render(request, 'teams/team_page.html', context)
 
 
+@login_required
 def pit_scouting(request, team_number):
     comp_code = request.GET.get('comp')
     if not comp_code:
@@ -115,7 +116,7 @@ def pit_scouting(request, team_number):
             team.robot_picture = img_url
         team.pit_scout_status = True
         team.save()
-        return redirect('team_page', team_number=team_number)
+        return redirect(f'/teams/{team_number}/?comp={comp_code}')
 
     return render(request, "teams/pit_scouting.html", {
         'team_number': team_number,
@@ -123,7 +124,7 @@ def pit_scouting(request, team_number):
         'existing_data': team.pit_data,
     })
     
-# @login_required
+@login_required
 def human_player_submit(request, team_number):
     comp_code = request.GET.get('comp')
     if request.method == 'POST':

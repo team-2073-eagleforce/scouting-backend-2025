@@ -8,7 +8,9 @@ from constants import AUTHORIZED_EMAIL
 from .models import AuthorizedUser
 
 # Create your views here.
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+# Only allow insecure transport for local development
+if os.getenv('DEBUG', 'False').lower() == 'true':
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/userinfo.profile',
@@ -25,7 +27,7 @@ client_config = {
         "redirect_uris": [
             "http://localhost:8000/auth/oauth2callback/",
             "http://127.0.0.1:8000/auth/oauth2callback/",
-            "https://scouting.chrisccluk.live/"
+            "https://scouting.chrisccluk.live/auth/oauth2callback/"
         ],
         "javascript_origins": [
             "http://localhost:8000",

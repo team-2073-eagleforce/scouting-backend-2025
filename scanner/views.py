@@ -3,7 +3,9 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from teams.models import Teams, Team_Match_Data
 from utils import config_loader
+from helpers import login_required
 
+@login_required
 def scanner(request):
     if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
         try:

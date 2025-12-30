@@ -1,0 +1,22 @@
+{% extends 'index.html' %}
+
+{% block Title %}Unauthorized{% endblock %}
+
+{% block Content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h3>Access Denied</h3>
+                </div>
+                <div class="card-body">
+                    <p>Your email <strong>{{ email }}</strong> is not authorized to access this system.</p>
+                    <p>Please contact your team administrator if you believe this is an error.</p>
+                    <a href="/auth/" class="btn btn-secondary">Back to Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
