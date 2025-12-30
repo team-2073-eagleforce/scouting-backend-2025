@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Data Editor</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+        h1 { 
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            font-size: 20px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e74c3c;
+            padding-bottom: 8px;
+        }
+        h3 {
+            color: #34495e;
+            font-size: 16px;
+            margin: 20px 0 10px 0;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        label { 
+            display: block; 
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #555;
+            font-size: 14px;
+        }
+        select, input[type="number"], textarea { 
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: #e74c3c;
+        }
+        select:disabled { 
+            background: #f8f9fa;
+            cursor: not-allowed;
+            color: #999;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .btn { 
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-primary { 
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) { 
+            background: #c0392b;
+        }
+        .btn-success { 
+            background: #27ae60;
+            color: white;
+        }
+        .btn-success:hover { 
+            background: #229954;
+        }
+        .editor-section { 
+            display: none;
+        }
+        textarea#dataJson { 
+            min-height: 350px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .alert { 
+            padding: 15px 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+        .alert-info { 
+            background: #fee;
+            border-color: #e74c3c;
+            color: #2c3e50;
+        }
+        .alert-warning { 
+            background: #fff8e1;
+            border-color: #f39c12;
+            color: #7d6608;
+        }
+        .alert-success { 
+            background: #d4edda;
+            border-color: #27ae60;
+            color: #155724;
+            display: none;
+        }
+        .alert-error { 
+            background: #f8d7da;
+            border-color: #e74c3c;
+            color: #721c24;
+            display: none;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        .checkbox-group label {
+            margin: 0;
+            font-weight: 500;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #e74c3c;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Match Data Editor</h1>
+    
+    <div class="container">
+        <h2>Find Match Data</h2>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="compSelect">Competition</label>
+                <select id="compSelect">
+                    <option value="">Select Competition</option>
+                    {% for code, name in event_map.items %}
+                    <option value="{{ code }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="teamSelect">Team Number</label>
+                <select id="teamSelect" disabled>
+                    <option value="">Select Competition First</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="quantifierSelect">Match Type</label>
+                <select id="quantifierSelect" disabled>
+                    <option value="">Select Team First</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="matchSelect">Match Number</label>
+                <select id="matchSelect" disabled>
+                    <option value="">Select Match Type First</option>
+                </select>
+            </div>
+        </div>
+        
+        <button id="loadBtn" class="btn btn-primary" disabled>Load Match Data</button>
+    </div>
+
+    <div class="container editor-section" id="editorSection">
+        <h2>Edit Match Data</h2>
+        
+        <div class="alert alert-info" id="matchInfo"></div>
+        
+        <div class="alert alert-warning">
+            <strong>Warning:</strong> Editing match data. Make sure all changes are correct before saving.
+        </div>
+        
+        <div class="alert alert-success" id="successMsg"></div>
+        <div class="alert alert-error" id="errorMsg"></div>
+        
+        <form id="editForm">
+            {% csrf_token %}
+            <input type="hidden" name="match_id" id="matchId">
+            
+            <h3>Anchor Fields</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="startPos">Start Position</label>
+                    <input type="number" name="start_pos" id="startPos" min="0" max="5">
+                </div>
+                <div class="form-group">
+                    <label for="quantifierEdit">Quantifier</label>
+                    <select name="quantifier" id="quantifierEdit">
+                        <option value="Quals">Quals</option>
+                        <option value="Playoff">Playoff</option>
+                        <option value="Prac">Practice</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="commentEdit">Comment</label>
+                <textarea name="comment" id="commentEdit" rows="2"></textarea>
+            </div>
+            
+            <div class="form-grid">
+                <div class="checkbox-group">
+                    <input type="checkbox" name="is_broken" id="isBroken" value="true">
+                    <label for="isBroken">Robot Broken</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" name="is_disabled" id="isDisabled" value="true">
+                    <label for="isDisabled">Robot Disabled</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" name="is_tipped" id="isTipped" value="true">
+                    <label for="isTipped">Robot Tipped</label>
+                </div>
+            </div>
+            
+            <h3>Match Data (JSON)</h3>
+            <textarea name="data_json" id="dataJson"></textarea>
+            
+            <div style="margin-top: 20px;">
+                <button type="submit" class="btn btn-success">Save All Changes</button>
+                <button type="button" class="btn btn-primary" onclick="formatJson()">Format JSON</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const compSelect = document.getElementById('compSelect');
+        const teamSelect = document.getElementById('teamSelect');
+        const quantifierSelect = document.getElementById('quantifierSelect');
+        const matchSelect = document.getElementById('matchSelect');
+        const loadBtn = document.getElementById('loadBtn');
+        const editorSection = document.getElementById('editorSection');
+        
+        compSelect.addEventListener('change', async function() {
+            const comp = this.value;
+            teamSelect.innerHTML = '<option value="">Loading...</option>';
+            teamSelect.disabled = true;
+            quantifierSelect.disabled = true;
+            matchSelect.disabled = true;
+            loadBtn.disabled = true;
+            editorSection.style.display = 'none';
+            
+            if (!comp) return;
+            
+            const response = await fetch(`/admin-panel/api/get-teams/?comp=${comp}`);
+            const data = await response.json();
+            
+            teamSelect.innerHTML = '<option value="">Select Team</option>';
+            data.teams.forEach(team => {
+                teamSelect.innerHTML += `<option value="${team}">${team}</option>`;
+            });
+            teamSelect.disabled = false;
+        });
+        
+        teamSelect.addEventListener('change', async function() {
+            const comp = compSelect.value;
+            const team = this.value;
+            quantifierSelect.innerHTML = '<option value="">Loading...</option>';
+            quantifierSelect.disabled = true;
+            matchSelect.disabled = true;
+            loadBtn.disabled = true;
+            editorSection.style.display = 'none';
+            
+            if (!team) return;
+            
+            const response = await fetch(`/admin-panel/api/get-quantifiers/?comp=${comp}&team=${team}`);
+            const data = await response.json();
+            
+            quantifierSelect.innerHTML = '<option value="">Select Match Type</option>';
+            data.quantifiers.forEach(q => {
+                quantifierSelect.innerHTML += `<option value="${q}">${q}</option>`;
+            });
+            quantifierSelect.disabled = false;
+        });
+        
+        quantifierSelect.addEventListener('change', async function() {
+            const comp = compSelect.value;
+            const team = teamSelect.value;
+            const quantifier = this.value;
+            matchSelect.innerHTML = '<option value="">Loading...</option>';
+            matchSelect.disabled = true;
+            loadBtn.disabled = true;
+            editorSection.style.display = 'none';
+            
+            if (!quantifier) return;
+            
+            const response = await fetch(`/admin-panel/api/get-matches/?comp=${comp}&team=${team}&quantifier=${quantifier}`);
+            const data = await response.json();
+            
+            matchSelect.innerHTML = '<option value="">Select Match</option>';
+            data.matches.forEach(match => {
+                matchSelect.innerHTML += `<option value="${match}">Match ${match}</option>`;
+            });
+            matchSelect.disabled = false;
+        });
+        
+        matchSelect.addEventListener('change', function() {
+            loadBtn.disabled = !this.value;
+        });
+        
+        loadBtn.addEventListener('click', async function() {
+            const comp = compSelect.value;
+            const team = teamSelect.value;
+            const quantifier = quantifierSelect.value;
+            const match = matchSelect.value;
+            
+            const response = await fetch(`/admin-panel/api/load-match/?comp=${comp}&team=${team}&match=${match}&quantifier=${quantifier}`);
+            const data = await response.json();
+            
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+            
+            document.getElementById('matchId').value = data.id;
+            document.getElementById('dataJson').value = JSON.stringify(data.data, null, 2);
+            document.getElementById('startPos').value = data.start_pos || 0;
+            document.getElementById('quantifierEdit').value = data.quantifier || 'Quals';
+            document.getElementById('commentEdit').value = data.comment || '';
+            document.getElementById('isBroken').checked = data.is_broken;
+            document.getElementById('isDisabled').checked = data.is_disabled;
+            document.getElementById('isTipped').checked = data.is_tipped;
+            
+            document.getElementById('matchInfo').innerHTML = `
+                <strong>Match Info:</strong> Team ${data.team_number} | Match ${data.match_number} | ${data.event} | ${data.quantifier} | Scout: ${data.scout_name}
+            `;
+            
+            editorSection.style.display = 'block';
+            document.getElementById('successMsg').style.display = 'none';
+            document.getElementById('errorMsg').style.display = 'none';
+        });
+        
+        function formatJson() {
+            const textarea = document.getElementById('dataJson');
+            try {
+                const parsed = JSON.parse(textarea.value);
+                textarea.value = JSON.stringify(parsed, null, 2);
+            } catch (e) {
+                alert('Invalid JSON: ' + e.message);
+            }
+        }
+        
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const successMsg = document.getElementById('successMsg');
+            const errorMsg = document.getElementById('errorMsg');
+            
+            try {
+                JSON.parse(formData.get('data_json'));
+            } catch (e) {
+                errorMsg.textContent = 'Invalid JSON: ' + e.message;
+                errorMsg.style.display = 'block';
+                successMsg.style.display = 'none';
+                return;
+            }
+            
+            fetch('/admin-panel/update-match/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    successMsg.textContent = data.message;
+                    successMsg.style.display = 'block';
+                    errorMsg.style.display = 'none';
+                } else {
+                    errorMsg.textContent = data.message;
+                    errorMsg.style.display = 'block';
+                    successMsg.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                errorMsg.textContent = 'Network error: ' + error;
+                errorMsg.style.display = 'block';
+                successMsg.style.display = 'none';
+            });
+        });
+    </script>
+
+    <a href="/admin-panel/" class="back-link">Back to Admin Panel</a>
+</body>
+</html>

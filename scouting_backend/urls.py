@@ -27,4 +27,10 @@ urlpatterns = [
     path('admin-panel/', admin_views.admin_panel, name='admin_panel'),
     path('admin-panel/add-user/', admin_views.add_user, name='add_user'),
     path('admin-panel/remove-user/<int:user_id>/', admin_views.remove_user, name='remove_user'),
+    path('admin-panel/match-editor/', admin_views.match_data_editor, name='match_editor'),
+    path('admin-panel/api/get-teams/', admin_views.get_teams_for_event, name='get_teams'),
+    path('admin-panel/api/get-quantifiers/', admin_views.get_quantifiers_for_team, name='get_quantifiers'),
+    path('admin-panel/api/get-matches/', admin_views.get_matches_for_team, name='get_matches'),
+    path('admin-panel/api/load-match/', admin_views.load_match_data, name='load_match'),
+    path('admin-panel/update-match/', admin_views.update_match_data, name='update_match'),
 ]
