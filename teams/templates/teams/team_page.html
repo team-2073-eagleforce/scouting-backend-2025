@@ -85,6 +85,11 @@
 </div>
 
 <style>
+    #match_data {
+        width: max-content;
+        min-width: 100%;
+        font-size: 13px;
+    }
     #match_data thead th {
         position: -webkit-sticky;
         position: sticky;
@@ -92,11 +97,18 @@
         background: white;
         z-index: 10;
         box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+        white-space: nowrap;
+        padding: 4px 8px;
+    }
+    #match_data td {
+        white-space: nowrap;
+        padding: 4px 8px;
     }
     
     .table-responsive {
-        max-height: 600px;
+        max-height: 80vh;
         overflow: auto;
+        width: 100%;
     }
 </style>
 

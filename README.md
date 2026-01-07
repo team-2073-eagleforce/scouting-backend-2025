@@ -364,6 +364,12 @@ python manage.py collectstatic --no-input
 
 Ensure `STATIC_ROOT` is set in `settings.py`.
 
+## Documentation
+
+- [Configuration Guide](CONFIG_GUIDE.md) - Complete guide to creating game configurations
+- [QR Scanner Testing](QR_SCANNER_TESTING.md) - Testing guide for QR code scanner
+- [Phase 4 Complete](PHASE4_COMPLETE.md) - Final implementation summary
+
 ## Contributions
 
 1. Fork the repository

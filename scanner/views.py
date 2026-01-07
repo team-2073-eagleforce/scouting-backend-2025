@@ -50,7 +50,15 @@ def scanner(request):
             
             for metric in config['metrics']:
                 key = metric['key']
+                # Try current key first
                 value = get_value(key)
+                
+                # If not found, try legacy keys
+                if value is None and 'legacy_keys' in metric:
+                    for legacy_key in metric['legacy_keys']:
+                        value = get_value(legacy_key)
+                        if value is not None:
+                            break
                 
                 if value is not None:
                     # Validate

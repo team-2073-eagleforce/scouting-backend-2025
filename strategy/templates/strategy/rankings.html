@@ -8,6 +8,12 @@
     <style>
         td, th {
             white-space: nowrap;
+            padding: 4px 8px;
+            font-size: 13px;
+        }
+        #rankings_table {
+            width: max-content;
+            min-width: 100%;
         }
         #rankings_table thead th {
             position: -webkit-sticky;
@@ -19,8 +25,9 @@
         }
         
         .table-responsive {
-            max-height: 600px;
+            max-height: 80vh;
             overflow: auto;
+            width: 100%;
         }
     </style>
 {% endblock %}
