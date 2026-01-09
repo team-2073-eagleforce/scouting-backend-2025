@@ -1,11 +1,14 @@
 {% extends 'index.html' %}
 {% load static %}
 {% load scouting_extras %}
+{% load plugin_tags %}
 
 {% block Title %}Team {{ team_number }}{% endblock %}
 
 {% block Content %}
 <h2>Team {{ team_number }}</h2>
+
+{% plugin_hook 'team_page_header' %}
 
 {% if team %}
 <div class="card mb-4">
@@ -58,6 +61,7 @@
                 {% endfor %}
                 <th>Scout</th>
                 <th>Comments</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -76,6 +80,7 @@
                     {% if match.is_tipped %}<span class="badge bg-info">Tipped</span>{% endif %}
                     {{ match.comment }}
                 </td>
+                {% plugin_hook 'team_page_match_row' %}
             </tr>
             {% empty %}
             <tr><td colspan="100%" class="text-center">No match data found.</td></tr>

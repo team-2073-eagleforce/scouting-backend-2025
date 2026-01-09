@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel</title>
+    <link rel="icon" href="{{ logo_url }}" type="image/png">
     <style>
         * { box-sizing: border-box; }
+        :root { --panel-color: {{ theme_color }}; }
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             max-width: 1400px; 
@@ -133,13 +135,126 @@
         .quick-actions {
             margin-bottom: 20px;
         }
+        /* Plugin status colors */
+        .status-enabled {
+            color: #2ecc71; /* green */
+            font-weight: 600;
+        }
+        .status-disabled {
+            color: #e74c3c; /* red */
+            font-weight: 600;
+        }
+        /* Upload button style (uses panel color) */
+        .btn-upload {
+            background: var(--panel-color);
+            color: #fff;
+            border: none;
+        }
+        .btn-upload:hover {
+            filter: brightness(0.92);
+        }
+        /* Scoped admin button */
+        .btn-admin {
+            background: var(--panel-color);
+            color: #fff;
+            border: none;
+        }
+        .btn-admin:hover {
+            filter: brightness(0.92);
+        }
     </style>
 </head>
 <body>
+    <div class="admin-sticky-left">
+        <a href="{% url 'home' %}" class="btn btn-admin">Home</a>
+    </div>
     <h1>Admin Panel</h1>
     
     <div class="container quick-actions">
-        <a href="/admin-panel/match-editor/" class="btn btn-primary">Match Data Editor</a>
+        <a href="/admin-panel/match-editor/" class="btn btn-admin">Match Data Editor</a>
+    </div>
+
+    <div class="container">
+        <h2>Theme</h2>
+        <form method="POST" action="/admin-panel/theme/" class="add-form">
+            {% csrf_token %}
+            <label for="theme_color">Panel Color:</label>
+            <input type="color" id="theme_color" name="theme_color" value="{{ theme_color }}">
+            <button type="submit" class="btn btn-admin">Save Color</button>
+        </form>
+    </div>
+
+    <div class="container">
+        <h2>Branding</h2>
+        <div class="branding-flex" style="display:flex; gap:16px; align-items:flex-start;">
+            <form method="POST" action="/admin-panel/logo/" class="add-form" style="flex: 1 1 auto;">
+                {% csrf_token %}
+                <label for="logo_url">Logo URL:</label>
+                <input type="text" id="logo_url" name="logo_url" value="{{ logo_url }}" placeholder="https://example.com/logo.png or /static/images/logo.png" style="width: 420px;">
+                <button type="submit" class="btn btn-admin">Save Logo</button>
+            </form>
+            <div class="logo-preview" style="flex: 0 0 auto;">
+                <label style="display:block; font-weight:600; color:#555;">Preview:</label>
+                <a id="logo_preview_link" href="{{ logo_url }}" target="_blank" rel="noopener">
+                    <img id="logo_preview_img" src="{{ logo_url }}" alt="Logo Preview" style="max-height:64px; border: 1px solid #ddd; border-radius: 4px; background: #fff; padding: 4px;">
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Plugins</h2>
+        <form method="POST" action="/admin-panel/plugins/upload/" enctype="multipart/form-data" class="add-form">
+            {% csrf_token %}
+            <input type="file" name="plugin_zip" accept=".zip" required>
+            <button type="submit" class="btn btn-upload">Upload Plugin (.zip)</button>
+        </form>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                    <th>Dependencies</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in plugins %}
+                <tr>
+                    <td>{{ p.name }}</td>
+                    <td>
+                        {% if p.enabled %}
+                            <span class="status-enabled">Enabled</span>
+                        {% else %}
+                            <span class="status-disabled">Disabled</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="POST" action="/admin-panel/plugins/enable/" style="display:inline-block">
+                            {% csrf_token %}
+                            <input type="hidden" name="name" value="{{ p.name }}">
+                            <input type="hidden" name="enable" value="{% if p.enabled %}false{% else %}true{% endif %}">
+                            <button type="submit" class="btn btn-admin">{% if p.enabled %}Disable{% else %}Enable{% endif %}</button>
+                        </form>
+                    </td>
+                    <td>
+                        {% if p.has_requirements %}
+                        <form method="POST" action="/admin-panel/plugins/install-deps/" style="display:inline-block">
+                            {% csrf_token %}
+                            <input type="hidden" name="name" value="{{ p.name }}">
+                            <button type="submit" class="btn btn-admin">Install Dependencies</button>
+                        </form>
+                        {% else %}
+                            <span style="color:#777">None</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3">No plugins found</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
     <div class="container">
@@ -147,7 +262,7 @@
         <form method="POST" action="/admin-panel/add-user/" class="add-form">
             {% csrf_token %}
             <input type="email" name="email" placeholder="user@example.com" required>
-            <button type="submit" class="btn btn-primary">Add User</button>
+            <button type="submit" class="btn btn-admin">Add User</button>
         </form>
         
         <table>
@@ -218,5 +333,19 @@
     </div>
 
     <a href="/" class="back-link">Back to Home</a>
+    <script>
+        (function(){
+            const input = document.getElementById('logo_url');
+            const img = document.getElementById('logo_preview_img');
+            const link = document.getElementById('logo_preview_link');
+            if (input && img && link) {
+                input.addEventListener('input', function(){
+                    const val = this.value.trim();
+                    img.src = val;
+                    link.href = val;
+                });
+            }
+        })();
+    </script>
 </body>
 </html>

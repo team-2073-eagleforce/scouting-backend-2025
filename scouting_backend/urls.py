@@ -8,6 +8,7 @@ from scanner import views as scanner_views
 from strategy import views as strategy_views
 from authenticate import views as auth_views
 from authenticate import views_admin as admin_views
+from plugins import plugin_manager
 
 urlpatterns = [
     # path('admin/', admin.site.urls),  # Disabled Django admin
@@ -33,4 +34,13 @@ urlpatterns = [
     path('admin-panel/api/get-matches/', admin_views.get_matches_for_team, name='get_matches'),
     path('admin-panel/api/load-match/', admin_views.load_match_data, name='load_match'),
     path('admin-panel/update-match/', admin_views.update_match_data, name='update_match'),
+    # Plugin management
+    path('admin-panel/plugins/enable/', admin_views.plugins_enable, name='plugins_enable'),
+    path('admin-panel/plugins/upload/', admin_views.plugins_upload, name='plugins_upload'),
+    path('admin-panel/plugins/install-deps/', admin_views.plugins_install_deps, name='plugins_install_deps'),
+    path('admin-panel/theme/', admin_views.admin_set_theme_color, name='admin_set_theme_color'),
+    path('admin-panel/logo/', admin_views.admin_set_logo_url, name='admin_set_logo_url'),
 ]
+
+# Add plugin URLs
+urlpatterns += plugin_manager.get_plugin_urls()

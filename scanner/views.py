@@ -2,6 +2,7 @@ import json
 from django.http import JsonResponse
 from django.shortcuts import render
 from teams.models import Teams, Team_Match_Data
+from plugins import plugin_manager
 from utils import config_loader
 from helpers import login_required
 
@@ -80,6 +81,19 @@ def scanner(request):
 
             if validation_errors:
                 return JsonResponse({"error": "; ".join(validation_errors)}, status=400)
+
+            # Allow plugins to process QR data and add fields
+            plugin_results = plugin_manager.execute_hook('scanner_data_process', {
+                'qr_data': data_from_post,
+                'team_number': team_num,
+                'event': event_code,
+                'match_number': match_num,
+                'scout_name': scout_name,
+            })
+
+            for res in plugin_results:
+                if isinstance(res, dict):
+                    data_bucket.update(res)
 
             match_data_defaults['data'] = data_bucket
 
