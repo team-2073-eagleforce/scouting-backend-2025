@@ -10,6 +10,17 @@ class Plugin:
     
     name = "example_plugin"
     version = "1.0.0"
+    description = "Example plugin demonstrating all available features"
+    author = "Your Name"
+    
+    # Declare what permissions this plugin needs
+    requested_permissions = {
+        "scanner_anchor_patch": ["start_pos", "comment"],
+        "data_metrics": [],
+        "read_only": False,
+        "custom_urls": True,
+        "accesses_external_apis": False,
+    }
     
     def __init__(self):
         # Register hooks - functions called at specific points
@@ -20,6 +31,8 @@ class Plugin:
             
             # Data hooks - return dict or None
             'scanner_data_process': self.process_qr_data,
+            # Controlled patch to anchor fields (requires config permission)
+            'scanner_anchor_patch': self.patch_anchor_fields,
         }
         
         # Register custom URL endpoints (optional)
@@ -53,6 +66,25 @@ class Plugin:
             return {'custom_field': qr_data['custom_field']}
         
         return None
+
+    def patch_anchor_fields(self, context):
+        """Optionally patch allowed anchor fields during scan.
+        Only fields whitelisted in config permissions will be applied.
+        """
+        current = context.get('current', {})
+        qr = context.get('qr_data', {})
+        patch = {}
+        # Example: ensure comment includes a tag
+        base_comment = current.get('comment', '')
+        if 'tag' in qr:
+            patch['comment'] = f"{base_comment} [tag:{qr['tag']}]"[:256]
+        # Example: set start position if present in QR
+        if 'startPos' in qr:
+            try:
+                patch['start_pos'] = int(qr['startPos'])
+            except Exception:
+                pass
+        return patch or None
     
     def api_endpoint(self, request):
         """Custom API endpoint"""

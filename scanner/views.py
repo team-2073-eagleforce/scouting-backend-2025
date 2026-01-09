@@ -1,10 +1,13 @@
 import json
+import logging
 from django.http import JsonResponse
 from django.shortcuts import render
 from teams.models import Teams, Team_Match_Data
 from plugins import plugin_manager
 from utils import config_loader
 from helpers import login_required
+
+_plugin_logger = logging.getLogger('plugins')
 
 @login_required
 def scanner(request):
@@ -83,7 +86,7 @@ def scanner(request):
                 return JsonResponse({"error": "; ".join(validation_errors)}, status=400)
 
             # Allow plugins to process QR data and add fields
-            plugin_results = plugin_manager.execute_hook('scanner_data_process', {
+            plugin_outputs = plugin_manager.execute_hook_with_meta('scanner_data_process', {
                 'qr_data': data_from_post,
                 'team_number': team_num,
                 'event': event_code,
@@ -91,9 +94,63 @@ def scanner(request):
                 'scout_name': scout_name,
             })
 
-            for res in plugin_results:
-                if isinstance(res, dict):
-                    data_bucket.update(res)
+            # Namespace all plugin contributions under data.plugins[plugin_name]
+            if plugin_outputs:
+                data_bucket.setdefault('plugins', {})
+                for out in plugin_outputs:
+                    plugin_name = out.get('plugin')
+                    res = out.get('result')
+                    if plugin_name and isinstance(res, dict):
+                        data_bucket['plugins'][plugin_name] = res
+
+            # Controlled anchor patches from plugins
+            # Only whitelisted fields can be modified, and only if allowed in permissions config.
+            ALLOWED_ANCHOR_PATCH = {
+                'start_pos': 'int',
+                'comment': 'str',
+                'quantifier': ['Quals', 'Playoff', 'Prac'],
+                'scout_name': 'str',
+                'is_broken': 'bool',
+                'is_disabled': 'bool',
+                'is_tipped': 'bool',
+            }
+            anchor_patch_outputs = plugin_manager.execute_hook_with_meta('scanner_anchor_patch', {
+                'current': dict(match_data_defaults),
+                'qr_data': data_from_post,
+                'team_number': team_num,
+                'event': event_code,
+                'match_number': match_num,
+                'scout_name': scout_name,
+            })
+            for out in anchor_patch_outputs:
+                plugin_name = out.get('plugin')
+                patch = out.get('result')
+                if not (plugin_name and isinstance(patch, dict)):
+                    continue
+                allowed_fields = set(plugin_manager.get_anchor_patch_fields(plugin_name))
+                if not allowed_fields:
+                    continue
+                for key, val in patch.items():
+                    if key not in ALLOWED_ANCHOR_PATCH or key not in allowed_fields:
+                        continue
+                    prev = match_data_defaults.get(key)
+                    spec = ALLOWED_ANCHOR_PATCH[key]
+                    try:
+                        if spec == 'int':
+                            match_data_defaults[key] = int(val)
+                        elif spec == 'str':
+                            match_data_defaults[key] = str(val)
+                        elif spec == 'bool':
+                            match_data_defaults[key] = bool(int(val)) if isinstance(val, (int, str)) else bool(val)
+                        elif isinstance(spec, list):
+                            match_data_defaults[key] = val if val in spec else prev
+                        else:
+                            match_data_defaults[key] = val
+                        if prev != match_data_defaults[key]:
+                            _plugin_logger.info("anchor_patch: plugin=%s key=%s prev=%r new=%r team=%s event=%s match=%s",
+                                                plugin_name, key, prev, match_data_defaults[key], team_num, event_code, match_num)
+                    except Exception:
+                        continue
 
             match_data_defaults['data'] = data_bucket
 

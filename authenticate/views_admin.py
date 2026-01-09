@@ -63,10 +63,16 @@ def admin_panel(request):
     for name in available:
         is_enabled = True if enabled_list is None else name in enabled_list
         has_req = (plugins_dir / name / 'requirements.txt').exists()
+        metadata = _extract_plugin_info(plugins_dir / name)
         plugin_info.append({
             'name': name,
             'enabled': is_enabled,
-            'has_requirements': has_req
+            'has_requirements': has_req,
+            'version': metadata.get('version', ''),
+            'description': metadata.get('description', ''),
+            'author': metadata.get('author', ''),
+            'requested_permissions': metadata.get('requested_permissions', {}),
+            'has_custom_urls': metadata.get('has_custom_urls', False),
         })
 
     # Current theme color
@@ -214,6 +220,7 @@ def plugins_enable(request):
         return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
     name = request.POST.get('name')
     enable = request.POST.get('enable') == 'true'
+    cleanup_requested = request.POST.get('cleanup') == 'true'
     if not name:
         return JsonResponse({'status': 'error', 'message': 'Missing plugin name'}, status=400)
 
@@ -244,9 +251,66 @@ def plugins_enable(request):
     config_path.write_text(json.dumps({'enabled': sorted(enabled)}, indent=2))
     # Reload plugins
     plugin_manager.reload()
+    cleanup_count = 0
+    # If disabling and cleanup requested, remove namespaced plugin data
+    if not enable and cleanup_requested:
+        try:
+            cleanup_count = plugin_manager.cleanup_plugin_data(name)
+        except Exception:
+            cleanup_count = 0
     if _is_ajax(request):
-        return JsonResponse({'status': 'success', 'enabled': enabled})
+        return JsonResponse({'status': 'success', 'enabled': enabled, 'cleanup_updated': cleanup_count})
     return redirect('admin_panel')
+
+
+def _extract_plugin_info(plugin_dir: Path) -> dict:
+    """Extract metadata and permission requests from a plugin.
+    
+    Returns dict with name, version, description, author, and requested_permissions.
+    """
+    info = {
+        'name': plugin_dir.name,
+        'version': 'unknown',
+        'description': '',
+        'author': '',
+        'requested_permissions': {},
+        'has_custom_urls': False,
+        'has_requirements': False,
+    }
+    
+    plugin_file = plugin_dir / 'plugin.py'
+    if not plugin_file.exists():
+        return info
+    
+    try:
+        # Read plugin.py and extract class attributes
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(f"temp_plugin_{plugin_dir.name}", plugin_file)
+        if spec and spec.loader:
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            
+            if hasattr(module, 'Plugin'):
+                plugin_class = module.Plugin
+                info['version'] = getattr(plugin_class, 'version', 'unknown')
+                info['description'] = getattr(plugin_class, 'description', '')
+                info['author'] = getattr(plugin_class, 'author', '')
+                info['requested_permissions'] = getattr(plugin_class, 'requested_permissions', {})
+                
+                # Check if plugin has URLs
+                try:
+                    instance = plugin_class()
+                    info['has_custom_urls'] = bool(getattr(instance, 'urls', []))
+                except Exception:
+                    pass
+    except Exception as e:
+        # If we can't load it, that's okay - just return basic info
+        pass
+    
+    # Check for requirements.txt
+    info['has_requirements'] = (plugin_dir / 'requirements.txt').exists()
+    
+    return info
 
 
 def _safe_extract_zip(zip_path: Path, dest_dir: Path) -> str:
@@ -295,8 +359,12 @@ def plugins_upload(request):
             if _is_ajax(request):
                 return JsonResponse({'status': 'error', 'message': 'Invalid plugin package: missing plugin.py'}, status=400)
             return redirect('admin_panel')
+        
+        # Extract plugin metadata and permissions
+        plugin_info = _extract_plugin_info(dest_dir / top)
+        
         if _is_ajax(request):
-            return JsonResponse({'status': 'success', 'plugin': top})
+            return JsonResponse({'status': 'success', 'plugin': top, 'info': plugin_info})
         return redirect('admin_panel')
     except Exception as e:
         if _is_ajax(request):

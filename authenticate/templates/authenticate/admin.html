@@ -214,6 +214,8 @@
             <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Info</th>
+                    <th>Permissions</th>
                     <th>Status</th>
                     <th>Action</th>
                     <th>Dependencies</th>
@@ -222,7 +224,34 @@
             <tbody>
                 {% for p in plugins %}
                 <tr>
-                    <td>{{ p.name }}</td>
+                    <td><strong>{{ p.name }}</strong></td>
+                    <td style="font-size: 12px;">
+                        {% if p.version %}<div>v{{ p.version }}</div>{% endif %}
+                        {% if p.description %}<div style="color:#666;">{{ p.description|truncatewords:10 }}</div>{% endif %}
+                        {% if p.author %}<div style="color:#999;">by {{ p.author }}</div>{% endif %}
+                    </td>
+                    <td style="font-size: 11px;">
+                        {% if p.requested_permissions %}
+                            {% if p.requested_permissions.scanner_anchor_patch %}
+                                <div title="Can modify: {{ p.requested_permissions.scanner_anchor_patch|join:', ' }}" style="color:#e74c3c;">
+                                    ⚠️ Modifies: {{ p.requested_permissions.scanner_anchor_patch|join:', ' }}
+                                </div>
+                            {% endif %}
+                            {% if p.requested_permissions.read_only %}
+                                <div style="color:#27ae60;">✓ Read-only</div>
+                            {% elif not p.requested_permissions.read_only %}
+                                <div style="color:#f39c12;">⚠️ Writes to database</div>
+                            {% endif %}
+                            {% if p.has_custom_urls %}
+                                <div style="color:#3498db;">• Custom API endpoints</div>
+                            {% endif %}
+                            {% if p.requested_permissions.accesses_external_apis %}
+                                <div style="color:#e74c3c;">⚠️ Accesses external APIs</div>
+                            {% endif %}
+                        {% else %}
+                            <span style="color:#999;">No info</span>
+                        {% endif %}
+                    </td>
                     <td>
                         {% if p.enabled %}
                             <span class="status-enabled">Enabled</span>
@@ -231,10 +260,15 @@
                         {% endif %}
                     </td>
                     <td>
-                        <form method="POST" action="/admin-panel/plugins/enable/" style="display:inline-block">
+                        <form method="POST" action="/admin-panel/plugins/enable/" style="display:inline-block; margin-right:8px;">
                             {% csrf_token %}
                             <input type="hidden" name="name" value="{{ p.name }}">
                             <input type="hidden" name="enable" value="{% if p.enabled %}false{% else %}true{% endif %}">
+                            {% if p.enabled %}
+                                <label style="display:inline-flex; align-items:center; gap:6px; font-size: 12px; color:#555;">
+                                    <input type="checkbox" name="cleanup" value="true"> Cleanup data on disable
+                                </label>
+                            {% endif %}
                             <button type="submit" class="btn btn-admin">{% if p.enabled %}Disable{% else %}Enable{% endif %}</button>
                         </form>
                     </td>
@@ -346,6 +380,108 @@
                 });
             }
         })();
+
+        // Plugin upload with permission review
+        const uploadForm = document.querySelector('form[action="/admin-panel/plugins/upload/"]');
+        if (uploadForm) {
+            uploadForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                
+                fetch('/admin-panel/plugins/upload/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {'X-Requested-With': 'XMLHttpRequest'}
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        const info = data.info || {};
+                        const perms = info.requested_permissions || {};
+                        
+                        let msg = `Plugin "${data.plugin}" uploaded successfully!\n\n`;
+                        
+                        if (info.description) {
+                            msg += `Description: ${info.description}\n`;
+                        }
+                        if (info.author) {
+                            msg += `Author: ${info.author}\n`;
+                        }
+                        if (info.version) {
+                            msg += `Version: ${info.version}\n`;
+                        }
+                        
+                        msg += '\n--- REQUESTED PERMISSIONS ---\n';
+                        
+                        if (perms.scanner_anchor_patch && perms.scanner_anchor_patch.length > 0) {
+                            msg += `⚠️  Modifies match fields: ${perms.scanner_anchor_patch.join(', ')}\n`;
+                        }
+                        
+                        if (perms.read_only === true) {
+                            msg += `✓ Read-only (cannot write to database)\n`;
+                        } else {
+                            msg += `⚠️  Can write to database\n`;
+                        }
+                        
+                        if (info.has_custom_urls) {
+                            msg += `• Adds custom API endpoints\n`;
+                        }
+                        
+                        if (perms.accesses_external_apis) {
+                            msg += `⚠️  Accesses external APIs\n`;
+                        }
+                        
+                        if (info.has_requirements) {
+                            msg += `• Requires additional Python packages\n`;
+                        }
+                        
+                        msg += '\nThe plugin is uploaded but DISABLED by default.\n';
+                        msg += 'Review the permissions above before enabling it.';
+                        
+                        alert(msg);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(err => {
+                    alert('Upload failed: ' + err.message);
+                });
+            });
+        }
+
+        // Plugin enable/disable with cleanup feedback
+        document.querySelectorAll('form[action="/admin-panel/plugins/enable/"]').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const pluginName = formData.get('name');
+                const isDisabling = formData.get('enable') === 'false';
+                const hasCleanup = formData.get('cleanup') === 'true';
+                
+                fetch('/admin-panel/plugins/enable/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {'X-Requested-With': 'XMLHttpRequest'}
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        let msg = isDisabling ? `Plugin "${pluginName}" disabled` : `Plugin "${pluginName}" enabled`;
+                        if (hasCleanup && data.cleanup_updated > 0) {
+                            msg += ` (cleaned ${data.cleanup_updated} record${data.cleanup_updated !== 1 ? 's' : ''})`;
+                        }
+                        alert(msg);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(err => {
+                    alert('Request failed: ' + err.message);
+                });
+            });
+        });
     </script>
 </body>
 </html>
