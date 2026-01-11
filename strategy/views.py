@@ -174,6 +174,7 @@ def picklist_submit(request):
 @csrf_exempt
 def dashboard(request):
     comp_code = request.GET.get('comp')
+    config = config_loader.get_config()
     
     if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
         try:
@@ -227,7 +228,10 @@ def dashboard(request):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
-    return render(request, "strategy/dashboard.html")
+    return render(request, "strategy/dashboard.html", {
+        'config_metrics': config.get('metrics', []),
+        'config_metrics_json': json.dumps(config.get('metrics', []))
+    })
 
 def fetch_team_match_averages(team_number, comp_code, quantifier):
     """Dynamic calculation of team averages based on game_config.json with legacy key support"""
@@ -245,6 +249,16 @@ def fetch_team_match_averages(team_number, comp_code, quantifier):
     
     result = {}
     
+    # Add anchor field averages
+    anchor_fields = ['driverRanking', 'defenseRanking', 'autoLeave']
+    for field in anchor_fields:
+        values = [getattr(match, field, 0) for match in team_match_data if getattr(match, field, 0) > 0]
+        if values:
+            result[field] = round(sum(values) / len(values), 3)
+        else:
+            result[field] = 0
+    
+    # Dynamic metrics from config
     for metric in config['metrics']:
         key = metric['key']
         aggregation = metric.get('aggregation', 'avg')
@@ -276,17 +290,9 @@ def fetch_team_match_averages(team_number, comp_code, quantifier):
         else:
             result[key] = 0
     
-    # Add anchor field averages
+    # Add start_pos from first match
     first_match = team_match_data.first()
     result['start_pos'] = first_match.start_pos if first_match else 0
-    
-    # Calculate composite metrics
-    auto_total = sum(result.get(f'auto_{suffix}', 0) for suffix in ['L1', 'L2', 'L3', 'L4', 'net', 'processor'])
-    teleop_total = sum(result.get(f'tele{suffix}', 0) for suffix in ['L1', 'L2', 'L3', 'L4', 'net', 'Processor'])
-    
-    result['auto_total'] = round(auto_total, 3)
-    result['teleop_total'] = round(teleop_total, 3)
-    result['total'] = round(auto_total + teleop_total + result.get('climb', 0), 3)
     
     return result
 

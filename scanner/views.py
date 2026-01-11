@@ -46,6 +46,9 @@ def scanner(request):
                 'is_broken': bool(int(get_value("isBroken", 0))),
                 'is_disabled': bool(int(get_value("isDisabled", 0))),
                 'is_tipped': bool(int(get_value("isTipped", 0))),
+                'driverRanking': int(get_value("driverRanking", 0)),
+                'defenseRanking': int(get_value("defenseRanking", 0)),
+                'autoLeave': int(get_value("autoLeave", 0)),
             }
 
             # Dynamic data bucket - loop through config metrics
@@ -113,6 +116,9 @@ def scanner(request):
                 'is_broken': 'bool',
                 'is_disabled': 'bool',
                 'is_tipped': 'bool',
+                'driverRanking': 'int',
+                'defenseRanking': 'int',
+                'autoLeave': 'int',
             }
             anchor_patch_outputs = plugin_manager.execute_hook_with_meta('scanner_anchor_patch', {
                 'current': dict(match_data_defaults),

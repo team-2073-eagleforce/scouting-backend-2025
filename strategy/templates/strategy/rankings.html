@@ -49,9 +49,12 @@
                 <tr class="sticky-top" style="background-color: gray">
                     <th>Rank</th>
                     <th onclick="sortTable(1, 'team_number')">Team #</th>
+                    <th onclick="sortTable(2, 'autoLeave')">Auto Leave</th>
                     {% for metric in config_metrics %}
-                        <th onclick="sortTable({{ forloop.counter|add:1 }}, '{{ metric.key }}')">{{ metric.display_name }}</th>
+                        <th onclick="sortTable({{ forloop.counter|add:2 }}, '{{ metric.key }}')">{{ metric.display_name }}</th>
                     {% endfor %}
+                    <th onclick="sortTable({{ config_metrics|length|add:3 }}, 'driverRanking')">Driver Ranking</th>
+                    <th onclick="sortTable({{ config_metrics|length|add:4 }}, 'defenseRanking')">Defense</th>
                 </tr>
             </thead>
             <tbody>
@@ -59,9 +62,12 @@
                     <tr class="data">
                         <td class="rank">{{ forloop.counter }}</td>
                         <td><a href="{% url 'team_page' team_number %}?comp={{ comp_code }}">{{ team_number }}</a></td>
+                        <td class="autoLeave">{{ stats.autoLeave|default:0 }}</td>
                         {% for metric in config_metrics %}
                             <td class="{{ metric.key }}">{{ stats|get_item:metric.key }}</td>
                         {% endfor %}
+                        <td class="driverRanking">{{ stats.driverRanking|default:0 }}</td>
+                        <td class="defenseRanking">{{ stats.defenseRanking|default:0 }}</td>
                     </tr>
                 {% endfor %}
             </tbody>

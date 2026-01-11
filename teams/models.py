@@ -36,6 +36,11 @@ class Team_Match_Data(models.Model):
     is_disabled = models.BooleanField(default=False)
     is_tipped = models.BooleanField(default=False)
     
+    # Subjective Ratings (Anchor)
+    driverRanking = models.IntegerField(default=0)
+    defenseRanking = models.IntegerField(default=0)
+    autoLeave = models.IntegerField(default=0)
+    
     # Dynamic Data Bucket
     data = models.JSONField(default=dict)
 

@@ -3,13 +3,17 @@ let prevClassName;
 function sortTable(n, className) {
     let tags = document.getElementsByClassName(className);
     for (let i = 0; i < tags.length; i++) {
-        tags[i].setAttribute("style", "color: LightGreen;")
+        if (tags[i]) {
+            tags[i].setAttribute("style", "color: LightGreen;")
+        }
     }
 
     if (prevClassName !== undefined && prevClassName !== className) {
         tags = document.getElementsByClassName(prevClassName);
         for (let i = 0; i < tags.length; i++) {
-            tags[i].setAttribute("style", "color: black;")
+            if (tags[i]) {
+                tags[i].setAttribute("style", "color: black;")
+            }
         }
     }
     prevClassName = className
@@ -34,6 +38,10 @@ function sortTable(n, className) {
             one from current row and one from the next: */
             x = rows[i].getElementsByTagName("TD")[n];
             y = rows[i + 1].getElementsByTagName("TD")[n];
+            
+            // Skip if elements don't exist
+            if (!x || !y) continue;
+            
             /* Check if the two rows should switch place,
             based on the direction, asc or desc: */
             if (dir === "asc" || className === "team_number") {

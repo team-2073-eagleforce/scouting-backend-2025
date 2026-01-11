@@ -56,10 +56,13 @@
         <thead class="thead-light">
             <tr>
                 <th>Match</th>
+                <th>Auto Leave</th>
                 {% for metric in config_metrics %}
                     <th>{{ metric.display_name }}</th>
                 {% endfor %}
                 <th>Scout</th>
+                <th>Driver Ranking</th>
+                <th>Defense</th>
                 <th>Comments</th>
                 <th>Actions</th>
             </tr>
@@ -68,12 +71,15 @@
             {% for match in all_team_match_data %}
             <tr>
                 <td>{{ match.match_number }} ({{ match.quantifier }})</td>
+                <td>{{ match.autoLeave|default:"0" }}</td>
                 
                 {% for metric in config_metrics %}
                     <td>{{ match.data|get_item:metric.key|default:"0" }}</td>
                 {% endfor %}
                 
                 <td>{{ match.scout_name }}</td>
+                <td>{{ match.driverRanking|default:"0" }}</td>
+                <td>{{ match.defenseRanking|default:"0" }}</td>
                 <td>
                     {% if match.is_broken %}<span class="badge bg-danger">Broken</span>{% endif %}
                     {% if match.is_disabled %}<span class="badge bg-warning">Disabled</span>{% endif %}

@@ -26,18 +26,11 @@
                 <tr>
                     <th>Position</th>
                     <th>Team</th>
-                    <th>Auto Total</th>
                     <th>Auto Leave</th>
-                    <th>L1</th>
-                    <th>L2</th>
-                    <th>L3</th>
-                    <th>L4</th>
-                    <th>Net Total</th>
-                    <th>Auto Missed</th>
-                    <th>Processor</th>
-                    <th>Removed</th>
-                    <th>Climb</th>
-                    <th>Total</th>
+                    {% for metric in config_metrics %}
+                        <th>{{ metric.display_name }}</th>
+                    {% endfor %}
+                    <th>Driver Ranking</th>
                     <th>Defense</th>
                     <th>Start Pos</th>
                 </tr>
@@ -65,5 +58,8 @@
 </style>
 
 {% block Scripts %}
+    <script>
+        window.configMetrics = {{ config_metrics_json|safe }};
+    </script>
     <script src="{% static 'strategy/dashboard.js' %}"></script>
 {% endblock %}

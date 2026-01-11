@@ -1,8 +1,7 @@
 console.log("Script loaded");
 
-const scoringFields = ["auto", "autoleave", "L1", "L2", "L3", "L4", "net", "missed_auto", "processor", "removed", "climb", "total", "defense", "start_pos"];
+const metricKeys = window.configMetrics ? window.configMetrics.map(m => m.key) : [];
 
-// Add a flag to track initialization
 if (window.dashboardInitialized) {
     console.warn('Dashboard already initialized');
 } else {
@@ -33,7 +32,6 @@ if (window.dashboardInitialized) {
                 return;
             }
 
-            // Clear table before fetch
             dashboardTable.innerHTML = '';
             console.log("Table cleared, starting fetch");
 
@@ -47,9 +45,9 @@ if (window.dashboardInitialized) {
                     'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRFToken': getCookie('csrftoken'),
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     match_number: parseInt(match) || 0,
-                    quantifier: document.getElementById('quantifier').value  // Add this line
+                    quantifier: document.getElementById('quantifier').value
                 })
             })
             .then(response => {
@@ -69,31 +67,33 @@ if (window.dashboardInitialized) {
                 // Process red alliance
                 (data.red_teams || []).forEach((redTeam, index) => {
                     const row = dashboardTable.insertRow();
-                    
-                    // Add position and team number
                     row.insertCell().textContent = `Red ${index + 1}`;
                     row.insertCell().textContent = redTeam;
+                    row.insertCell().textContent = data.red[redTeam]?.autoLeave || '0';
                     
-                    // Add scoring fields
-                    scoringFields.forEach(field => {
-                        const cell = row.insertCell();
-                        cell.textContent = data.red[redTeam]?.[field] || '0';
+                    metricKeys.forEach(key => {
+                        row.insertCell().textContent = data.red[redTeam]?.[key] || '0';
                     });
+                    
+                    row.insertCell().textContent = data.red[redTeam]?.driverRanking || '0';
+                    row.insertCell().textContent = data.red[redTeam]?.defenseRanking || '0';
+                    row.insertCell().textContent = data.red[redTeam]?.start_pos || '0';
                 });
 
                 // Process blue alliance
                 (data.blue_teams || []).forEach((blueTeam, index) => {
                     const row = dashboardTable.insertRow();
-                    
-                    // Add position and team number
                     row.insertCell().textContent = `Blue ${index + 1}`;
                     row.insertCell().textContent = blueTeam;
+                    row.insertCell().textContent = data.blue[blueTeam]?.autoLeave || '0';
                     
-                    // Add scoring fields
-                    scoringFields.forEach(field => {
-                        const cell = row.insertCell();
-                        cell.textContent = data.blue[blueTeam]?.[field] || '0';
+                    metricKeys.forEach(key => {
+                        row.insertCell().textContent = data.blue[blueTeam]?.[key] || '0';
                     });
+                    
+                    row.insertCell().textContent = data.blue[blueTeam]?.driverRanking || '0';
+                    row.insertCell().textContent = data.blue[blueTeam]?.defenseRanking || '0';
+                    row.insertCell().textContent = data.blue[blueTeam]?.start_pos || '0';
                 });
 
                 console.log("Table population complete");
@@ -102,7 +102,7 @@ if (window.dashboardInitialized) {
                 console.error('Error:', error);
                 const dashboardTable = document.getElementById("dashboardTable");
                 if (dashboardTable) {
-                    dashboardTable.innerHTML = `<tr><td colspan="14">Error: ${error.message}</td></tr>`;
+                    dashboardTable.innerHTML = `<tr><td colspan="100">Error: ${error.message}</td></tr>`;
                 }
             });
         };

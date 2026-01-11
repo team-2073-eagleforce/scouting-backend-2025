@@ -1,185 +1,76 @@
 {
-  "version": "2025_reefscape",
+  "version": "2026_rebuilt",
   "home_team": 2073,
-  "year": 2025,
+  "year": 2026,
   "app_name": "EagleScout",
   "team_name": "EagleForce",
   "metrics": [
     {
-      "key": "auto_leave",
-      "legacy_keys": ["autoLeave"],
+      "key": "autoScore",
       "type": "number",
       "category": "auto",
       "aggregation": "avg",
-      "display_name": "Auto Leave",
+      "display_name": "Auto Score",
       "min": 0,
-      "max": 1
+      "max": 999
     },
     {
-      "key": "auto_L1",
-      "legacy_keys": ["autoL1"],
+      "key": "autoPass",
       "type": "number",
       "category": "auto",
       "aggregation": "avg",
-      "display_name": "Auto L1",
+      "display_name": "Auto Pass",
       "min": 0,
-      "max": 12
+      "max": 999
     },
     {
-      "key": "auto_L2",
-      "legacy_keys": ["autoL2"],
+      "key": "autoClimb",
       "type": "number",
       "category": "auto",
       "aggregation": "avg",
-      "display_name": "Auto L2",
+      "display_name": "Auto Climb",
       "min": 0,
       "max": 12
     },
     {
-      "key": "auto_L3",
-      "legacy_keys": ["autoL3"],
-      "type": "number",
-      "category": "auto",
-      "aggregation": "avg",
-      "display_name": "Auto L3",
-      "min": 0,
-      "max": 12
-    },
-    {
-      "key": "auto_L4",
-      "legacy_keys": ["autoL4"],
-      "type": "number",
-      "category": "auto",
-      "aggregation": "avg",
-      "display_name": "Auto L4",
-      "min": 0,
-      "max": 12
-    },
-    {
-      "key": "auto_net",
-      "legacy_keys": ["autoNet"],
-      "type": "number",
-      "category": "auto",
-      "aggregation": "avg",
-      "display_name": "Auto Net",
-      "min": 0,
-      "max": 12
-    },
-    {
-      "key": "auto_processor",
-      "legacy_keys": ["autoProcessor"],
-      "type": "number",
-      "category": "auto",
-      "aggregation": "avg",
-      "display_name": "Auto Processor",
-      "min": 0,
-      "max": 12
-    },
-    {
-      "key": "auto_removed",
-      "legacy_keys": ["autoRemoved"],
-      "type": "number",
-      "category": "auto",
-      "aggregation": "avg",
-      "display_name": "Auto Removed",
-      "min": 0,
-      "max": 12
-    },
-    {
-      "key": "teleL1",
+      "key": "teleScore",
       "type": "number",
       "category": "teleop",
       "aggregation": "avg",
-      "display_name": "Teleop L1",
+      "display_name": "Teleop Score",
       "min": 0,
-      "max": 50
+      "max": 999
     },
     {
-      "key": "teleL2",
+      "key": "telePass",
       "type": "number",
-      "category": "teleop",
+      "category": "telePass",
       "aggregation": "avg",
-      "display_name": "Teleop L2",
+      "display_name": "Teleop Pass",
       "min": 0,
-      "max": 50
+      "max": 999
     },
     {
-      "key": "teleL3",
-      "type": "number",
-      "category": "teleop",
-      "aggregation": "avg",
-      "display_name": "Teleop L3",
-      "min": 0,
-      "max": 50
-    },
-    {
-      "key": "teleL4",
-      "type": "number",
-      "category": "teleop",
-      "aggregation": "avg",
-      "display_name": "Teleop L4",
-      "min": 0,
-      "max": 50
-    },
-    {
-      "key": "telenet",
-      "type": "number",
-      "category": "teleop",
-      "aggregation": "avg",
-      "display_name": "Teleop Net",
-      "min": 0,
-      "max": 50
-    },
-    {
-      "key": "teleProcessor",
-      "type": "number",
-      "category": "teleop",
-      "aggregation": "avg",
-      "display_name": "Teleop Processor",
-      "min": 0,
-      "max": 50
-    },
-    {
-      "key": "teleRemoved",
-      "type": "number",
-      "category": "teleop",
-      "aggregation": "avg",
-      "display_name": "Teleop Removed",
-      "min": 0,
-      "max": 50
-    },
-    {
-      "key": "climb",
-      "legacy_keys": ["endClimb"],
-      "type": "number",
-      "category": "endgame",
-      "aggregation": "avg",
-      "display_name": "Climb",
-      "min": 0,
-      "max": 12
-    },
-    {
-      "key": "driver_ranking",
-      "legacy_keys": ["driverRanking"],
+      "key": "endClimb",
       "type": "number",
       "category": "subjective",
       "aggregation": "avg",
-      "display_name": "Driver Skill",
-      "min": 1,
-      "max": 5
+      "display_name": "Climb Position",
+      "min": 0,
+      "max": 9
     },
+
     {
-      "key": "defense_ranking",
-      "legacy_keys": ["defenseRanking"],
+      "key": "shootingAccuracy",
       "type": "number",
       "category": "subjective",
       "aggregation": "avg",
-      "display_name": "Defense",
+      "display_name": "Shooting Accuracy",
       "min": 1,
-      "max": 5
+      "max": 10
     }
-  ],
-  "pit_questions": [
+    ],
+     "pit_questions": [
     {
       "key": "drivetrain",
       "type": "select",
@@ -276,3 +167,4 @@
     }
   ]
 }
+
