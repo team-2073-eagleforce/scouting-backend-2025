@@ -12,7 +12,8 @@
       "aggregation": "avg",
       "display_name": "Auto Score",
       "min": 0,
-      "max": 999
+      "max": 999,
+      "required": true
     },
     {
       "key": "autoPass",
@@ -21,7 +22,8 @@
       "aggregation": "avg",
       "display_name": "Auto Pass",
       "min": 0,
-      "max": 999
+      "max": 999,
+      "required": true
     },
     {
       "key": "autoClimb",
@@ -30,7 +32,8 @@
       "aggregation": "avg",
       "display_name": "Auto Climb",
       "min": 0,
-      "max": 12
+      "max": 12,
+      "required": true
     },
     {
       "key": "teleScore",
@@ -39,7 +42,8 @@
       "aggregation": "avg",
       "display_name": "Teleop Score",
       "min": 0,
-      "max": 999
+      "max": 999,
+      "required": true
     },
     {
       "key": "telePass",
@@ -48,7 +52,8 @@
       "aggregation": "avg",
       "display_name": "Teleop Pass",
       "min": 0,
-      "max": 999
+      "max": 999,
+      "required": true
     },
     {
       "key": "endClimb",
@@ -57,7 +62,8 @@
       "aggregation": "avg",
       "display_name": "Climb Position",
       "min": 0,
-      "max": 9
+      "max": 9,
+      "required": true
     },
 
     {
@@ -67,7 +73,8 @@
       "aggregation": "avg",
       "display_name": "Shooting Accuracy",
       "min": 1,
-      "max": 10
+      "max": 10,
+      "required": true
     }
     ],
      "pit_questions": [
@@ -83,83 +90,119 @@
       "type": "number",
       "display_name": "Weight (lbs)",
       "min": 0,
-      "max": 125
+      "max": 115,
+      "required": true
     },
     {
       "key": "length",
       "type": "number",
       "display_name": "Length (inches)",
       "min": 0,
-      "max": 48
+      "max": 48,
+      "required": true
     },
     {
       "key": "width",
       "type": "number",
       "display_name": "Width (inches)",
       "min": 0,
-      "max": 48
+      "max": 48,
+      "required": true
+    },
+    {
+      "key": "Volume",
+      "type": "number",
+      "display_name": "How much fuel can robot hold?",
+      "min": 0,
+      "max": 100,
+      "required": true
+    },
+    {
+      "key": "Shooter",
+      "type": "multiselect",
+      "display_name": "Shooter design",
+      "options": ["Hood", "Turret", "Double Shooter", "Both", "None"],
+      "required": true
     },
     {
       "key": "intake_design",
-      "type": "text",
-      "display_name": "Intake Design"
-    },
-    {
-      "key": "intake_locations",
       "type": "multiselect",
-      "display_name": "Intake Locations",
-      "options": ["Ground", "Source", "Reef"]
+      "display_name": "Intake Design",
+      "options": ["Split Bumper", "Over the Bumper", "Outpost Intake", "None"],
+      "required": true
     },
     {
-      "key": "scoring_locations",
-      "type": "multiselect",
-      "display_name": "Scoring Locations",
-      "options": ["L1", "L2", "L3", "L4", "Net", "Processor"]
-    },
-    {
-      "key": "cage_positions",
-      "type": "multiselect",
-      "display_name": "Cage Positions",
-      "options": ["Shallow", "Deep"]
-    },
-    {
-      "key": "under_shallow",
+      "key": "Hopper",
       "type": "select",
-      "display_name": "Can Go Under Shallow Reef?",
-      "options": ["Yes", "No"]
-    },
-    {
-      "key": "algae_picker",
-      "type": "select",
-      "display_name": "Has Algae Picker?",
-      "options": ["Yes", "No"]
+      "display_name": "Has Hopper?",
+      "options": ["Yes", "No"],
+      "required": true
     },
     {
       "key": "auto_positions",
       "type": "multiselect",
       "display_name": "Auto Starting Positions",
-      "options": ["1", "2", "3", "4", "5"]
+      "options": ["1", "2", "3", "4", "5"],
+      "required": true
     },
     {
-      "key": "auto_leave",
+      "key": "auto_fuel_max",
+      "type": "number",
+      "display_name": "Max Auto Fuel",
+      "min": 0,
+      "max": 99,
+      "required": true
+    },
+    {
+      "key": "auto_hang",
       "type": "select",
-      "display_name": "Can Leave in Auto?",
-      "options": ["Yes", "No"]
+      "display_name": "Auto Hang?",
+      "options": ["Yes", "No"],
+      "required": true
     },
     {
-      "key": "auto_algae_max",
-      "type": "number",
-      "display_name": "Max Auto Algae",
-      "min": 0,
-      "max": 12
+      "key": "intake_locations",
+      "type": "multiselect",
+      "display_name": "Intake Locations",
+      "options": ["Ground", "Outpost", "Depot"],
+      "required": true
     },
     {
-      "key": "auto_coral_max",
-      "type": "number",
-      "display_name": "Max Auto Coral",
-      "min": 0,
-      "max": 12
+      "key": "shooting_distance",
+      "type": "multiselect",
+      "display_name": "Shooting Distance",
+      "options": ["Short", "Middle", "Far"],
+      "required": true
     },
+    {
+      "key": "tower_positions",
+      "type": "multiselect",
+      "display_name": "Tower Positions",
+      "options": ["Left", "Middle", "Right", "None"],
+      "required": true
+    },
+    {
+      "key": "tower_levels",
+      "type": "multiselect",
+      "display_name": "Tower Level",
+      "options": ["L1", "L2", "L3", "None"],
+      "required": true
+    },
+    {
+      "key": "trench",
+      "type": "select",
+      "display_name": "Trench?",
+      "options": ["Yes", "No"],
+      "required": true
+    },
+    {
+      "key": "Bump",
+      "type": "select",
+      "display_name": "Bump?",
+      "options": ["Yes", "No"],
+      "required": true
+    },
+
     {
       "key": "additional_info",
       "type": "textarea",

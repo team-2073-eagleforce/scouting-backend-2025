@@ -1,67 +1,275 @@
 {% extends 'index.html' %}
-{% load crispy_forms_tags %}
 {% load scouting_extras %}
 
 {% block Title %}Pit Scouting - Team {{ team_number }}{% endblock %}
 
 {% block Content %}
-<h2>Pit Scouting - Team {{ team_number }}</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Pit Scouting – Team {{ team_number }}</h2>
+    <span id="autosave-indicator" class="autosave idle">Draft not saved</span>
+</div>
 
-<form method="POST" enctype="multipart/form-data">
+<!-- Completion Progress -->
+<div class="progress-wrapper mb-4">
+    <div class="progress-label">
+        Completion: <span id="progress-percent">0%</span>
+    </div>
+    <div class="progress">
+        <div id="progress-bar" class="progress-bar"></div>
+    </div>
+</div>
+
+<form method="POST" enctype="multipart/form-data" novalidate>
     {% csrf_token %}
-    
+
     {% for q in questions %}
-        <div class="form-group mb-3">
-            <label><b>{{ q.display_name }}</b></label>
-            
-            {% if q.type == "text" %}
-                <input type="text" name="{{ q.key }}" class="form-control" 
-                       value="{{ existing_data|get_item:q.key|default:'' }}">
-            
-            {% elif q.type == "number" %}
-                <input type="number" name="{{ q.key }}" class="form-control"
-                       value="{{ existing_data|get_item:q.key|default:'' }}"
-                       {% if q.min %}min="{{ q.min }}"{% endif %}
-                       {% if q.max %}max="{{ q.max }}"{% endif %}>
+    <div class="form-group mb-4" data-q="{{ q.key }}">
+        <label class="form-label fw-semibold">
+            {{ q.display_name }}
+            {% if q.required %}<span class="text-danger">*</span>{% endif %}
+        </label>
 
-            {% elif q.type == "select" %}
-                <select name="{{ q.key }}" class="form-control">
-                    <option value="">-- Select --</option>
-                    {% for opt in q.options %}
-                        <option value="{{ opt }}" 
-                            {% if existing_data|get_item:q.key == opt %}selected{% endif %}>
-                            {{ opt }}
-                        </option>
-                    {% endfor %}
-                </select>
+        {% if q.type == "text" %}
+            <input type="text" name="{{ q.key }}"
+                   class="form-control theme-input"
+                   value="{{ existing_data|get_item:q.key|default:'' }}"
+                   data-required="{{ q.required }}">
 
-            {% elif q.type == "multiselect" %}
+        {% elif q.type == "number" %}
+            <input type="number" name="{{ q.key }}"
+                   class="form-control theme-input"
+                   value="{{ existing_data|get_item:q.key|default:'' }}"
+                   {% if q.min is not None %}min="{{ q.min }}"{% endif %}
+                   {% if q.max is not None %}max="{{ q.max }}"{% endif %}
+                   step="any"
+                   data-required="{{ q.required }}"
+                   data-min="{{ q.min }}"
+                   data-max="{{ q.max }}">
+
+        {% elif q.type == "textarea" %}
+            <textarea name="{{ q.key }}"
+                      rows="3"
+                      class="form-control theme-input"
+                      data-required="{{ q.required }}">{{ existing_data|get_item:q.key|default:'' }}</textarea>
+
+        {% elif q.type == "select" %}
+            <select name="{{ q.key }}" class="theme-select" data-required="{{ q.required }}">
+                <option value="">— Select —</option>
                 {% for opt in q.options %}
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="{{ q.key }}" value="{{ opt }}"
-                            {% if existing_data and opt in existing_data|get_item:q.key %}checked{% endif %}>
-                        <label class="form-check-label">{{ opt }}</label>
-                    </div>
+                    <option value="{{ opt }}"
+                        {% if existing_data|get_item:q.key == opt %}selected{% endif %}>
+                        {{ opt }}
+                    </option>
                 {% endfor %}
+            </select>
 
-            {% elif q.type == "textarea" %}
-                <textarea name="{{ q.key }}" class="form-control" rows="3">{{ existing_data|get_item:q.key|default:'' }}</textarea>
+        {% elif q.type == "multiselect" %}
+            <div class="multiselect-list" data-required="{{ q.required }}" data-multiselect-name="{{ q.key }}">
+                {% for opt in q.options %}
+                <label class="multiselect-item">
+                    <input type="checkbox"
+                           name="{{ q.key }}"
+                           value="{{ opt }}"
+                           {% if existing_data and opt in existing_data|get_item:q.key %}checked{% endif %}>
+                    <span>{{ opt }}</span>
+                </label>
+                {% endfor %}
+            </div>
 
-            {% elif q.type == "boolean" %}
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="{{ q.key }}"
-                        {% if existing_data|get_item:q.key %}checked{% endif %}>
-                    <label class="form-check-label">Yes</label>
-                </div>
-            {% endif %}
-        </div>
+        {% elif q.type == "boolean" %}
+            <div class="form-check theme-check">
+                <input class="form-check-input" type="checkbox" name="{{ q.key }}"
+                       {% if existing_data|get_item:q.key %}checked{% endif %}>
+                <label class="form-check-label">Yes</label>
+            </div>
+        {% endif %}
+
+        <div class="invalid-feedback d-none" id="error-{{ q.key }}"></div>
+    </div>
     {% endfor %}
 
-    <div class="form-group mb-3">
-        <label><b>Robot Picture</b></label>
-        <input type="file" name="robot_picture" class="form-control" accept="image/*">
+    <!-- Required File -->
+    <div class="form-group mb-4" data-q="robot_picture">
+        <label class="form-label fw-semibold">
+            Robot Picture <span class="text-danger">*</span>
+        </label>
+        <input type="file"
+               name="robot_picture"
+               class="form-control theme-input"
+               accept="image/*"
+               data-required="true">
+        <div class="invalid-feedback d-none" id="error-robot_picture"></div>
     </div>
 
-    <button type="submit" class="btn btn-primary btn-lg">Submit Data</button>
+    <button type="submit" class="btn btn-lg theme-btn">Submit</button>
 </form>
+
+<style>
+/* Autosave indicator */
+.autosave { font-size: 0.9em; padding: 4px 10px; border-radius: 999px; transition: all 0.3s ease; }
+.autosave.idle { background: var(--border); color: var(--text); }
+.autosave.saving { background: #ffc107; color: #000; }
+.autosave.saved { background: #28a745; color: #fff; }
+
+/* Completion progress */
+.progress { height: 12px; background: var(--border); border-radius: 999px; overflow: hidden; }
+.progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.6s ease; }
+
+/* Theme inputs */
+.theme-input { background: var(--bg-elevated); color: var(--text); border: 1px solid var(--border); }
+.theme-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 0.2rem rgba(196,22,42,0.2); }
+
+/* Multiselect */
+.multiselect-list { display: flex; flex-direction: column; gap: 8px; padding: 5px; border-radius: 6px; border: 1px solid var(--border); transition: all 0.3s ease; }
+.multiselect-list.is-invalid { border: 2px solid var(--accent); background: rgba(196,22,42,0.08); }
+.multiselect-item { padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+
+/* Select customization */
+.theme-select {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background-color: var(--bg-elevated);
+    color: var(--text);
+    cursor: pointer;
+}
+.theme-select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 0.2rem rgba(196,22,42,0.2); }
+
+/* Buttons */
+.theme-btn { background: var(--accent); color: #fff; }
+.theme-btn:hover { background: rgba(196,22,42,0.8); }
+
+/* Validation feedback */
+.invalid-feedback { color: var(--accent); }
+</style>
+
+<script>
+(function() {
+    const form = document.querySelector('form');
+    const STORAGE_KEY = 'pit_draft_{{ team_number }}';
+    const indicator = document.getElementById('autosave-indicator');
+    const progressBar = document.getElementById('progress-bar');
+    const progressPercent = document.getElementById('progress-percent');
+
+    /* =========================
+       Helper Functions
+    ========================= */
+    function setIndicator(state, text){
+        indicator.className = 'autosave ' + state;
+        indicator.textContent = text;
+    }
+
+    function saveDraft(){
+        setIndicator('saving', 'Saving…');
+        const data = {};
+        form.querySelectorAll('input, textarea, select').forEach(el => {
+            if(!el.name) return;
+            if(el.type === 'checkbox') {
+                data[el.name] = data[el.name] || [];
+                if(el.checked) data[el.name].push(el.value);
+            } else if(el.type !== 'file') {
+                data[el.name] = el.value;
+            }
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        setTimeout(()=>setIndicator('saved', 'Draft saved ✓'), 300);
+        updateProgress();
+    }
+
+    function restoreDraft() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return;
+        const data = JSON.parse(raw);
+        Object.entries(data).forEach(([name, val])=>{
+            form.querySelectorAll(`[name="${name}"]`).forEach(el=>{
+                if(el.type==='checkbox') el.checked = val.includes(el.value);
+                else el.value = val;
+            });
+        });
+        setIndicator('saved', 'Draft restored ✓');
+        updateProgress();
+    }
+
+    function validateField(el){
+        const required = el.dataset.required==='True' || el.dataset.required==='true';
+        if(!required) return true;
+
+        let valid = true;
+        if(el.dataset.multiselectName) {
+            valid = el.querySelectorAll('input:checked').length > 0;
+            el.classList.toggle('is-invalid', !valid);
+        } else if(el.type==='file') {
+            valid = el.files.length>0;
+            el.classList.toggle('is-invalid', !valid);
+        } else if(el.type==='checkbox') {
+            valid = el.checked;
+            el.closest('.form-group').classList.toggle('is-invalid', !valid);
+        } else if(el.type==='number') {
+            const val = parseFloat(el.value);
+            const min = el.dataset.min ? parseFloat(el.dataset.min) : null;
+            const max = el.dataset.max ? parseFloat(el.dataset.max) : null;
+            valid = el.value && el.value.trim()!=='';
+            if(valid && min !== null && val < min) valid = false;
+            if(valid && max !== null && val > max) valid = false;
+            el.classList.toggle('is-invalid', !valid);
+        } else {
+            valid = el.value && el.value.trim()!=='';
+            el.classList.toggle('is-invalid', !valid);
+        }
+        return valid;
+    }
+
+    function updateProgress(){
+        const requiredFields = form.querySelectorAll('[data-required="true"], [data-required="True"]');
+        let filled=0;
+        requiredFields.forEach(el=>{
+            if(el.dataset.multiselectName){
+                if(el.querySelectorAll('input:checked').length>0) filled++;
+            } else if(el.type==='file'){
+                if(el.files.length>0) filled++;
+            } else if(el.type==='checkbox'){
+                if(el.checked) filled++;
+            } else if(el.type==='number'){
+                const val = parseFloat(el.value);
+                const min = el.dataset.min ? parseFloat(el.dataset.min) : null;
+                const max = el.dataset.max ? parseFloat(el.dataset.max) : null;
+                let valid = el.value && el.value.trim()!=='';
+                if(valid && min !== null && val < min) valid = false;
+                if(valid && max !== null && val > max) valid = false;
+                if(valid) filled++;
+            } else {
+                if(el.value && el.value.trim()!=='') filled++;
+            }
+        });
+        const percent = requiredFields.length ? Math.round(filled/requiredFields.length*100) : 0;
+        progressBar.style.width = percent+'%';
+        progressPercent.textContent = percent+'%';
+    }
+
+    /* =========================
+       Event Listeners
+    ========================= */
+    form.addEventListener('input', saveDraft);
+    form.addEventListener('change', saveDraft);
+
+    form.addEventListener('submit', e=>{
+        let valid=true;
+        form.querySelectorAll('[data-required="true"], [data-required="True"]').forEach(el=>{
+            if(!validateField(el)) valid=false;
+        });
+        updateProgress();
+        if(!valid){
+            e.preventDefault();
+            const first=form.querySelector('.is-invalid');
+            if(first) window.scrollTo({top:first.offsetTop-100, behavior:'smooth'});
+        } else {
+            localStorage.removeItem(STORAGE_KEY);
+        }
+    });
+
+    restoreDraft();
+    updateProgress();
+})();
+</script>
 {% endblock %}

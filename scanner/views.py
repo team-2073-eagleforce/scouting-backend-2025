@@ -6,6 +6,37 @@ from teams.models import Teams, Team_Match_Data
 from plugins import plugin_manager
 from utils import config_loader
 from helpers import login_required
+# views.py
+from django.http import HttpResponse
+from django.contrib.staticfiles import finders
+import os
+
+def debug_scanner_files(request):
+    # The relative path Django should be looking for
+    worker_file = "scanner/qr-scanner-worker.min.js"
+    
+    # Attempt to find the absolute path on the disk
+    result = finders.find(worker_file)
+    
+    if result:
+        # Check if the file is actually readable
+        file_exists = os.path.exists(result)
+        return HttpResponse(
+            f"✅ <strong>Success!</strong><br>"
+            f"Django found the file at: <code>{result}</code><br>"
+            f"File exists on disk: <strong>{file_exists}</strong>"
+        )
+    else:
+        # List where Django is currently looking
+        from django.conf import settings
+        search_locations = "<br>".join([str(d) for d in settings.STATICFILES_DIRS])
+        
+        return HttpResponse(
+            f"❌ <strong>File Not Found!</strong><br>"
+            f"Django could not find <code>{worker_file}</code> in any static directories.<br><br>"
+            f"<strong>Searching in:</strong><br>{search_locations}",
+            status=404
+        )
 
 _plugin_logger = logging.getLogger('plugins')
 
@@ -13,7 +44,15 @@ _plugin_logger = logging.getLogger('plugins')
 def scanner(request):
     if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
         try:
-            data_from_post = json.loads(request.body.decode("utf-8"))
+            body_data = json.loads(request.body.decode("utf-8"))
+            # Handle both direct data and wrapped qr_data format
+            if "qr_data" in body_data:
+                data_from_post = body_data["qr_data"]
+                # If qr_data is a string, parse it
+                if isinstance(data_from_post, str):
+                    data_from_post = json.loads(data_from_post)
+            else:
+                data_from_post = body_data
             config = config_loader.get_config()
 
             # Extract anchor fields
@@ -23,7 +62,7 @@ def scanner(request):
                 match_num = int(data_from_post["matchNumber"])
                 scout_name = data_from_post.get("name", "")
             except (KeyError, ValueError, TypeError) as e:
-                return JsonResponse({"error": f"Missing or invalid key identifier: {e}"}, status=400)
+                return JsonResponse({"error": f"Missing or invalid key identifier: '{e}'"}, status=400)
 
             # Ensure team exists
             Teams.objects.get_or_create(team_number=team_num, event=event_code)

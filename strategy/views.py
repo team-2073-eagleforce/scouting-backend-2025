@@ -191,6 +191,10 @@ def dashboard(request):
 
             # Get match with proper comp_level
             match = get_single_match(comp_code, f"{comp_level}{match_number}")
+            
+            # Check if match data exists
+            if not match or 'alliances' not in match:
+                return JsonResponse({"error": "Match data not found or incomplete"}, status=404)
 
             # Existing team processing with quantifier passthrough
             red_json = {}

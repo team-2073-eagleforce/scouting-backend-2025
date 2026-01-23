@@ -92,6 +92,7 @@ class NewPitScoutingData(forms.Form):
     auto_algae_max = forms.IntegerField()
     auto_coral_max = forms.IntegerField()
     robot_picture = forms.ImageField()
+    team_logo = forms.ImageField(required=False)
     additional_info = forms.CharField(
         max_length=512,
         required=False,

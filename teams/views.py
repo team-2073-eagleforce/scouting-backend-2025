@@ -84,9 +84,11 @@ def pit_scouting(request, team_number):
     if request.method == 'POST':
         # Handle image upload (Anchor field)
         img_url = None
+        logo_url = None
+        allowed_types = ['image/png', 'image/jpeg', 'image/jpg']
+
         if 'robot_picture' in request.FILES:
             image_file = request.FILES['robot_picture']
-            allowed_types = ['image/png', 'image/jpeg', 'image/jpg']
             if image_file.content_type not in allowed_types:
                 return JsonResponse({
                     'status': 'error',
@@ -99,8 +101,26 @@ def pit_scouting(request, team_number):
             image_url_list.insert(1, "upload/w_0.4,c_scale/")
             img_url = "".join(image_url_list)
 
+        # Optional team logo upload
+        if 'team_logo' in request.FILES:
+            logo_file = request.FILES['team_logo']
+            if logo_file.content_type not in allowed_types:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Invalid logo file type. Only PNG, JPEG, and JPG are allowed.'
+                }, status=400)
+
+            logo_response = cloudinary.uploader.upload(logo_file)
+            logo_url = logo_response["secure_url"]
+            # small display size
+            logo_url_list = logo_url.split("upload/")
+            logo_url_list.insert(1, "upload/w_0.4,c_scale/")
+            logo_url = "".join(logo_url_list)
+
         # Handle dynamic pit data
         pit_payload = {}
+        validation_errors = []
+        
         for q in config.get('pit_questions', []):
             key = q['key']
             if q['type'] == 'multiselect':
@@ -109,19 +129,68 @@ def pit_scouting(request, team_number):
                 pit_payload[key] = request.POST.get(key) == 'on'
             else:
                 pit_payload[key] = request.POST.get(key, '')
+            
+            # Validate number fields with min/max
+            if q['type'] == 'number' and pit_payload[key]:
+                try:
+                    val = float(pit_payload[key])
+                    if 'min' in q and val < q['min']:
+                        validation_errors.append(f"{q.get('display_name', key)} must be at least {q['min']}")
+                    if 'max' in q and val > q['max']:
+                        validation_errors.append(f"{q.get('display_name', key)} cannot exceed {q['max']}")
+                except (ValueError, TypeError):
+                    validation_errors.append(f"{q.get('display_name', key)} must be a valid number")
+
+        # Server-side required-field validation
+        field_errors = {}
+        for q in config.get('pit_questions', []):
+            if q.get('required'):
+                val = pit_payload.get(q['key'])
+                if q['type'] == 'multiselect':
+                    if not val:
+                        field_errors[q['key']] = f"{q.get('display_name', q['key'])} is required."
+                elif q['type'] in ['select', 'text', 'textarea', 'number']:
+                    if val in [None, '', []]:
+                        field_errors[q['key']] = f"{q.get('display_name', q['key'])} is required."
+        
+        # Merge validation errors
+        if validation_errors:
+            for err in validation_errors:
+                field_errors['_general'] = field_errors.get('_general', []) if isinstance(field_errors.get('_general'), list) else []
+                field_errors['_general'].append(err)
+
+        if field_errors:
+            # Return form with errors and previously entered values
+            return render(request, "teams/pit_scouting.html", {
+                'team_number': team_number,
+                'questions': config.get('pit_questions', []),
+                'existing_data': pit_payload,
+                'field_errors': field_errors,
+            })
         
         # Save
         team.pit_data = pit_payload
         if img_url:
             team.robot_picture = img_url
+        if logo_url:
+            team.logo_url = logo_url
         team.pit_scout_status = True
         team.save()
         return redirect(f'/teams/{team_number}/?comp={comp_code}')
 
+    # Ensure existing_data is a dict (some DB rows may have JSON saved as string)
+    existing_data = team.pit_data or {}
+    if isinstance(existing_data, str):
+        try:
+            import json as _json
+            existing_data = _json.loads(existing_data)
+        except Exception:
+            existing_data = {}
+
     return render(request, "teams/pit_scouting.html", {
         'team_number': team_number,
         'questions': config.get('pit_questions', []),
-        'existing_data': team.pit_data,
+        'existing_data': existing_data,
     })
     
 @login_required

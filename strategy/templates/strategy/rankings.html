@@ -1,80 +1,213 @@
 {% extends 'index.html' %}
 {% load static %}
-{% load scouting_extras %}
 
 {% block Title %}Rankings{% endblock %}
 
 {% block Styles %}
-    <style>
-        td, th {
-            white-space: nowrap;
-            padding: 4px 8px;
-            font-size: 13px;
-        }
-        #rankings_table {
-            width: max-content;
-            min-width: 100%;
-        }
-        #rankings_table thead th {
-            position: -webkit-sticky;
-            position: sticky;
-            top: 0;
-            background: #f8f9fa;
-            z-index: 10;
-            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-        }
-        
-        .table-responsive {
-            max-height: 80vh;
-            overflow: auto;
-            width: 100%;
-        }
-    </style>
+<style>
+/* ========================
+   Page Wrapper
+   ======================== */
+.rankings-wrapper {
+    padding: 16px;
+    font-family: inherit; /* inherit from site */
+}
+
+/* ========================
+   Filter / Controls
+   ======================== */
+.rankings-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.rankings-controls label {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.rankings-controls select {
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+/* ========================
+   Card-style table container
+   ======================== */
+.table-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+}
+
+/* Scrollable table wrapper */
+.table-responsive {
+    max-height: 68vh;
+    overflow: auto;
+}
+
+/* ========================
+   Table Styles
+   ======================== */
+#rankings_table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* Table cells */
+#rankings_table th,
+#rankings_table td {
+    padding: 8px 10px;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+}
+
+/* Sticky header */
+#rankings_table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--bg-elevated);
+    color: var(--accent);
+    font-weight: 700;
+    z-index: 10;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+/* Header hover */
+#rankings_table thead th:hover {
+    background: var(--accent);
+    color: var(--bg-elevated);
+}
+
+/* Zebra striping for rows */
+#rankings_table tbody tr:nth-child(even) {
+    background: rgba(196, 22, 42, 0.04);
+}
+
+/* Row hover effect */
+#rankings_table tbody tr:hover {
+    background: rgba(196, 22, 42, 0.12);
+}
+
+/* Rank emphasis */
+.rank {
+    font-weight: 700;
+}
+
+/* Links */
+#rankings_table a {
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+#rankings_table a:hover {
+    text-decoration: underline;
+}
+
+/* ========================
+   Scrollbar customization
+   ======================== */
+.table-responsive::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+}
+
+/* ========================
+   Compact / Comfortable Density Modes
+   ======================== */
+body.compact #rankings_table th,
+body.compact #rankings_table td {
+    padding: 4px 6px;
+    font-size: 12px;
+}
+
+body.comfortable #rankings_table th,
+body.comfortable #rankings_table td {
+    padding: 12px 16px;
+    font-size: 15px;
+}
+</style>
 {% endblock %}
 
 {% block Content %}
-    <form method="get" action="{% url 'rankings' %}">
+<div class="rankings-wrapper">
+
+    <!-- Match Type Selector -->
+    <form method="get" action="{% url 'rankings' %}" class="rankings-controls">
         <input type="hidden" name="comp" value="{{ comp_code }}">
-        <label for="quantifier">Select Match Type:</label>
+        <label for="quantifier">Match Type:</label>
         <select name="quantifier" id="quantifier" onchange="this.form.submit()">
-            <option value="Prac" {% if selected_quantifier == 'Prac' %}selected{% endif %}>Prac</option>
-            <option value="Quals" {% if selected_quantifier == 'Quals' %}selected{% endif %}>Quals</option>
-            <option value="Playoff" {% if selected_quantifier == 'Playoff' %}selected{% endif %}>Playoff</option>
+            <option value="Prac" {% if selected_quantifier == 'Prac' %}selected{% endif %}>Practice</option>
+            <option value="Quals" {% if selected_quantifier == 'Quals' %}selected{% endif %}>Qualifiers</option>
+            <option value="Play Off" {% if selected_quantifier == 'Play Off' %}selected{% endif %}>Playoffs</option>
         </select>
     </form>
 
-    <div class="table-responsive">
-        <table class="table" id="rankings_table">
-            <thead>
-                <tr class="sticky-top" style="background-color: gray">
-                    <th>Rank</th>
-                    <th onclick="sortTable(1, 'team_number')">Team #</th>
-                    <th onclick="sortTable(2, 'autoLeave')">Auto Leave</th>
-                    {% for metric in config_metrics %}
-                        <th onclick="sortTable({{ forloop.counter|add:2 }}, '{{ metric.key }}')">{{ metric.display_name }}</th>
-                    {% endfor %}
-                    <th onclick="sortTable({{ config_metrics|length|add:3 }}, 'driverRanking')">Driver Ranking</th>
-                    <th onclick="sortTable({{ config_metrics|length|add:4 }}, 'defenseRanking')">Defense</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for team_number, stats in team_averages.items %}
-                    <tr class="data">
+    <!-- Table Card -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table id="rankings_table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th onclick="sortTable(1, 'team_number')">Team</th>
+                        <th onclick="sortTable(2, 'autoScore')">Auto Score</th>
+                        <th onclick="sortTable(2, 'autoPass')">Auto Pass</th>
+                        <th onclick="sortTable(3, 'autoClimb')">Auto Climb</th>
+                        <th onclick="sortTable(4, 'telePass')">Teleop Pass</th>
+                        <th onclick="sortTable(5, 'endClimb')">Climb Position</th>
+                        <th onclick="sortTable(6, 'shootingAccuracy')">Shooting Accuracy</th>
+                </thead>
+                <tbody>
+                    {% for team_number, team_stats in team_averages.items %}
+                    <tr>
                         <td class="rank">{{ forloop.counter }}</td>
-                        <td><a href="{% url 'team_page' team_number %}?comp={{ comp_code }}">{{ team_number }}</a></td>
-                        <td class="autoLeave">{{ stats.autoLeave|default:0 }}</td>
-                        {% for metric in config_metrics %}
-                            <td class="{{ metric.key }}">{{ stats|get_item:metric.key }}</td>
-                        {% endfor %}
-                        <td class="driverRanking">{{ stats.driverRanking|default:0 }}</td>
-                        <td class="defenseRanking">{{ stats.defenseRanking|default:0 }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        <td>
+                            <a href="{% url 'team_page' team_number %}?comp={{ comp_code }}">
+                                {{ team_number }}
+                            </a>
+                        </td>
+                        <td>{{ team_stats.autoScore }}</td>
+                        <td>{{ team_stats.autoPass }}</td>
+                        <td>{{ team_stats.autoClimb }}</td>
+                        <td>{{ team_stats.telePass }}</td>
+                        <td>{{ team_stats.endClimb }}</td>
+                        <td>{{ team_stats.shootingAccuracy }}</td>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
+
+</div>
 {% endblock %}
 
 {% block Scripts %}
-    <script src="{% static '/strategy/ranking.js' %}"></script>
+<script src="{% static 'strategy/ranking.js' %}"></script>
+<script>
+/* Optional: allow switching between compact/comfortable modes */
+function setDensity(mode) {
+    document.body.classList.remove('compact', 'comfortable');
+    if (mode) document.body.classList.add(mode);
+}
+</script>
 {% endblock %}

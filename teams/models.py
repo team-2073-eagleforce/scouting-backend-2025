@@ -5,6 +5,8 @@ class Teams(models.Model):
     team_number = models.IntegerField()
     event = models.CharField(max_length=10)
     robot_picture = models.URLField(max_length=200, null=True)
+    # Optional team logo URL (uploadable via Pit Scouting)
+    logo_url = models.URLField(max_length=512, null=True, blank=True)
     pit_scout_status = models.BooleanField(default=False)
     
     # Dynamic Data Bucket

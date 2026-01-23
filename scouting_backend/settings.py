@@ -9,10 +9,22 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# 1. The URL used when referring to static files
+STATIC_URL = 'static/'
+
+# 2. Locations of static files during development
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+# 3. The folder where collectstatic will put files for production
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')

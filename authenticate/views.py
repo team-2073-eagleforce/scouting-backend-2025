@@ -6,6 +6,9 @@ import requests
 
 from constants import AUTHORIZED_EMAIL
 from .models import AuthorizedUser
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+import json
 
 # Create your views here.
 # Only allow insecure transport for local development
@@ -18,12 +21,12 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapi
 
 client_config = {
     "web": {
-        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+        "client_id": os.getenv("GOOGLE_CLIENT_ID", "").strip(),
         "project_id": "scouting-excel-test",
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
         "token_uri": "https://oauth2.googleapis.com/token",
         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-        "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+        "client_secret": os.getenv("GOOGLE_CLIENT_SECRET", "").strip(),
         "redirect_uris": [
             "http://localhost:8000/auth/oauth2callback/",
             "http://127.0.0.1:8000/auth/oauth2callback/",
@@ -100,6 +103,20 @@ def oauth2callback(request):
 def logout(request):
     request.session.flush()
     return redirect('/auth/')
+
+
+@require_POST
+def set_theme(request):
+    """Set user's theme preference in session (expects JSON {inverted: true/false})"""
+    try:
+        payload = json.loads(request.body.decode('utf-8') or '{}')
+        inverted = bool(payload.get('inverted', False))
+    except Exception:
+        # Fallback to form-encoded
+        inverted = request.POST.get('inverted') in ['1', 'true', 'True']
+
+    request.session['inverted'] = inverted
+    return JsonResponse({'status': 'success', 'inverted': inverted})
 
 
 def credentials_to_dict(credentials):

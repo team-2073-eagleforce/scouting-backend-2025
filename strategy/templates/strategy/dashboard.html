@@ -1,65 +1,198 @@
 {% extends 'index.html' %}
 {% load static %}
 
+{% block Title %}Dashboard{% endblock %}
+
 {% block Content %}
-    <div class="container">
-        <h1>Dashboard</h1>
-        <form>
-            <div class="row">
+<div class="container-fluid py-4">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-0">Dashboard</h1>
+            <div class="text-muted small">
+                Match performance overview & strategic insights
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls Card -->
+    <div class="card dashboard-card mb-4">
+        <div class="card-body">
+            <form class="row g-3 align-items-end">
                 <div class="col-md-3">
+                    <label class="form-label fw-semibold">Match Type</label>
                     <select id="quantifier" class="form-select">
                         <option value="Prac">Practice</option>
                         <option value="Quals" selected>Qualifications</option>
                     </select>
                 </div>
+
                 <div class="col-md-3">
-                    <input id="match" class="form-control" placeholder="Match Number" type="text">
+                    <label class="form-label fw-semibold">Match Number</label>
+                    <input
+                        id="match"
+                        class="form-control"
+                        placeholder="e.g. 42"
+                        type="text"
+                        inputmode="numeric"
+                    >
                 </div>
+
                 <div class="col-md-3">
-                    <button id="match_button" class="btn btn-primary" type="button">Load Data</button>
+                    <button
+                        id="match_button"
+                        class="btn btn-primary w-100"
+                        type="button"
+                    >
+                        Load Match Data
+                    </button>
                 </div>
-            </div>
-        </form>
-        <br>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Position</th>
-                    <th>Team</th>
-                    <th>Auto Leave</th>
-                    {% for metric in config_metrics %}
-                        <th>{{ metric.display_name }}</th>
-                    {% endfor %}
-                    <th>Driver Ranking</th>
-                    <th>Defense</th>
-                    <th>Start Pos</th>
-                </tr>
-            </thead>            
-            <tbody id="dashboardTable">
-            </tbody>
-        </table>
+            </form>
+        </div>
     </div>
+
+    <!-- Dashboard Table -->
+    <div class="card dashboard-card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm mb-0" id="dashboard_table">
+                    <thead>
+                        <tr>
+                            <th>Position</th>
+                            <th>Team</th>
+                            <th>Auto Leave</th>
+                            {% for metric in config_metrics %}
+                                <th>{{ metric.display_name }}</th>
+                            {% endfor %}
+                            <th>Driver</th>
+                            <th>Defense</th>
+                            <th>Start Pos</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboardTable">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
 {% endblock %}
 
+{% block Styles %}
 <style>
-    .table thead th {
-        position: -webkit-sticky;
-        position: sticky;
-        top: 0;
-        background: #f8f9fa;
-        z-index: 10;
-        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-    }
-    
-    .table-responsive {
-        max-height: 600px;
-        overflow: auto;
-    }
+/* =========================
+   Dashboard Cards
+   ========================= */
+.dashboard-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+/* =========================
+   Table Layout
+   ========================= */
+.table-responsive {
+    max-height: 65vh;
+    overflow: auto;
+}
+
+/* Sticky headers */
+#dashboard_table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg-elevated);
+    color: var(--text);
+    font-weight: 600;
+    border-bottom: 2px solid var(--border);
+}
+
+/* Cells */
+#dashboard_table td,
+#dashboard_table th {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    font-size: 13px;
+    white-space: nowrap;
+    color: var(--text);
+}
+
+/* Zebra rows */
+#dashboard_table tbody tr:nth-child(even) {
+    background: rgba(0,0,0,0.03);
+}
+
+/* Hover */
+#dashboard_table tbody tr:hover {
+    background: rgba(196, 22, 42, 0.10);
+    transition: background 0.15s ease-in-out;
+}
+
+/* =========================
+   Controls
+   ========================= */
+.form-select,
+.form-control {
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.form-label {
+    margin-bottom: 4px;
+}
+
+.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover, var(--accent));
+}
+
+/* =========================
+   Scrollbars
+   ========================= */
+.table-responsive::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.25);
+    border-radius: 6px;
+}
+
+html.inverted .table-responsive::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.25);
+}
 </style>
+{% endblock %}
 
 {% block Scripts %}
-    <script>
-        window.configMetrics = {{ config_metrics_json|safe }};
-    </script>
-    <script src="{% static 'strategy/dashboard.js' %}"></script>
+<script type="application/json" id="config-metrics">
+    {{ config_metrics_json|safe }}
+</script>
+
+<script>
+(function(){
+    try {
+        window.configMetrics = JSON.parse(
+            document.getElementById('config-metrics').textContent || '[]'
+        );
+    } catch (e) {
+        window.configMetrics = [];
+        console.error('Failed to parse config metrics JSON', e);
+    }
+})();
+</script>
+
+<script src="{% static 'strategy/dashboard.js' %}"></script>
 {% endblock %}

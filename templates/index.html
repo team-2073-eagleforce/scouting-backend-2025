@@ -1,115 +1,564 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block Title %}{{ app_name }}{% endblock %}</title>
-    <link rel="icon" href="{{ logo_url }}" type="image/png">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    {% block Styles %} {% endblock %}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>{% block Title %}{{ app_name }}{% endblock %}</title>
+<link rel="icon" href="{{ logo_url }}" type="image/png">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+/* ======================================================
+   THEME VARIABLES
+====================================================== */
+:root {
+  --bg: #f5f5f5;
+  --bg-elevated: #ffffff;
+  --text: #1a1a1a;
+  --muted-text: #555555;
+  --accent: #b11226;
+  --accent-hover: #8f0f1f;
+  --border: #dddddd;
+
+  --pad-xs: 0.25rem;
+  --pad-sm: 0.5rem;
+  --pad-md: 0.75rem;
+}
+
+html.inverted {
+  --bg: #1c1e21;
+  --bg-elevated: #2b2f34;
+  --text: #e6e6e6;
+  --muted-text: #a9a9a9;
+  --accent: #c4162a;
+  --accent-hover: #e01e37;
+  --border: #4b5055;
+}
+
+/* ======================================================
+   NAVBAR TOGGLER
+====================================================== */
+.navbar-toggler {
+  background-color: var(--accent);
+  border: none;
+}
+
+html.inverted .navbar-toggler {
+  background-color: #c4162a;
+}
+
+.navbar-toggler-icon {
+  filter: invert(1);
+}
+
+/* ======================================================
+   DENSITY MODES
+====================================================== */
+html[data-density="comfortable"] {
+  --control-padding: var(--pad-md);
+  --table-padding: var(--pad-md);
+  --navbar-padding: var(--pad-md);
+}
+
+html[data-density="compact"] {
+  --control-padding: var(--pad-xs);
+  --table-padding: var(--pad-xs);
+  --navbar-padding: var(--pad-sm);
+}
+
+/* ======================================================
+   GLOBAL / TYPOGRAPHY
+====================================================== */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI",
+               Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* ======================================================
+   NAVBAR
+====================================================== */
+.navbar {
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  padding-top: var(--navbar-padding);
+  padding-bottom: var(--navbar-padding);
+}
+
+/* BRAND ANIMATION (ADDITIVE) */
+.navbar-brand h3 {
+  margin: 0;
+  color: var(--accent);
+  font-weight: 800;
+  position: relative;
+  animation: brandFadeSlide 0.6s ease-out both;
+}
+
+@keyframes brandFadeSlide {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.navbar-brand h3::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  width: 0;
+  height: 2px;
+  background-color: var(--accent);
+  transition: width 0.25s ease;
+}
+
+.navbar-brand:hover h3::after {
+  width: 100%;
+}
+/* ======================================================
+   REFINED BRAND UNDERLINE (SOLID + GLOW)
+====================================================== */
+
+.navbar-brand h3::after {
+  height: 3px;
+  border-radius: 999px;
+  background-color: var(--accent);
+
+  /* Solid glow, no transparency fade */
+  box-shadow:
+    0 0 6px var(--accent),
+    0 0 12px var(--accent),
+    0 0 18px rgba(0, 0, 0, 0); /* keeps glow edge clean */
+
+  transition:
+    width 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+/* Slight glow intensification on hover */
+.navbar-brand:hover h3::after {
+  box-shadow:
+    0 0 8px var(--accent),
+    0 0 16px var(--accent);
+}
+
+/* Dark mode tuning */
+html.inverted .navbar-brand h3::after {
+  box-shadow:
+    0 0 10px var(--accent),
+    0 0 20px var(--accent);
+}
+
+
+/* ======================================================
+   LINKS
+====================================================== */
+.nav-link {
+  color: var(--text) !important;
+  font-weight: 500;
+}
+
+.nav-link:hover {
+  color: var(--accent) !important;
+}
+
+/* ======================================================
+   DROPDOWNS
+====================================================== */
+.dropdown-menu {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  animation: dropdownFade 0.18s ease-out;
+}
+
+@keyframes dropdownFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+  color: var(--text);
+}
+
+.dropdown-item:hover {
+  background: rgba(196, 22, 42, 0.15);
+  color: var(--accent);
+}
+
+/* MOBILE SPACING IMPROVEMENTS (ADDITIVE) */
+.dropdown-menu li {
+  padding-bottom: 0.5rem;
+}
+
+.dropdown-menu li + li {
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+
+.dropdown-menu button {
+  width: 100%;
+  text-align: left;
+}
+
+@media (max-width: 991px) {
+  .navbar-collapse {
+    padding-top: 0.75rem;
+  }
+}
+/* ======================================================
+   ENHANCED MOBILE HAMBURGER SPACING
+====================================================== */
+
+@media (max-width: 991px) {
+
+  /* Space out nav items */
+  .navbar-nav .nav-item {
+    margin-bottom: 0.6rem;
+  }
+
+  /* Settings dropdown looks like a panel */
+  .dropdown-menu {
+    padding: 1rem !important;
+    border-radius: 0.75rem;
+  }
+
+  /* Extra spacing inside settings */
+  .dropdown-menu li {
+    padding-bottom: 0.75rem;
+  }
+
+  .dropdown-menu li + li {
+    margin-top: 0.75rem;
+  }
+}
+/* ======================================================
+   SETTINGS LABEL THEME-AWARE TEXT
+====================================================== */
+
+/* Labels inside settings dropdown */
+.dropdown-menu b {
+  color: var(--muted-text);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Dark mode refinement */
+html.inverted .dropdown-menu b {
+  color: var(--muted-text);
+}
+/* Subtle separator emphasis */
+.dropdown-menu li + li {
+  border-top-color: color-mix(in srgb, var(--border) 70%, transparent);
+}
+/* ======================================================
+   COMPETITION SELECT (THEME-AWARE + POLISHED)
+====================================================== */
+
+#comp {
+  min-width: 220px;
+  background-color: var(--bg-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  padding: 0.45rem 2.2rem 0.45rem 0.75rem;
+  font-weight: 500;
+
+  /* Smooth transitions */
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease;
+}
+
+/* Hover polish */
+#comp:hover {
+  border-color: var(--accent);
+}
+
+/* Focus state (keyboard + click) */
+#comp:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.15rem rgba(196, 22, 42, 0.25);
+}
+
+/* Dark mode refinement */
+html.inverted #comp {
+  background-color: var(--bg-elevated);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+/* Remove harsh browser glow in dark mode */
+html.inverted #comp:focus {
+  box-shadow: 0 0 0 0.15rem rgba(224, 30, 55, 0.35);
+}
+
+/* ======================================================
+   CUSTOM DROPDOWN ARROW (SUBTLE, THEME-AWARE)
+====================================================== */
+
+#comp {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-text) 50%),
+    linear-gradient(135deg, var(--muted-text) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) calc(50% - 3px),
+    calc(100% - 11px) calc(50% - 3px);
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+}
+
+/* Arrow color reacts to hover */
+#comp:hover {
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+    linear-gradient(135deg, var(--accent) 50%, transparent 50%);
+}
+
+/* ======================================================
+   NAVBAR-SPECIFIC POLISH
+====================================================== */
+
+/* Align nicely in navbar */
+.navbar #comp {
+  margin-left: 0.5rem;
+}
+
+/* Mobile spacing */
+@media (max-width: 991px) {
+  #comp {
+    width: 100%;
+    margin-top: 0.4rem;
+  }
+}
+
+#comp {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+html.inverted #comp {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.35);
+}
+
+/* ======================================================
+   SETTINGS GEAR (THEME AWARE)
+====================================================== */
+#settings-toggle {
+  color: var(--text);
+  border-color: var(--border);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+#settings-toggle:hover {
+  background-color: rgba(196, 22, 42, 0.12);
+  color: var(--accent);
+}
+
+/* ======================================================
+   ANIMATED THEME TOGGLE
+====================================================== */
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.theme-icon {
+  display: inline-block;
+  font-size: 1.2rem;
+  transition: transform 0.35s ease, opacity 0.25s ease;
+}
+
+.theme-icon.rotate {
+  transform: rotate(180deg) scale(0.8);
+  opacity: 0;
+}
+</style>
+
+{% block Styles %}{% endblock %}
 </head>
+
 <body>
-{% block Body %}
-    <header>
-        <nav class="navbar navbar-expand-lg bg-light">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="/"><h3>{{ app_name }}</h3></a>
-                <button aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler"
-                        data-bs-target="#navbarSupportedContent" data-bs-toggle="collapse" type="button">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link active" href='{% url "scanner" %}'>QR Scanner</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href='{% url "teams" %}'>Teams</a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                              Strategy
-                            </a>
-                            <ul class="dropdown-menu">
-                              <li><a class="dropdown-item" href="{% url 'rankings' %}">Rankings</a></li>
-                              <li><a class="dropdown-item" href="{% url 'dashboard' %}">Dashboard</a></li>
-                              <li><a class="dropdown-item" href="{% url 'picklist' %}">Picklist</a></li>
-                            </ul>
-                          </li>
-                        <li class="nav-item">
-                            <select class="form-select" id="comp"></select>
-                        </li>
-                        {% if not request.session.name %}
-                        <form class="d-flex" role="search">
-                            <button class="btn btn-outline-primary" onclick="location.assign('/auth')" type="button">
-                                Login with Google
-                            </button>
-                        </form>
-                        {% endif %}
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    <div class="container-fluid" style="max-width: 98%; padding: 0 15px;">
-        {% block Content %}
-        {% endblock %}
-    </div>
-{% endblock %}
+<header>
+<nav class="navbar navbar-expand-lg">
+<div class="container-fluid">
+
+<a class="navbar-brand" href="/"><h3>{{ app_name }}</h3></a>
+
+<button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+  <span class="navbar-toggler-icon"></span>
+</button>
+
+<div class="collapse navbar-collapse" id="navbarSupportedContent">
+
+<ul class="navbar-nav me-auto">
+  <li class="nav-item"><a class="nav-link" href="{% url 'scanner' %}">QR Scanner</a></li>
+  <li class="nav-item"><a class="nav-link" href="{% url 'teams' %}">Teams</a></li>
+
+  <li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Strategy</a>
+    <ul class="dropdown-menu">
+      <li><a class="dropdown-item" href="{% url 'rankings' %}">Rankings</a></li>
+      <li><a class="dropdown-item" href="{% url 'dashboard' %}">Dashboard</a></li>
+      <li><a class="dropdown-item" href="{% url 'picklist' %}">Picklist</a></li>
+    </ul>
+  </li>
+
+  <li class="nav-item">
+    <select id="comp" class="form-select"></select>
+  </li>
+</ul>
+
+<ul class="navbar-nav ms-auto">
+<li class="nav-item dropdown">
+
+<button id="settings-toggle" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+⚙️
+</button>
+
+<ul class="dropdown-menu dropdown-menu-end p-3" style="min-width:220px;">
+
+<li>
+<b>Theme</b><br>
+<button id="theme-toggle" class="btn btn-sm btn-outline-secondary mt-1 theme-toggle-btn">
+  <span id="theme-icon" class="theme-icon">🌙</span>
+  <span id="theme-text">Dark Mode</span>
+</button>
+</li>
+
+<li>
+<b>Density</b><br>
+<button id="density-toggle" class="btn btn-sm btn-outline-secondary mt-1">
+Comfortable
+</button>
+</li>
+
+</ul>
+</li>
+</ul>
+
+{% if not request.session.name %}
+<form class="d-flex">
+  <button class="btn btn-outline-primary" type="button" onclick="location.assign('/auth')">
+    Login with Google
+  </button>
+</form>
+{% endif %}
+
+</div>
+</div>
+</nav>
+</header>
+
+<div class="container-fluid" style="max-width:98%;">
+{% block Content %}{% endblock %}
+</div>
+
+<!-- ======================================================
+     COMP SELECT LOGIC (UNCHANGED)
+====================================================== -->
+<script>
+function post_data_to_server(){
+  fetch("/get_events/", { credentials: "same-origin" })
+    .then(r => r.json())
+    .then(data => {
+      const select = document.getElementById("comp");
+      select.innerHTML = "";
+      for(const key in data){
+        const o = document.createElement("option");
+        o.id = key;
+        o.value = key;
+        o.textContent = data[key];
+        select.appendChild(o);
+      }
+      const prev = localStorage.getItem("comp");
+      if(prev && document.getElementById(prev)){
+        document.getElementById(prev).selected = true;
+      } else {
+        localStorage.setItem("comp", select.value);
+      }
+    });
+}
+
+post_data_to_server();
+
+document.getElementById("comp").onchange = () => {
+  const v = document.getElementById("comp").value;
+  localStorage.setItem("comp", v);
+  location.assign(window.location.pathname + "?comp=" + v);
+};
+
+if(localStorage.getItem("comp") && !window.location.search){
+  location.assign(window.location.pathname + "?comp=" + localStorage.getItem("comp"));
+}
+</script>
+
+<!-- ======================================================
+     THEME TOGGLE (ENHANCED, NON-DESTRUCTIVE)
+====================================================== -->
+<script>
+(function(){
+  const toggle = document.getElementById("theme-toggle");
+  const icon = document.getElementById("theme-icon");
+  const text = document.getElementById("theme-text");
+
+  function updateUI(isDark){
+    icon.classList.add("rotate");
+    setTimeout(() => {
+      icon.textContent = isDark ? "🌞" : "🌙";
+      text.textContent = isDark ? "Light Mode" : "Dark Mode";
+      icon.classList.remove("rotate");
+    }, 180);
+  }
+
+  function setTheme(on){
+    document.documentElement.classList.toggle("inverted", on);
+    localStorage.setItem("inverted", on ? "1" : "0");
+    updateUI(on);
+  }
+
+  if(toggle){
+    toggle.onclick = () => {
+      setTheme(!document.documentElement.classList.contains("inverted"));
+    };
+  }
+
+  const stored = localStorage.getItem("inverted");
+  if(stored !== null) setTheme(stored === "1");
+})();
+</script>
+
+<!-- ======================================================
+     DENSITY TOGGLE (UNCHANGED)
+====================================================== -->
+<script>
+(function(){
+  const btn = document.getElementById("density-toggle");
+
+  function setDensity(mode){
+    document.documentElement.setAttribute("data-density", mode);
+    localStorage.setItem("density", mode);
+    if(btn) btn.textContent = mode === "compact" ? "Compact" : "Comfortable";
+  }
+
+  if(btn){
+    btn.onclick = () => {
+      const cur = document.documentElement.getAttribute("data-density");
+      setDensity(cur === "compact" ? "comfortable" : "compact");
+    };
+  }
+
+  setDensity(localStorage.getItem("density") || "comfortable");
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+{% block Scripts %}{% endblock %}
 </body>
 </html>
-<script>
-    post_data_to_server();
-
-    function toggleMobileMenu(menu) {
-        menu.classList.toggle('open');
-    }
-
-    function post_data_to_server() {
-        fetch("/get_events/", {
-                method: 'GET',
-                credentials: 'include',
-                mode: 'same-origin'
-            }
-        )
-            .then(response => {
-                return response.json();
-            })
-            .then(data => {
-                for (let event in data) {
-                    let option = document.createElement("option");
-                    option.setAttribute("id", event);
-                    option.setAttribute("value", event);
-                    option.innerText = data[event];
-                    document.getElementById("comp").appendChild(option);
-                }
-
-                let prevComp = localStorage.getItem("comp")
-                console.log(prevComp)
-                if (prevComp == null) {
-                    localStorage.setItem("comp", document.getElementById("comp").value)
-                } else {
-                    console.log(document.getElementById("comp"))
-                    document.getElementById(prevComp).setAttribute("selected", "true")
-                }
-
-            })
-    }
-
-    document.getElementById("comp").onchange = () => {
-        localStorage.setItem("comp", document.getElementById("comp").value)
-        location.assign(window.location.origin + window.location.pathname + "?comp=" + document.getElementById("comp").value);
-    }
-
-    if (localStorage.getItem("comp") !== null && window.location.search === "") {
-        location.assign(window.location.origin + window.location.pathname + "?comp=" + localStorage.getItem("comp"));
-    }
-
-
-</script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
-        crossorigin="anonymous"></script>
-{% block Scripts %}{% endblock %}

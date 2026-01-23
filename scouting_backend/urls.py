@@ -1,4 +1,5 @@
 from django.conf.urls.static import static
+from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
 
@@ -9,6 +10,15 @@ from strategy import views as strategy_views
 from authenticate import views as auth_views
 from authenticate import views_admin as admin_views
 from plugins import plugin_manager
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    # ... your other paths ...
+]
+
+# This allows Django to serve static files during development
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.BASE_DIR / "static")
 
 urlpatterns = [
     # path('admin/', admin.site.urls),  # Disabled Django admin
@@ -34,6 +44,7 @@ urlpatterns = [
     path('admin-panel/api/get-matches/', admin_views.get_matches_for_team, name='get_matches'),
     path('admin-panel/api/load-match/', admin_views.load_match_data, name='load_match'),
     path('admin-panel/update-match/', admin_views.update_match_data, name='update_match'),
+    path('set-theme/', auth_views.set_theme, name='set_theme'),
     # Plugin management
     path('admin-panel/plugins/enable/', admin_views.plugins_enable, name='plugins_enable'),
     path('admin-panel/plugins/upload/', admin_views.plugins_upload, name='plugins_upload'),

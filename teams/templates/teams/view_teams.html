@@ -1,27 +1,156 @@
 {% extends 'index.html' %}
 
-{% block Title %} Teams {% endblock %}
+{% block Title %}Teams{% endblock %}
 
 {% block Content %}
-    <h2>Teams</h2>
-    <table class="table table-responsive">
+<h2>Teams</h2>
+
+<div class="table-responsive theme-table-container">
+    <table class="table table-bordered table-sm theme-table">
         <thead>
-        <tr>
-            <th><h4>Team</h4></th>
-            <th><h4>Pit Scout Status</h4></th>
-        </tr>
+            <tr>
+                <th>Team</th>
+                <th>Pit Scout Status</th>
+            </tr>
         </thead>
         <tbody>
         {% for team in all_teams %}
             <tr>
-                <td><h5><a href="{% url 'team_page' team %}?comp={{ request.GET.comp }}">{{ team }}</a></h5></td>
+                <!-- Team Number -->
+                <td>
+                    <a class="team-link"
+                       href="{% url 'team_page' team %}{% if request.GET.comp %}?comp={{ request.GET.comp }}{% endif %}">
+                        {{ team }}
+                    </a>
+                </td>
+
+                <!-- Pit Scout Status -->
                 {% if team in pit_scouted %}
-                    <td style="color:mediumspringgreen"><h5>Pit Scouted</h5></td>
+                    <td class="status-complete">
+                        Pit Scouted <span class="checkmark">✔</span>
+                    </td>
                 {% else %}
-                    <td><a style="color:red" href="{% url 'pit_scouting' team %}?comp={{ request.GET.comp }}"><h5>Pit Scout</h5></a></td>
+                    <td>
+                        <a class="status-action"
+                           href="{% url 'pit_scouting' team %}{% if request.GET.comp %}?comp={{ request.GET.comp }}{% endif %}">
+                            Pit Scout
+                        </a>
+                    </td>
                 {% endif %}
             </tr>
         {% endfor %}
         </tbody>
     </table>
+</div>
+
+<style>
+/* =========================
+   Table Container
+   ========================= */
+.theme-table-container {
+    background-color: var(--bg);
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* =========================
+   Table
+   ========================= */
+.theme-table {
+    width: 100%;
+    border: 1px solid var(--border) !important;
+    background-color: var(--bg-elevated) !important;
+    color: var(--text) !important;
+    border-radius: 0.25rem;
+}
+
+.theme-table th,
+.theme-table td {
+    border-color: var(--border) !important;
+    padding: 10px 15px;
+    vertical-align: middle;
+    background-color: var(--bg-elevated) !important;
+    color: var(--text) !important;
+}
+
+/* Header */
+.theme-table thead th {
+    background-color: var(--bg) !important;
+    color: var(--accent) !important;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.3);
+    text-align: left;
+}
+
+/* Hover row */
+.theme-table tbody tr:hover {
+    background-color: rgba(196, 22, 42, 0.08);
+}
+
+/* =========================
+   Links & Status
+   ========================= */
+.team-link {
+    color: var(--text) !important;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.team-link:hover {
+    color: var(--accent) !important;
+    text-decoration: underline;
+}
+
+/* Pit Scouted Status */
+.status-complete {
+    color: #28a745; /* green for scouted */
+    font-weight: 600;
+    background-color: rgba(40, 167, 69, 0.1); /* subtle green background */
+    text-align: center;
+    border-radius: 4px;
+    padding: 4px 6px;
+}
+
+/* Checkmark */
+.checkmark {
+    color: #28a745;
+    margin-left: 6px;
+    font-size: 0.85em;
+}
+
+/* Pit Scout Action Link */
+.status-action {
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s;
+    padding: 4px 6px;
+    display: inline-block;
+}
+
+.status-action:hover {
+    color: var(--accent-hover, var(--accent));
+    text-decoration: underline;
+    background-color: rgba(196, 22, 42, 0.05);
+    border-radius: 4px;
+}
+
+/* =========================
+   Responsive
+   ========================= */
+.table-responsive {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* Optional: alternate row shading */
+.theme-table tbody tr:nth-child(even) {
+    background-color: rgba(0,0,0,0.02);
+}
+</style>
 {% endblock %}

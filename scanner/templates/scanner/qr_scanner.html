@@ -1,30 +1,191 @@
 {% extends 'index.html' %}
 {% load static %}
 
-{% block Title %} Scanner {% endblock %}
+{% block Title %}Scanner{% endblock %}
 
-{% block Styles %} <link rel="stylesheet" href="{% static 'scanner/scanner.css' %}"> {% endblock %}
+{% block Styles %}
 
-{% block Content %}
-    {% csrf_token %}
-    <div id="video-container">
-        <video id="qr-video"></video>
-    </div>
-    <br>
-    <h6><b>Last Scan Result: </b> <span id="cam-qr-result">None</span></h6>
-    
-    <div class="my-3">
-        <p id="scan-feedback" class="mt-2 font-weight-bold"></p>
-    </div>
-    
-    <div class="mb-3">
-        <label for="camera-select" class="form-label">Camera:</label>
-        <select id="camera-select" class="form-select"></select>
-    </div>
-    
-    <button class="btn btn-success" id="start-button">Start</button>
-    <button class="btn btn-danger" id="stop-button">Stop</button>
-    <hr>
+<style>
+/* =========================
+   Page Layout
+   ========================= */
+.scanner-page {
+    max-width: 900px;
+    margin: auto;
+    padding-top: 1rem;
+}
+
+/* =========================
+   Scanner Card
+   ========================= */
+.scanner-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1rem;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+/* =========================
+   Video Container
+   ========================= */
+#video-container {
+    background: var(--bg);
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 0.75rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Video */
+#qr-video {
+    width: 100%;
+    max-width: 560px;
+    aspect-ratio: 4 / 3;
+    border-radius: 10px;
+    background-color: #000;
+}
+
+/* =========================
+   Scan Status
+   ========================= */
+.scan-status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-top: 1rem;
+}
+
+.scan-label {
+    font-size: 0.9rem;
+    color: var(--muted-text);
+}
+
+#cam-qr-result {
+    font-weight: 700;
+    color: var(--accent);
+    word-break: break-word;
+}
+
+#scan-feedback {
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* =========================
+   Controls
+   ========================= */
+.scanner-controls {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 0.75rem;
+    align-items: end;
+    margin-top: 1rem;
+}
+
+/* Camera select */
+#camera-select {
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+/* Buttons */
+#start-button,
+#stop-button {
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    transition: transform 0.1s ease, background 0.2s ease;
+}
+
+#start-button {
+    background: #3ddc84;
+    color: #0b3d1f;
+}
+
+#start-button:hover {
+    background: #2fc174;
+}
+
+#stop-button {
+    background: #ff4d4f;
+    color: #fff;
+}
+
+#stop-button:hover {
+    background: #e04345;
+}
+
+#start-button:active,
+#stop-button:active {
+    transform: scale(0.96);
+}
+
+/* =========================
+   Divider
+   ========================= */
+hr {
+    border-color: var(--border);
+    margin: 1.5rem 0 0.5rem;
+}
+
+/* =========================
+   Responsive
+   ========================= */
+@media (max-width: 768px) {
+    .scanner-controls {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 {% endblock %}
 
-{% block Scripts %} <script type="module" src="{% static 'scanner/scanner.js' %}"></script> {% endblock %}
+{% block Content %}
+{% csrf_token %}
+<div class="scanner-page">
+
+    <h2 class="mb-3">QR Scanner</h2>
+
+    <div class="scanner-card">
+
+        <!-- Video -->
+        <div id="video-container">
+            <video id="qr-video"></video>
+        </div>
+
+        <!-- Status -->
+        <div class="scan-status">
+            <div class="scan-label">Last Scan Result</div>
+            <div id="cam-qr-result">None</div>
+            <div id="scan-feedback"></div>
+        </div>
+
+        <!-- Controls -->
+        <div class="scanner-controls">
+            <div>
+                <label for="camera-select" class="form-label mb-1">Camera</label>
+                <select id="camera-select" class="form-select"></select>
+            </div>
+
+            <button class="btn" id="start-button">
+                ▶ Start
+            </button>
+
+            <button class="btn" id="stop-button">
+                ■ Stop
+            </button>
+        </div>
+
+        <hr>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block Scripts %}
+<script type="module" src="{% static 'scanner/scanner.js' %}"></script>
+{% endblock %}

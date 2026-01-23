@@ -6,7 +6,20 @@
 {% block Title %}Team {{ team_number }}{% endblock %}
 
 {% block Content %}
-<h2>Team {{ team_number }}</h2>
+<div class="team-header">
+    {% if team and team.logo_url %}
+        <img src="{{ team.logo_url }}"
+             alt="Team {{ team_number }} logo"
+             class="team-logo"
+             onerror="this.style.display='none'">
+    {% else %}
+        <img src="/static/images/teams/{{ team_number }}.png"
+             alt="Team {{ team_number }} logo"
+             class="team-logo"
+             onerror="this.style.display='none'">
+    {% endif %}
+    <h2 style="margin:0;">Team {{ team_number }}</h2>
+</div>
 
 {% plugin_hook 'team_page_header' %}
 
@@ -18,7 +31,7 @@
             <div class="col-md-8">
                 {% if team.pit_scout_status %}
                     {% for key, value in team.pit_data.items %}
-                        <p><b>{{ key|title }}:</b> 
+                        <p class="mb-1"><b>{{ key|title }}:</b> 
                         {% if value is not None %}
                             {% if value is iterable and value is not string %}
                                 {{ value|join:", " }}
@@ -32,7 +45,19 @@
                     {% empty %}
                         <p>No Pit Data Collected</p>
                     {% endfor %}
-                    <a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}" class="btn btn-sm btn-warning">Edit Pit Data</a>
+                    
+                    <!-- Buttons -->
+                    <div class="d-flex gap-2 mt-2">
+                        <a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}" class="btn btn-sm btn-warning">Edit Pit Data</a>
+
+                        <!-- Clear Pit Data form -->
+                        <form id="clear-pit-form" method="POST" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="team_number" value="{{ team_number }}">
+                            <input type="hidden" name="comp_code" value="{{ comp_code }}">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirmClearPitData();">Clear Pit Data</button>
+                        </form>
+                    </div>
                 {% else %}
                     <p>No Pit Data Collected</p>
                     <a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}" class="btn btn-sm btn-primary">Pit Scout</a>
@@ -52,8 +77,8 @@
 
 <h3>Match History</h3>
 <div class="table-responsive">
-    <table class="table table-bordered table-sm" id="match_data">
-        <thead class="thead-light">
+    <table class="table table-bordered table-sm theme-table" id="match_data">
+        <thead>
             <tr>
                 <th>Match</th>
                 <th>Auto Leave</th>
@@ -96,31 +121,111 @@
 </div>
 
 <style>
-    #match_data {
-        width: max-content;
-        min-width: 100%;
-        font-size: 13px;
-    }
-    #match_data thead th {
-        position: -webkit-sticky;
-        position: sticky;
-        top: 0;
-        background: white;
-        z-index: 10;
-        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-        white-space: nowrap;
-        padding: 4px 8px;
-    }
-    #match_data td {
-        white-space: nowrap;
-        padding: 4px 8px;
-    }
-    
-    .table-responsive {
-        max-height: 80vh;
-        overflow: auto;
-        width: 100%;
-    }
+/* =========================
+   Team Header
+   ========================= */
+.team-logo {
+    width: 80px;
+    height: auto;
+}
+
+.team-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+/* =========================
+   Cards
+   ========================= */
+.card {
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.card-header {
+    background: var(--bg);
+    color: var(--accent);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+}
+
+/* =========================
+   Table
+   ========================= */
+.theme-table {
+    background: var(--bg-elevated);
+    color: var(--text);
+    border-color: var(--border);
+}
+
+.theme-table th,
+.theme-table td {
+    border-color: var(--border);
+    white-space: nowrap;
+    padding: 4px 8px;
+}
+
+#match_data {
+    width: max-content;
+    min-width: 100%;
+    font-size: 13px;
+}
+
+/* Sticky header */
+#match_data thead th {
+    position: sticky;
+    top: 0;
+    background: var(--bg-elevated);
+    color: var(--text);
+    z-index: 10;
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+}
+
+/* Row hover */
+.theme-table tbody tr:hover {
+    background: rgba(196, 22, 42, 0.08);
+}
+
+/* =========================
+   Badges
+   ========================= */
+.badge {
+    font-size: 0.75em;
+}
+
+.badge.bg-danger {
+    background-color: #c4162a !important;
+}
+
+.badge.bg-warning {
+    background-color: #e0a800 !important;
+    color: #000;
+}
+
+.badge.bg-info {
+    background-color: #0dcaf0 !important;
+    color: #000;
+}
+
+/* =========================
+   Table container
+   ========================= */
+.table-responsive {
+    max-height: 80vh;
+    overflow: auto;
+    width: 100%;
+}
 </style>
 
+<script>
+// Confirmation before clearing pit data
+function confirmClearPitData() {
+    return confirm("Are you sure you want to clear all pit data for this team? This cannot be undone.");
+}
+</script>
+
+{% plugin_hook 'team_page_footer' %}
 {% endblock %}
