@@ -89,3 +89,4 @@ coverage/
 bundlesize.json
 
 picklists/
+.opencode

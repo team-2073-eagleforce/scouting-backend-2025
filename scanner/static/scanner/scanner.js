@@ -2,6 +2,7 @@ import QrScanner from "/static/scanner/qr-scanner.min.js";
 
 const video = document.getElementById('qr-video');
 const camQrResult = document.getElementById('cam-qr-result');
+const scanFeedback = document.getElementById('scan-feedback');
 let prevResult = "";
 
 // Get CSRF Token
@@ -21,7 +22,7 @@ function getCookie(name) {
 }
 
 // Function to send QR data to Django backend
-function post_data_to_server(data) {
+function post_data_to_server(data, scouterName) {
     fetch("/scanner/", {  // Ensure this matches your Django URL
         method: 'POST',
         credentials: 'include',
@@ -40,11 +41,16 @@ function post_data_to_server(data) {
         }
         return response.json();
     })
-    .then(data => {
-        console.log("Server Response:", data);
+    .then(responseData => {
+        console.log("Server Response:", responseData);
+        const displayName = scouterName || "Unknown";
+        scanFeedback.textContent = `Scan Complete! Scouter: ${displayName}`;
+        scanFeedback.style.color = 'var(--accent)';
     })
     .catch(error => {
         console.error("Error:", error.message);
+        scanFeedback.textContent = `Error: ${error.message}`;
+        scanFeedback.style.color = '#ff4d4f';
     });
 }
 
@@ -54,12 +60,24 @@ function setResult(label, result) {
     if (data !== prevResult && !data.includes("error")) {
         prevResult = data;
         console.log("Scanned Data:", data);
+
+        let scouterName = null;
+        try {
+            const parsed = JSON.parse(data);
+            scouterName = parsed.name || null;
+        } catch (e) {
+            // Not JSON, leave scouterName as null
+        }
+
         label.innerText = data;
         label.style.color = 'teal';
         clearTimeout(label.highlightTimeout);
         label.highlightTimeout = setTimeout(() => label.style.color = 'inherit', 100);
-        
-        post_data_to_server(data);
+
+        scanFeedback.textContent = 'Sending...';
+        scanFeedback.style.color = 'var(--muted-text)';
+
+        post_data_to_server(data, scouterName);
     }
 }
 
