@@ -2,22 +2,147 @@
 
 {% block Title %}Login{% endblock %}
 
+{% block Styles %}
+<style>
+.login-page {
+    min-height: 72vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.login-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem 2.25rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.1);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: pageEnter 0.45s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both;
+}
+
+html.inverted .login-card {
+    box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+}
+
+/* Subtle gradient glow behind card */
+.login-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 70% 50% at 50% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.login-card > * { position: relative; z-index: 1; }
+
+.login-logo {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 14px;
+    padding: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    margin-bottom: 1.25rem;
+}
+
+.login-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text);
+    margin: 0 0 0.35rem;
+}
+
+.login-subtitle {
+    font-size: 0.875rem;
+    color: var(--muted-text);
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+.google-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    width: 100%;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.12s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.google-btn:hover {
+    background: var(--bg-elevated);
+    border-color: var(--accent);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+    color: var(--text);
+}
+
+.google-btn:active { transform: scale(0.98); }
+
+.google-icon {
+    width: 20px; height: 20px;
+    flex-shrink: 0;
+}
+
+.login-note {
+    margin-top: 1.25rem;
+    font-size: 0.78rem;
+    color: var(--muted-text);
+    line-height: 1.5;
+}
+
+.login-divider {
+    margin: 1.5rem 0;
+    border: none;
+    border-top: 1px solid var(--border);
+}
+</style>
+{% endblock %}
+
 {% block Content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Login to Scouting System</h3>
-                </div>
-                <div class="card-body">
-                    <p>Please sign in with your authorized Google account.</p>
-                    <a href="?login=true" class="btn btn-primary btn-lg btn-block">
-                        Sign in with Google
-                    </a>
-                </div>
-            </div>
-        </div>
+<div class="login-page">
+    <div class="login-card">
+
+        {% load static %}
+        <img src="{% static 'images/logo.png' %}" class="login-logo" alt="Logo">
+
+        <h1 class="login-title">Welcome Back</h1>
+        <p class="login-subtitle">Sign in to access the scouting system.<br>Use your authorized team Google account.</p>
+
+        <a href="?login=true" class="google-btn btn">
+            <!-- Google G icon -->
+            <svg class="google-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#4285F4" d="M24 9.5c3.14 0 5.95 1.08 8.17 2.86l6.1-6.1C34.46 3.03 29.5 1 24 1 14.61 1 6.73 6.48 3.18 14.34l7.1 5.52C12.02 13.78 17.52 9.5 24 9.5z"/>
+                <path fill="#34A853" d="M46.1 24.5c0-1.57-.14-3.1-.4-4.57H24v8.64h12.43c-.54 2.9-2.18 5.36-4.65 7.01l7.15 5.55C43.32 37.42 46.1 31.4 46.1 24.5z"/>
+                <path fill="#FBBC05" d="M10.28 28.15A14.49 14.49 0 0 1 9.5 24c0-1.44.24-2.83.67-4.14l-7.1-5.52A23.96 23.96 0 0 0 0 24c0 3.87.92 7.53 2.56 10.77l7.72-6.62z"/>
+                <path fill="#EA4335" d="M24 47c5.46 0 10.05-1.81 13.4-4.91l-7.15-5.55C28.4 38.4 26.3 39.5 24 39.5c-6.46 0-11.96-4.28-13.72-10.04l-7.72 6.62C6.73 43.52 14.61 47 24 47z"/>
+            </svg>
+            Sign in with Google
+        </a>
+
+        <p class="login-note">Access is restricted to authorized team members only.</p>
+
     </div>
 </div>
 {% endblock %}

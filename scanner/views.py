@@ -5,7 +5,7 @@ from django.shortcuts import render
 from teams.models import Teams, Team_Match_Data
 from plugins import plugin_manager
 from utils import config_loader
-from helpers import login_required
+from helpers import login_required, rate_limit
 # views.py
 from django.http import HttpResponse
 from django.contrib.staticfiles import finders
@@ -41,6 +41,7 @@ def debug_scanner_files(request):
 _plugin_logger = logging.getLogger('plugins')
 
 @login_required
+@rate_limit(max_calls=60, period_seconds=60)
 def scanner(request):
     if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
         try:
@@ -58,11 +59,16 @@ def scanner(request):
             # Extract anchor fields
             try:
                 team_num = int(data_from_post["teamNumber"])
-                event_code = data_from_post["comp_code"]
+                event_code = str(data_from_post["comp_code"])
                 match_num = int(data_from_post["matchNumber"])
-                scout_name = data_from_post.get("name", "")
-            except (KeyError, ValueError, TypeError) as e:
-                return JsonResponse({"error": f"Missing or invalid key identifier: '{e}'"}, status=400)
+                scout_name = str(data_from_post.get("name", ""))[:100]
+            except (KeyError, ValueError, TypeError):
+                return JsonResponse({"error": "Missing or invalid field in submission"}, status=400)
+
+            # Validate event_code format: alphanumeric + underscores/hyphens, max 20 chars
+            import re as _re
+            if not _re.match(r'^[A-Za-z0-9_\-]{1,20}$', event_code):
+                return JsonResponse({"error": "Invalid competition code format"}, status=400)
 
             # Ensure team exists
             Teams.objects.get_or_create(team_number=team_num, event=event_code)
@@ -213,8 +219,7 @@ def scanner(request):
 
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON format"}, status=400)
-        except Exception as e:
-            print(f"Error in scanner view: {e}")
-            return JsonResponse({"error": f"An unexpected error occurred: {e}"}, status=500)
+        except Exception:
+            return JsonResponse({"error": "An unexpected error occurred"}, status=500)
 
     return render(request, "qr_scanner.html")

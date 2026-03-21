@@ -1,5 +1,6 @@
 {% extends 'index.html' %}
 {% load static %}
+{% load scouting_extras %}
 
 {% block Title %}Rankings{% endblock %}
 
@@ -10,7 +11,33 @@
    ======================== */
 .rankings-wrapper {
     padding: 16px;
-    font-family: inherit; /* inherit from site */
+    font-family: inherit;
+}
+
+/* ========================
+   Page Header
+   ======================== */
+.rankings-page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.rankings-title {
+    margin: 0 0 2px;
+    font-weight: 800;
+    font-size: 1.6rem;
+    color: var(--text);
+}
+
+.rankings-subtitle {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--muted-text);
+    font-weight: 500;
 }
 
 /* ========================
@@ -18,24 +45,77 @@
    ======================== */
 .rankings-controls {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 16px;
-}
-
-.rankings-controls label {
-    color: var(--text);
-    font-weight: 600;
+    gap: 8px;
 }
 
 .rankings-controls select {
     background: var(--bg-elevated);
     color: var(--text);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 12px;
+    border-radius: 8px;
+    padding: 7px 12px;
     cursor: pointer;
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease;
+    outline: none;
+}
+
+.rankings-controls select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.rankings-controls input[type="search"] {
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 0.875rem;
+    width: 130px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.rankings-controls input[type="search"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.rankings-controls input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+}
+
+/* ========================
+   Rank Medals
+   ======================== */
+.rank-medal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: 0.75rem;
+}
+.rank-medal.gold   { background: #fbbf24; color: #78350f; }
+.rank-medal.silver { background: #94a3b8; color: #1e293b; }
+.rank-medal.bronze { background: #c2844a; color: #431407; }
+
+.rank-col { width: 52px; text-align: center; }
+
+/* ========================
+   Row stagger animation
+   ======================== */
+#rankings_table tbody tr {
+    animation: rankRowIn 0.30s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both;
+}
+
+@keyframes rankRowIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
 }
 
 /* ========================
@@ -80,7 +160,11 @@
     top: 0;
     background: var(--bg-elevated);
     color: var(--accent);
+    font-family: 'Inter', system-ui, sans-serif;
     font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
     z-index: 10;
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
@@ -100,6 +184,14 @@
 /* Row hover effect */
 #rankings_table tbody tr:hover {
     background: rgba(196, 22, 42, 0.12);
+}
+
+/* Jump-to-team highlight */
+#rankings_table tbody tr.team-highlight {
+    background: rgba(251, 191, 36, 0.18) !important;
+    outline: 2px solid #fbbf24;
+    outline-offset: -2px;
+    transition: background 0.3s ease;
 }
 
 /* Rank emphasis */
@@ -151,16 +243,29 @@ body.comfortable #rankings_table td {
 {% block Content %}
 <div class="rankings-wrapper">
 
-    <!-- Match Type Selector -->
-    <form method="get" action="{% url 'rankings' %}" class="rankings-controls">
-        <input type="hidden" name="comp" value="{{ comp_code }}">
-        <label for="quantifier">Match Type:</label>
-        <select name="quantifier" id="quantifier" onchange="this.form.submit()">
-            <option value="Prac" {% if selected_quantifier == 'Prac' %}selected{% endif %}>Practice</option>
-            <option value="Quals" {% if selected_quantifier == 'Quals' %}selected{% endif %}>Qualifiers</option>
-            <option value="Play Off" {% if selected_quantifier == 'Play Off' %}selected{% endif %}>Playoffs</option>
-        </select>
-    </form>
+    <!-- Page Header -->
+    <div class="rankings-page-header">
+        <div>
+            <h2 class="rankings-title">Rankings</h2>
+            <p class="rankings-subtitle">{{ selected_quantifier }} · {{ comp_code }}</p>
+        </div>
+        <!-- Controls: quantifier + sort + search -->
+        <form method="get" action="{% url 'rankings' %}" class="rankings-controls" id="rankings-form">
+            <input type="hidden" name="comp" value="{{ comp_code }}">
+            <select name="quantifier" id="quantifier" onchange="this.form.submit()">
+                <option value="Prac" {% if selected_quantifier == 'Prac' %}selected{% endif %}>Practice</option>
+                <option value="Quals" {% if selected_quantifier == 'Quals' %}selected{% endif %}>Qualifiers</option>
+                <option value="Play Off" {% if selected_quantifier == 'Play Off' %}selected{% endif %}>Playoffs</option>
+            </select>
+            <select name="sort_by" id="sort_by" onchange="this.form.submit()">
+                {% for key, label in sort_options %}
+                <option value="{{ key }}" {% if sort_by == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <input type="search" id="team-search" placeholder="Jump to team #" autocomplete="off"
+                   inputmode="numeric">
+        </form>
+    </div>
 
     <!-- Table Card -->
     <div class="table-card">
@@ -168,30 +273,33 @@ body.comfortable #rankings_table td {
             <table id="rankings_table">
                 <thead>
                     <tr>
-                        <th>Rank</th>
-                        <th onclick="sortTable(1, 'team_number')">Team</th>
-                        <th onclick="sortTable(2, 'autoScore')">Auto Score</th>
-                        <th onclick="sortTable(2, 'autoPass')">Auto Pass</th>
-                        <th onclick="sortTable(3, 'autoClimb')">Auto Climb</th>
-                        <th onclick="sortTable(4, 'telePass')">Teleop Pass</th>
-                        <th onclick="sortTable(5, 'endClimb')">Climb Position</th>
-                        <th onclick="sortTable(6, 'shootingAccuracy')">Shooting Accuracy</th>
+                        <th class="rank-col">#</th>
+                        {% for col in rankings_columns %}
+                            {% if col.sortable %}
+                                <th onclick="sortTable({{ forloop.counter }}, '{{ col.key }}')">{{ col.display_name }} ↕</th>
+                            {% else %}
+                                <th>{{ col.display_name }}</th>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
                 </thead>
                 <tbody>
                     {% for team_number, team_stats in team_averages.items %}
-                    <tr>
-                        <td class="rank">{{ forloop.counter }}</td>
-                        <td>
-                            <a href="{% url 'team_page' team_number %}?comp={{ comp_code }}">
-                                {{ team_number }}
-                            </a>
+                    <tr style="animation-delay: {{ forloop.counter0 }}0ms">
+                        <td class="rank">
+                            {% if forloop.counter == 1 %}<span class="rank-medal gold">1</span>
+                            {% elif forloop.counter == 2 %}<span class="rank-medal silver">2</span>
+                            {% elif forloop.counter == 3 %}<span class="rank-medal bronze">3</span>
+                            {% else %}{{ forloop.counter }}{% endif %}
                         </td>
-                        <td>{{ team_stats.autoScore }}</td>
-                        <td>{{ team_stats.autoPass }}</td>
-                        <td>{{ team_stats.autoClimb }}</td>
-                        <td>{{ team_stats.telePass }}</td>
-                        <td>{{ team_stats.endClimb }}</td>
-                        <td>{{ team_stats.shootingAccuracy }}</td>
+                        {% for col in rankings_columns %}
+                            {% if col.key == 'team_number' %}
+                                <td><a href="{% url 'team_page' team_number %}?comp={{ comp_code }}">{{ team_number }}</a></td>
+                            {% else %}
+                                <td>{{ team_stats|get_item:col.key }}</td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -204,10 +312,51 @@ body.comfortable #rankings_table td {
 {% block Scripts %}
 <script src="{% static 'strategy/ranking.js' %}"></script>
 <script>
-/* Optional: allow switching between compact/comfortable modes */
-function setDensity(mode) {
-    document.body.classList.remove('compact', 'comfortable');
-    if (mode) document.body.classList.add(mode);
-}
+(function () {
+    /* Cap stagger so large tables don't delay forever */
+    var rows = document.querySelectorAll('#rankings_table tbody tr');
+    rows.forEach(function (row, i) {
+        row.style.animationDelay = Math.min(i * 14, 280) + 'ms';
+    });
+})();
+</script>
+
+<script>
+(function () {
+    var searchInput = document.getElementById('team-search');
+    if (!searchInput) return;
+
+    var highlightTimer = null;
+
+    searchInput.addEventListener('input', function () {
+        var q = this.value.trim();
+
+        // Clear existing highlight
+        document.querySelectorAll('#rankings_table tbody tr.team-highlight')
+            .forEach(function (r) { r.classList.remove('team-highlight'); });
+        clearTimeout(highlightTimer);
+
+        if (!q) return;
+
+        var rows = document.querySelectorAll('#rankings_table tbody tr');
+        for (var i = 0; i < rows.length; i++) {
+            var cell = rows[i].cells[1]; // team number is always TD[1]
+            if (cell && cell.textContent.trim() === q) {
+                rows[i].classList.add('team-highlight');
+                rows[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Auto-remove highlight after 3 s
+                highlightTimer = setTimeout(function (row) {
+                    row.classList.remove('team-highlight');
+                }.bind(null, rows[i]), 3000);
+                break;
+            }
+        }
+    });
+
+    // Prevent the search input from submitting the form on Enter
+    searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') e.preventDefault();
+    });
+})();
 </script>
 {% endblock %}

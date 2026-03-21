@@ -1,13 +1,12 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, JsonResponse
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 from authenticate.models import AuthorizedUser
 from teams.models import Team_Match_Data
 from django.db.models import Count
 import json
-import zipfile
 from pathlib import Path
-import subprocess
-import sys
 from plugins import plugin_manager
 from authenticate.models import SiteSettings
 from utils import config_loader
@@ -21,9 +20,8 @@ def admin_required(function):
         email = request.session.get("email")
         if not email:
             return HttpResponseRedirect('/auth/')
-        # Temporarily disabled - first user can add themselves
-        # if not AuthorizedUser.objects.filter(email=email).exists():
-        #     return HttpResponseRedirect('/auth/unauthorized/')
+        if not AuthorizedUser.objects.filter(email=email).exists():
+            return HttpResponseRedirect('/auth/unauthorized/')
         return function(request, *args, **kw)
     return wrapper
 
@@ -97,9 +95,13 @@ def admin_panel(request):
 @admin_required
 def add_user(request):
     if request.method == 'POST':
-        email = request.POST.get('email', '').strip()
+        email = request.POST.get('email', '').strip().lower()
         if email:
-            AuthorizedUser.objects.get_or_create(email=email)
+            try:
+                validate_email(email)
+                AuthorizedUser.objects.get_or_create(email=email)
+            except ValidationError:
+                pass  # silently reject malformed addresses
     return redirect('/admin-panel/')
 
 @admin_required
@@ -208,8 +210,8 @@ def update_match_data(request):
             return JsonResponse({'status': 'error', 'message': 'Match not found'}, status=404)
         except json.JSONDecodeError:
             return JsonResponse({'status': 'error', 'message': 'Invalid JSON format'}, status=400)
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+        except Exception:
+            return JsonResponse({'status': 'error', 'message': 'An unexpected error occurred'}, status=500)
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
@@ -339,42 +341,8 @@ def _safe_extract_zip(zip_path: Path, dest_dir: Path) -> str:
 
 @admin_required
 def plugins_upload(request):
-    if request.method != 'POST':
-        return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
-    file = request.FILES.get('plugin_zip')
-    if not file:
-        return JsonResponse({'status': 'error', 'message': 'Missing file'}, status=400)
-
-    # Save temp
-    temp_path = Path('/tmp') / f'plugin_{file.name}'
-    with temp_path.open('wb') as f:
-        for chunk in file.chunks():
-            f.write(chunk)
-
-    try:
-        dest_dir = plugin_manager.plugins_dir
-        top = _safe_extract_zip(temp_path, dest_dir)
-        # Basic validation: plugin.py exists
-        if not (dest_dir / top / 'plugin.py').exists():
-            if _is_ajax(request):
-                return JsonResponse({'status': 'error', 'message': 'Invalid plugin package: missing plugin.py'}, status=400)
-            return redirect('admin_panel')
-        
-        # Extract plugin metadata and permissions
-        plugin_info = _extract_plugin_info(dest_dir / top)
-        
-        if _is_ajax(request):
-            return JsonResponse({'status': 'success', 'plugin': top, 'info': plugin_info})
-        return redirect('admin_panel')
-    except Exception as e:
-        if _is_ajax(request):
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-        return redirect('admin_panel')
-    finally:
-        try:
-            temp_path.unlink(missing_ok=True)
-        except Exception:
-            pass
+    # Plugin uploads are disabled for security - plugins must be installed manually on the server.
+    return JsonResponse({'status': 'error', 'message': 'Plugin uploads are disabled. Install plugins manually on the server.'}, status=403)
 
 
 def _sanitize_requirements(lines):
@@ -399,44 +367,8 @@ def _sanitize_requirements(lines):
 
 @admin_required
 def plugins_install_deps(request):
-    if request.method != 'POST':
-        return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
-    name = request.POST.get('name')
-    if not name:
-        return JsonResponse({'status': 'error', 'message': 'Missing plugin name'}, status=400)
-    plugins_dir = plugin_manager.plugins_dir
-    req_path = plugins_dir / name / 'requirements.txt'
-    if not req_path.exists():
-        return JsonResponse({'status': 'error', 'message': 'No requirements.txt found for plugin'}, status=404)
-
-    try:
-        lines = req_path.read_text().splitlines()
-        safe_pkgs = _sanitize_requirements(lines)
-        if not safe_pkgs:
-            if _is_ajax(request):
-                return JsonResponse({'status': 'success', 'message': 'No dependencies to install'})
-            return redirect('admin_panel')
-        # Install using current venv python
-        cmd = [sys.executable, '-m', 'pip', 'install'] + safe_pkgs
-        subprocess_result = subprocess.run(cmd, capture_output=True, text=True)
-        if subprocess_result.returncode != 0:
-            if _is_ajax(request):
-                return JsonResponse({
-                    'status': 'error',
-                    'message': subprocess_result.stderr[:5000]
-                }, status=400)
-            return redirect('admin_panel')
-        if _is_ajax(request):
-            return JsonResponse({
-                'status': 'success',
-                'installed': safe_pkgs,
-                'output': subprocess_result.stdout[:5000]
-            })
-        return redirect('admin_panel')
-    except Exception as e:
-        if _is_ajax(request):
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-        return redirect('admin_panel')
+    # Dependency installation via UI is disabled for security - install dependencies manually on the server.
+    return JsonResponse({'status': 'error', 'message': 'Dependency installation is disabled. Install dependencies manually on the server.'}, status=403)
 
 
 @admin_required
@@ -456,9 +388,9 @@ def admin_set_theme_color(request):
         if _is_ajax(request):
             return JsonResponse({'status': 'success', 'theme_color': color})
         return redirect('admin_panel')
-    except Exception as e:
+    except Exception:
         if _is_ajax(request):
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            return JsonResponse({'status': 'error', 'message': 'An unexpected error occurred'}, status=400)
         return redirect('admin_panel')
 
 
@@ -477,7 +409,7 @@ def admin_set_logo_url(request):
         if _is_ajax(request):
             return JsonResponse({'status': 'success', 'logo_url': url})
         return redirect('admin_panel')
-    except Exception as e:
+    except Exception:
         if _is_ajax(request):
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            return JsonResponse({'status': 'error', 'message': 'An unexpected error occurred'}, status=400)
         return redirect('admin_panel')

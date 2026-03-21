@@ -4,184 +4,555 @@
 {% block Title %}Picklist{% endblock %}
 
 {% block Styles %}
-    <style>
-        td {
-            white-space: nowrap;
-        }
+<style>
+/* =========================
+   Page Layout
+   ========================= */
+.picklist-page {
+    max-width: 100%;
+    padding: 1.25rem 0.5rem;
+}
 
-        th {
-            white-space: nowrap;
-        }
+.picklist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
 
-        s {
-            display: inline;
-        }      
+.picklist-header h2 {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 800;
+    color: var(--text);
+    font-size: 1.5rem;
+    letter-spacing: -0.03em;
+}
 
-        p {
-            display: inline;
-            line-height: 24px;
-        }
+/* =========================
+   Search Bar
+   ========================= */
+.picklist-search-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.1rem;
+    flex-wrap: wrap;
+}
 
-        .lists {
-            display: flex;
-            flex-flow: column wrap;
-            border: 1px solid black;
-            height: 150px;
-            min-width: 100px;
-            margin-bottom: 10px;
-        }
+.picklist-search-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 280px;
+}
 
-        .picklist_teams {
-            flex: 0 0 auto;
-            border: 1px solid black;
-            border-radius: 3px;
-            background-color: lightgray;
-            width: 75px;
-            height: 20px;
-            margin: 2px;
-            padding: 2px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: background-color 0.3s ease;
-        }
+.picklist-search-wrap svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted-text);
+    pointer-events: none;
+}
 
-        .picklist_teams.being-dragged {
-            opacity: 0.5;
-            background-color: #a0a0a0;
-        }
+#picklist-search {
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 7px 12px 7px 34px;
+    font-size: 0.9rem;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
 
-        .picklist_teams p {
-            font-size: 0.9em;
-            margin: 0;
-            padding: 0 3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 55px;
-        }
+#picklist-search:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
 
-        .picklist_teams input[type="checkbox"] {
-            margin: 0 2px;
-            flex-shrink: 0;
-        }
+#picklist-search::placeholder { color: var(--muted-text); }
 
-        .save-button {
-            margin: 20px 0;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: transform 0.1s ease;
-        }
+.search-match-count {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted-text);
+    white-space: nowrap;
+}
 
-        .save-button:hover {
-            background-color: #45a049;
-        }
+/* =========================
+   Auto-save Badge
+   ========================= */
+.autosave-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--muted-text);
+    transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
 
-        .save-button:active {
-            transform: scale(0.95);
-        }
+.autosave-badge::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted-text);
+    transition: background 0.3s ease;
+    flex-shrink: 0;
+}
 
-        .save-button.success {
-            background-color: #45a049;
-            transform: scale(0.95);
-        }
+.autosave-badge.saving {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.autosave-badge.saving::before { background: var(--accent); animation: pulseDot 0.8s ease infinite; }
 
-        .save-status {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 4px;
-            display: none;
-        }
+.autosave-badge.saved {
+    border-color: var(--muted-text);
+    color: var(--muted-text);
+}
+.autosave-badge.saved::before { background: var(--muted-text); }
 
-        .save-status.success {
-            background-color: #dff0d8;
-            color: #3c763d;
-            border: 1px solid #d6e9c6;
-            display: block;
-        }
+.autosave-badge.error {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+.autosave-badge.error::before { background: #ef4444; }
 
-        .save-status.error {
-            background-color: #f2dede;
-            color: #a94442;
-            border: 1px solid #ebccd1;
-            display: block;
-        }
+@keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.7); }
+}
 
-        .status-message {
-            display: inline-block;
-            vertical-align: middle;
-        }
-    </style>
+/* =========================
+   Kanban Board
+   ========================= */
+.picklist-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+    gap: 0.6rem;
+    align-items: start;
+}
+
+/* =========================
+   Kanban Column
+   ========================= */
+.picklist-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+@media (max-width: 640px) {
+    .picklist-board {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Column Header */
+.col-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.col-header.col-no-pick   { border-left: 3px solid var(--muted-text); color: var(--muted-text); }
+.col-header.col-first     { border-left: 3px solid var(--accent); color: var(--accent); }
+.col-header.col-second    { border-left: 3px solid color-mix(in srgb, var(--accent) 65%, #fff); color: color-mix(in srgb, var(--accent) 65%, #fff); }
+.col-header.col-third     { border-left: 3px solid color-mix(in srgb, var(--accent) 40%, var(--muted-text)); color: color-mix(in srgb, var(--accent) 40%, var(--muted-text)); }
+.col-header.col-dnp       { border-left: 3px solid var(--muted-text); color: var(--muted-text); }
+
+.col-count {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--border);
+    color: var(--muted-text);
+    min-width: 22px;
+    text-align: center;
+}
+
+/* =========================
+   Drop Zone (list)
+   ========================= */
+.lists {
+    list-style: none;
+    margin: 0;
+    padding: 0.4rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    min-height: 80px;
+    max-height: 60vh;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.lists::-webkit-scrollbar { width: 4px; }
+.lists::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.lists.drag-over {
+    background: color-mix(in srgb, var(--accent) 6%, var(--bg-elevated));
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+/* =========================
+   Team Chip
+   ========================= */
+.picklist_teams {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 5px 7px;
+    border-radius: 7px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    cursor: grab;
+    transition:
+        background  0.18s ease,
+        border-color 0.18s ease,
+        transform   0.18s var(--ease-spring, cubic-bezier(0.34,1.56,0.64,1)),
+        box-shadow  0.18s ease,
+        opacity     0.18s ease;
+    user-select: none;
+    animation: chipEntry 0.28s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both;
+    touch-action: none;
+}
+
+@keyframes chipEntry {
+    from { opacity: 0; transform: scale(0.92) translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.picklist_teams:hover {
+    background: color-mix(in srgb, var(--accent) 8%, var(--bg-elevated));
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.picklist_teams:active { cursor: grabbing; }
+
+.picklist_teams.being-dragged {
+    opacity: 0.4;
+    transform: scale(0.97);
+    box-shadow: none;
+}
+
+.picklist_teams p {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text);
+    display: inline;
+    line-height: 1.2;
+}
+
+.picklist_teams input[type="checkbox"] {
+    margin: 0;
+    flex-shrink: 0;
+    cursor: pointer;
+    accent-color: var(--accent);
+    width: 13px;
+    height: 13px;
+}
+
+/* =========================
+   Save Button
+   ========================= */
+.picklist-footer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.save-button {
+    padding: 9px 22px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    box-shadow: 0 3px 10px rgba(177,18,38,0.3);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.save-button:hover {
+    background: var(--accent-hover, #8f0f1f);
+    box-shadow: 0 5px 16px rgba(177,18,38,0.4);
+    transform: translateY(-1px);
+}
+
+.save-button:active { transform: scale(0.97); }
+.save-button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+/* Legacy save-status (used by picklist.js) - now hidden; badge handles feedback */
+.save-status { display: none !important; }
+</style>
 {% endblock %}
 
 {% block Content %}
-    <h1>Picklist</h1>
-    <p>Not Chosen</p>
-    <ol class="lists" id="no_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)">
-        {% for team in teams %}
-            <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
-                <p>{{ team }}</p>
-                <input type="checkbox" onchange="chosen(event)">
-            </li>
-        {% endfor %}
-        {% for team in no_pick_teams %}
-            <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
-                <p>{{ team }}</p>
-                <input type="checkbox" onchange="chosen(event)">
-            </li>
-        {% endfor %}
-    </ol>
-    <p>First Pick</p>
-    <ol class="lists" id="1st_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)">
-        {% for team in first_pick_teams %}
-            <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
-                <p>{{ team }}</p>
-                <input type="checkbox" onchange="chosen(event)">
-            </li>
-        {% endfor %}
-    </ol>
-    <p>Second Pick</p>
-    <ol class="lists" id="2nd_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)">
-        {% for team in second_pick_teams %}
-            <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
-                <p>{{ team }}</p>
-                <input type="checkbox" onchange="chosen(event)">
-            </li>
-        {% endfor %}
-    </ol>
-    {% if comp_code == '2024cmptx' %}
-        <p>Third Pick</p>
-        <ol class="lists" id="3rd_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)">
-            {% for team in third_pick_teams %}
-                <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
-                    <p>{{ team }}</p>
-                    <input type="checkbox" onchange="chosen(event)">
-                </li>
-            {% endfor %}
-        </ol>
-    {% endif %}
-    <p>Do Not Pick</p>
-    <ol class="lists" id="dnp" ondrop="onDrop(event)" ondragover="onDragOver(event)">
-        {% for team in dn_pick_teams %}
-            <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
-                <p>{{ team }}</p>
-                <input type="checkbox" onchange="chosen(event)">
-            </li>
-        {% endfor %}
-    </ol>
+<div class="picklist-page">
 
-    <div class="save-status">
-        <span class="status-message"></span>
+    <!-- Header -->
+    <div class="picklist-header">
+        <h2>Picklist</h2>
+        <span class="autosave-badge" id="autosave-badge">Auto-save on</span>
     </div>
 
-    <button onclick="saveToDB()" class="save-button">Save to Database</button>
+    <!-- Search -->
+    <div class="picklist-search-row">
+        <div class="picklist-search-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input type="text" id="picklist-search" placeholder="Find team number…" autocomplete="off" inputmode="numeric">
+        </div>
+        <span class="search-match-count" id="picklist-match-count"></span>
+    </div>
 
-    <script>
-        const comp_code = '{{ comp_code }}';
-    </script>
-    <script src="{% static 'strategy/picklist.js' %}"></script>
+    <!-- Kanban Board -->
+    <div class="picklist-board">
+
+        <!-- No Pick (unassigned pool) -->
+        <div class="picklist-col">
+            <div class="col-header col-no-pick">
+                No Pick
+                <span class="col-count" id="count-no_pick">0</span>
+            </div>
+            <ol class="lists" id="no_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)">
+                {% for team in no_pick_teams %}
+                    <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
+                        <p>{{ team }}</p>
+                        <input type="checkbox" onchange="chosen(event)">
+                    </li>
+                {% endfor %}
+                {% for team in teams %}
+                    <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
+                        <p>{{ team }}</p>
+                        <input type="checkbox" onchange="chosen(event)">
+                    </li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <!-- First Pick -->
+        <div class="picklist-col">
+            <div class="col-header col-first">
+                First Pick
+                <span class="col-count" id="count-1st_pick">0</span>
+            </div>
+            <ol class="lists" id="1st_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)">
+                {% for team in first_pick_teams %}
+                    <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
+                        <p>{{ team }}</p>
+                        <input type="checkbox" onchange="chosen(event)">
+                    </li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <!-- Second Pick -->
+        <div class="picklist-col">
+            <div class="col-header col-second">
+                Second Pick
+                <span class="col-count" id="count-2nd_pick">0</span>
+            </div>
+            <ol class="lists" id="2nd_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)">
+                {% for team in second_pick_teams %}
+                    <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
+                        <p>{{ team }}</p>
+                        <input type="checkbox" onchange="chosen(event)">
+                    </li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <!-- Third Pick (conditional) -->
+        {% if comp_code == '2024cmptx' %}
+        <div class="picklist-col">
+            <div class="col-header col-third">
+                Third Pick
+                <span class="col-count" id="count-3rd_pick">0</span>
+            </div>
+            <ol class="lists" id="3rd_pick" ondrop="onDrop(event)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)">
+                {% for team in third_pick_teams %}
+                    <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
+                        <p>{{ team }}</p>
+                        <input type="checkbox" onchange="chosen(event)">
+                    </li>
+                {% endfor %}
+            </ol>
+        </div>
+        {% endif %}
+
+        <!-- Do Not Pick -->
+        <div class="picklist-col">
+            <div class="col-header col-dnp">
+                Do Not Pick
+                <span class="col-count" id="count-dnp">0</span>
+            </div>
+            <ol class="lists" id="dnp" ondrop="onDrop(event)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)">
+                {% for team in dn_pick_teams %}
+                    <li draggable="true" ondragstart="onDragStart(event)" class="picklist_teams" ondrop="onDrop(event)" ondragover="onDragOver(event)" id="{{ team }}">
+                        <p>{{ team }}</p>
+                        <input type="checkbox" onchange="chosen(event)">
+                    </li>
+                {% endfor %}
+            </ol>
+        </div>
+
+    </div><!-- /.picklist-board -->
+
+    <!-- Footer -->
+    <div class="picklist-footer">
+        <button onclick="saveToDB()" class="save-button btn">💾 Save to Database</button>
+    </div>
+
+    <!-- Legacy status div (hidden; picklist.js needs the DOM node) -->
+    <div class="save-status"><span class="status-message"></span></div>
+
+</div><!-- /.picklist-page -->
+
+<script>
+    const comp_code = '{{ comp_code }}';
+    let lastTimestamp = {{ json_timestamp|default:0 }};
+</script>
+<script src="{% static 'strategy/picklist.js' %}"></script>
+
+<script>
+/* =========================================================
+   Picklist UI Enhancements
+   ========================================================= */
+(function () {
+    var badge = document.getElementById('autosave-badge');
+
+    /* Hook into picklist.js state changes via badge */
+    var origSaveTemp = window.saveTemporary;
+    var origSaveToDB = window.saveToDB;
+
+    function setBadge(state, text) {
+        if (!badge) return;
+        badge.className = 'autosave-badge ' + state;
+        badge.textContent = text;
+    }
+
+    /* Column counts */
+    function updateCounts() {
+        ['no_pick', '1st_pick', '2nd_pick', '3rd_pick', 'dnp'].forEach(function (id) {
+            var list  = document.getElementById(id);
+            var count = document.getElementById('count-' + id);
+            if (list && count) count.textContent = list.children.length;
+        });
+    }
+    updateCounts();
+
+    /* Drag-over visual on columns */
+    document.addEventListener('dragover', function (e) {
+        var list = e.target.closest('.lists');
+        if (list) list.classList.add('drag-over');
+    });
+
+    /* onDragLeave handler referenced in HTML */
+    window.onDragLeave = function (e) {
+        var list = e.currentTarget;
+        if (list) list.classList.remove('drag-over');
+    };
+
+    /* Observe DOM changes in lists to update counts */
+    var listIds = ['no_pick', '1st_pick', '2nd_pick', '3rd_pick', 'dnp'];
+    listIds.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        new MutationObserver(updateCounts).observe(el, { childList: true });
+    });
+
+    /* Patch saveToDB to update badge */
+    var originalSaveToDB = window.saveToDB;
+    window.saveToDB = function () {
+        setBadge('saving', 'Saving…');
+        var result = originalSaveToDB.apply(this, arguments);
+        /* saveToDB uses fetch; watch the save-status div to detect outcome */
+        var observer = new MutationObserver(function () {
+            var statusDiv = document.querySelector('.save-status');
+            if (!statusDiv) return;
+            if (statusDiv.classList.contains('success')) {
+                setBadge('saved', 'Saved ✓');
+                observer.disconnect();
+                setTimeout(function () { setBadge('', 'Auto-save on'); }, 4000);
+            } else if (statusDiv.classList.contains('error')) {
+                setBadge('error', 'Save failed');
+                observer.disconnect();
+            }
+        });
+        var statusDiv = document.querySelector('.save-status');
+        if (statusDiv) observer.observe(statusDiv, { attributes: true, attributeFilter: ['class'] });
+        return result;
+    };
+
+    /* Badge feedback on drag activity */
+    document.addEventListener('drop', function () {
+        setBadge('saving', 'Saving…');
+        setTimeout(function () { setBadge('saved', 'Synced ✓'); }, 700);
+        setTimeout(function () { setBadge('', 'Auto-save on'); }, 3500);
+        updateCounts();
+    });
+
+    /* ---- Numeric search: highlight/filter chips across all columns ---- */
+    var searchInput  = document.getElementById('picklist-search');
+    var matchCounter = document.getElementById('picklist-match-count');
+
+    function filterChips() {
+        var q = searchInput.value.trim();
+        var chips = document.querySelectorAll('.picklist_teams');
+        var matches = 0;
+        chips.forEach(function (chip) {
+            var num = chip.id || '';
+            var show = !q || num.includes(q);
+            chip.style.display = show ? '' : 'none';
+            chip.style.outline = (show && q) ? '2px solid var(--accent)' : '';
+            if (show && q) matches++;
+        });
+        matchCounter.textContent = q ? matches + ' match' + (matches !== 1 ? 'es' : '') : '';
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filterChips);
+})();
+</script>
 {% endblock %}

@@ -208,6 +208,21 @@
       "type": "textarea",
       "display_name": "Additional Notes"
     }
+  ],
+  "rankings": [
+    {"key": "team_number",      "display_name": "Team #",             "sortable": true},
+    {"key": "autoLeave",        "display_name": "Auto Leave",         "sortable": true},
+    {"key": "autoScore",        "display_name": "Auto Score",         "sortable": true},
+    {"key": "autoPass",         "display_name": "Auto Pass",          "sortable": true},
+    {"key": "autoClimb",        "display_name": "Auto Climb",         "sortable": true},
+    {"key": "teleScore",        "display_name": "Teleop Score",       "sortable": true},
+    {"key": "telePass",         "display_name": "Teleop Pass",        "sortable": true},
+    {"key": "endClimb",         "display_name": "Climb Position",     "sortable": true},
+    {"key": "shootingAccuracy", "display_name": "Shooting Accuracy",  "sortable": true},
+    {"key": "driverRanking",    "display_name": "Driver Ranking",     "sortable": true},
+    {"key": "defenseRanking",   "display_name": "Defense",            "sortable": true},
+    {"key": "totalPass",        "display_name": "Total Pass",         "sortable": true, "computed": true},
+    {"key": "totalShooting",    "display_name": "Total Score",        "sortable": true, "computed": true}
   ]
 }
 

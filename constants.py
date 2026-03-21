@@ -1,8 +1,2 @@
-# Hardcoded admin emails - these users always have access
-AUTHORIZED_EMAIL = [
-    "adrienne.nguyen@team2073.com",
-    "chris.luk@team2073.com",
-    "praneel.arya@team2073.com",
-    "matt.beaudin@team2073.com",
-    "stan.chong@team2073.com",
-]
+# Authorized emails are managed in the database via the AuthorizedUser model.
+# Use the admin panel at /admin-panel/ to add or remove users.

@@ -2,8 +2,7 @@
 Django settings for scouting_backend project.
 """
 import os
-import random
-import string
+import secrets
 from pathlib import Path
 
 import dj_database_url
@@ -27,10 +26,22 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
-if not SECRET_KEY or not SECRET_KEY.strip():
-    SECRET_KEY = ''.join(random.choice(string.ascii_lowercase + string.ascii_uppercase + string.digits) for i in range(50))
-    print("WARNING: Using auto-generated SECRET_KEY. Set SECRET_KEY environment variable for production.")
+SECRET_KEY = os.environ.get('SECRET_KEY', '').strip()
+_debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
+if not SECRET_KEY:
+    if not _debug_mode:
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured(
+            "SECRET_KEY environment variable must be set in production. "
+            "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(50))\""
+        )
+    SECRET_KEY = secrets.token_urlsafe(50)
+    import warnings
+    warnings.warn(
+        "No SECRET_KEY set — using a temporary key for development. "
+        "Sessions will not persist across restarts.",
+        stacklevel=2,
+    )
 
 # Set DEBUG based on environment
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
@@ -40,6 +51,10 @@ ALLOWED_HOSTS = [
     '127.0.0.1', 
     "scouting.chrisccluk.live",
 ]
+
+# IPs allowed to set X-Forwarded-For (e.g. Render's load balancer, nginx)
+TRUSTED_PROXIES = os.environ.get('TRUSTED_PROXIES', '').split(',')
+TRUSTED_PROXIES = [ip.strip() for ip in TRUSTED_PROXIES if ip.strip()]
 
 # CSRF configuration
 CSRF_TRUSTED_ORIGINS = [
@@ -155,6 +170,10 @@ LOGIN_URL= '/auth/'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
+# Cookie security - always enforced regardless of DEBUG
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False  # Must be False so JS can read the token for AJAX requests
+
 # Security settings for production
 if not DEBUG:
     # Proxy SSL configuration - fixes OAuth redirect_uri_mismatch
@@ -164,3 +183,5 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
