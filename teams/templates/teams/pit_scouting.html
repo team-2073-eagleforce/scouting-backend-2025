@@ -873,7 +873,7 @@ html.inverted .form-group:hover {
         });
 
         /* Regular inputs */
-        form.querySelectorAll('[data-required="true"], [data-required="True"]').forEach(function (el) {
+        form.querySelectorAll('input[data-required="true"], input[data-required="True"], textarea[data-required="true"], textarea[data-required="True"], select[data-required="true"], select[data-required="True"]').forEach(function (el) {
             if (el.classList.contains('hidden-select-input') || el.classList.contains('hidden-bool-input')) return;
             var group = el.closest('.form-group');
             var ok = true;

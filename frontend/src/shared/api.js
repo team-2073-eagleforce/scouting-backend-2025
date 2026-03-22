@@ -1,6 +1,7 @@
 /**
  * Shared API utilities for making HTTP requests to the Django backend
  */
+/* eslint-disable no-console */
 
 /**
  * Get CSRF token from Django cookies

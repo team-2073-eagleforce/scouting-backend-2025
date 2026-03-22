@@ -37,17 +37,29 @@ function addToHistory(scouterName, teamNum, matchNum, status) {
     const now = new Date();
     const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-    const icon   = status === 'success' ? '✓' : '✕';
-    const detail = scouterName
-        ? `<span class="h-scouter">${scouterName}</span>`
-        : '<span class="h-scouter muted">Unknown scouter</span>';
-    const extra  = teamNum  ? ` · Team ${teamNum}`  : '';
-    const matchStr = matchNum ? ` · Match ${matchNum}` : '';
+    const icon = status === 'success' ? '✓' : '✕';
 
-    row.innerHTML = `
-        <span class="h-icon">${icon}</span>
-        <span class="h-body">${detail}${extra}${matchStr}</span>
-        <span class="h-time">${time}</span>`;
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'h-icon';
+    iconSpan.textContent = icon;
+
+    const detailSpan = document.createElement('span');
+    detailSpan.className = scouterName ? 'h-scouter' : 'h-scouter muted';
+    detailSpan.textContent = scouterName || 'Unknown scouter';
+
+    const bodySpan = document.createElement('span');
+    bodySpan.className = 'h-body';
+    bodySpan.appendChild(detailSpan);
+    if (teamNum) bodySpan.appendChild(document.createTextNode(` · Team ${teamNum}`));
+    if (matchNum) bodySpan.appendChild(document.createTextNode(` · Match ${matchNum}`));
+
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'h-time';
+    timeSpan.textContent = time;
+
+    row.appendChild(iconSpan);
+    row.appendChild(bodySpan);
+    row.appendChild(timeSpan);
 
     // Animate in
     row.style.opacity = '0';

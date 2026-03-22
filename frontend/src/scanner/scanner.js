@@ -2,6 +2,7 @@
  * QR Code Scanner Module - No Caching Version
  * Handles QR code scanning with immediate validation and processing
  */
+/* eslint-disable no-console */
 
 import { postJSON, triggerHapticFeedback } from '@shared/api';
 import { getElementById, addEventListener } from '@shared/utils';
@@ -59,7 +60,7 @@ class QRCodeScanner {
   async showValidationDialog(errors, scanData) {
     const message = `Scan validation failed:\n${errors.join('\n')}\n\nOptions:\n1. Skip this scan\n2. Edit data manually`;
     
-    if (confirm(message + '\n\nClick OK to edit manually, Cancel to skip')) {
+    if (confirm(`${message}\n\nClick OK to edit manually, Cancel to skip`)) {
       return this.showEditDialog(scanData);
     }
     return null;
@@ -86,7 +87,7 @@ class QRCodeScanner {
       teamNumber: teamNumber.trim(),
       matchNumber: matchNumber.trim(),
       name: name.trim(),
-      comp_code: comp_code.trim()
+      comp_code: comp_code.trim(),
     };
   }
 

@@ -1185,7 +1185,13 @@ window.t = function(key) {
     var container = document.getElementById('toast-container');
     var el = document.createElement('div');
     el.className = 'toast-item toast-' + type;
-    el.innerHTML = '<span class="toast-icon">' + (icons[type] || 'ℹ') + '</span><span>' + message + '</span>';
+    var iconSpan = document.createElement('span');
+    iconSpan.className = 'toast-icon';
+    iconSpan.textContent = icons[type] || 'ℹ';
+    var msgSpan = document.createElement('span');
+    msgSpan.textContent = message;
+    el.appendChild(iconSpan);
+    el.appendChild(msgSpan);
     el.addEventListener('click', function () {
       el.classList.remove('show');
       el.addEventListener('transitionend', function () { el.remove(); }, { once: true });

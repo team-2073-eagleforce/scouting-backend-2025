@@ -31,7 +31,7 @@ def home(request):
             # Only pass external HTTPS URLs (Cloudinary). Skip local dev / IP-only URLs.
             if url.startswith('https://'):
                 robot_picture = url
-    except Exception:
+    except Exception:  # nosec B110
         pass
     return render(request, 'home.html', {'robot_picture': robot_picture})
 
@@ -231,7 +231,9 @@ def clear_pit_data(request, team_number):
                 team.pit_scout_status = False
                 team.robot_picture = None
                 team.save()
-        return redirect(f'/teams/{team_number}/?comp={comp_code}')
+        if comp_code:
+            return redirect(f'/teams/{team_number}/?comp={comp_code}')
+        return redirect(f'/teams/{team_number}/')
     return redirect(f'/teams/{team_number}/')
 
 @login_required

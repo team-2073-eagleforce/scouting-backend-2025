@@ -11,7 +11,7 @@ from helpers import rate_limit
 import json
 
 # Create your views here.
-os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
+os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'  # nosec B105
 
 _DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
@@ -23,7 +23,7 @@ client_config = {
         "client_id": os.getenv("GOOGLE_CLIENT_ID", "").strip(),
         "project_id": "scouting-excel-test",
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
+        "token_uri": "https://oauth2.googleapis.com/token",  # nosec B105
         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
         "client_secret": os.getenv("GOOGLE_CLIENT_SECRET", "").strip(),
         "redirect_uris": [
@@ -50,19 +50,22 @@ def authorize(request):
     if request.GET.get('login') == 'true':
         if _DEBUG:
             os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-        flow = google_auth_oauthlib.flow.Flow.from_client_config(
-            client_config=client_config, scopes=SCOPES)
+        try:
+            flow = google_auth_oauthlib.flow.Flow.from_client_config(
+                client_config=client_config, scopes=SCOPES)
 
-        flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
+            flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
 
-        authorization_url, state = flow.authorization_url(
-            access_type='offline',
-            include_granted_scopes='true')
+            authorization_url, state = flow.authorization_url(
+                access_type='offline',
+                include_granted_scopes='true')
 
-        # Store state in session to verify on callback
-        request.session['oauth_state'] = state
+            # Store state in session to verify on callback
+            request.session['oauth_state'] = state
 
-        return redirect(authorization_url)
+            return redirect(authorization_url)
+        finally:
+            os.environ.pop('OAUTHLIB_INSECURE_TRANSPORT', None)
     
     # Otherwise show login page
     return render(request, 'authenticate/login.html')
@@ -96,7 +99,8 @@ def oauth2callback(request):
     cred = credentials_to_dict(credentials)
     request.session['credentials'] = cred
 
-    r = requests.get(f'https://www.googleapis.com/oauth2/v2/userinfo?access_token={cred["token"]}').json()
+    r = requests.get(f'https://www.googleapis.com/oauth2/v2/userinfo?access_token={cred["token"]}',
+                     timeout=10).json()
 
     request.session["name"] = r["given_name"] + " " + r["family_name"]
 

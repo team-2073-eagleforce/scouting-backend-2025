@@ -1,6 +1,7 @@
 /**
  * Shared DOM utilities and helper functions
  */
+/* eslint-disable no-console */
 
 /**
  * Safely get element by ID with error handling

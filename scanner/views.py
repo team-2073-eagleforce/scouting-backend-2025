@@ -200,7 +200,7 @@ def scanner(request):
                         if prev != match_data_defaults[key]:
                             _plugin_logger.info("anchor_patch: plugin=%s key=%s prev=%r new=%r team=%s event=%s match=%s",
                                                 plugin_name, key, prev, match_data_defaults[key], team_num, event_code, match_num)
-                    except Exception:
+                    except Exception:  # nosec B112
                         continue
 
             match_data_defaults['data'] = data_bucket

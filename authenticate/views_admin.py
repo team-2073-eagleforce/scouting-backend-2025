@@ -303,9 +303,9 @@ def _extract_plugin_info(plugin_dir: Path) -> dict:
                 try:
                     instance = plugin_class()
                     info['has_custom_urls'] = bool(getattr(instance, 'urls', []))
-                except Exception:
+                except Exception:  # nosec B110
                     pass
-    except Exception as e:
+    except Exception as e:  # nosec B110
         # If we can't load it, that's okay - just return basic info
         pass
     

@@ -526,11 +526,32 @@
         return result;
     };
 
-    /* Badge feedback on drag activity */
-    document.addEventListener('drop', function () {
+    /* Patch saveTemporary to tie badge to actual fetch result */
+    window.saveTemporary = function () {
         setBadge('saving', 'Saving…');
-        setTimeout(function () { setBadge('saved', 'Synced ✓'); }, 700);
-        setTimeout(function () { setBadge('', 'Auto-save on'); }, 3500);
+        var savedFetch = window.fetch;
+        window.fetch = function (url, opts) {
+            window.fetch = savedFetch;
+            return savedFetch(url, opts)
+                .then(function (response) {
+                    if (response.ok) {
+                        setBadge('saved', 'Synced ✓');
+                        setTimeout(function () { setBadge('', 'Auto-save on'); }, 3000);
+                    } else {
+                        setBadge('error', 'Sync failed');
+                    }
+                    return response;
+                })
+                .catch(function (err) {
+                    setBadge('error', 'Sync failed');
+                    throw err;
+                });
+        };
+        origSaveTemp.apply(this, arguments);
+    };
+
+    /* Update counts on drop; badge is handled by patched saveTemporary above */
+    document.addEventListener('drop', function () {
         updateCounts();
     });
 

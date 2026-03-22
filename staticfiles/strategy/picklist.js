@@ -4,7 +4,7 @@
 
 let draggedItem = null;
 let saveTimeout = null;
-let lastTimestamp = 0;
+// lastTimestamp is initialized from the server in the template
 const INACTIVITY_TIMEOUT = 3000; // 3 seconds before auto-save
 const FETCH_UPDATE_INTERVAL = 5000; // Fetch updates every 5 seconds
 let isFetching = false; // To prevent overlapping fetch requests
