@@ -7,7 +7,7 @@ import requests
 from .models import AuthorizedUser
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
-from helpers import rate_limit
+from helpers import rate_limit, login_required
 import json
 
 # Create your views here.
@@ -124,6 +124,7 @@ def logout(request):
     return redirect('/auth/')
 
 
+@login_required
 @require_POST
 def set_theme(request):
     """Set user's theme preference in session (expects JSON {inverted: true/false})"""

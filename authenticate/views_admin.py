@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, JsonResponse
+from django.views.decorators.http import require_POST
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from authenticate.models import AuthorizedUser
@@ -105,6 +106,7 @@ def add_user(request):
     return redirect('/admin-panel/')
 
 @admin_required
+@require_POST
 def remove_user(request, user_id):
     AuthorizedUser.objects.filter(id=user_id).delete()
     return redirect('/admin-panel/')
@@ -315,54 +317,10 @@ def _extract_plugin_info(plugin_dir: Path) -> dict:
     return info
 
 
-def _safe_extract_zip(zip_path: Path, dest_dir: Path) -> str:
-    """Safely extract a plugin ZIP into dest_dir.
-
-    Returns the top-level folder name extracted.
-    Raises ValueError on unsafe paths.
-    """
-    with zipfile.ZipFile(zip_path) as zf:
-        # Identify common top-level directory
-        top_levels = set(p.split('/')[0] for p in zf.namelist() if '/' in p)
-        if not top_levels:
-            raise ValueError('ZIP must contain a top-level folder')
-        if len(top_levels) > 1:
-            raise ValueError('ZIP must contain a single top-level folder')
-        top = next(iter(top_levels))
-
-        for member in zf.infolist():
-            # Prevent path traversal
-            extracted_path = dest_dir / member.filename
-            if not str(extracted_path.resolve()).startswith(str(dest_dir.resolve())):
-                raise ValueError('Unsafe ZIP path detected')
-        zf.extractall(dest_dir)
-        return top
-
-
 @admin_required
 def plugins_upload(request):
     # Plugin uploads are disabled for security - plugins must be installed manually on the server.
     return JsonResponse({'status': 'error', 'message': 'Plugin uploads are disabled. Install plugins manually on the server.'}, status=403)
-
-
-def _sanitize_requirements(lines):
-    """Return a safe list of requirements from raw file lines.
-
-    Only allow standard `pkg`, `pkg==x.y`, `pkg>=x`, `pkg<=x`, `pkg~=x`.
-    Disallow URLs, options, editable installs, and extras like `@`.
-    """
-    import re
-    allowed = re.compile(r"^[A-Za-z0-9_.\-]+(==|>=|<=|~=)?[A-Za-z0-9_.\-]+$")
-    safe = []
-    for line in lines:
-        line = line.strip()
-        if not line or line.startswith('#'):
-            continue
-        if allowed.match(line):
-            safe.append(line)
-        else:
-            raise ValueError(f"Disallowed requirement entry: {line}")
-    return safe
 
 
 @admin_required

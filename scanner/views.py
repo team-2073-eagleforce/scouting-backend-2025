@@ -6,37 +6,7 @@ from teams.models import Teams, Team_Match_Data
 from plugins import plugin_manager
 from utils import config_loader
 from helpers import login_required, rate_limit
-# views.py
-from django.http import HttpResponse
-from django.contrib.staticfiles import finders
-import os
 
-def debug_scanner_files(request):
-    # The relative path Django should be looking for
-    worker_file = "scanner/qr-scanner-worker.min.js"
-    
-    # Attempt to find the absolute path on the disk
-    result = finders.find(worker_file)
-    
-    if result:
-        # Check if the file is actually readable
-        file_exists = os.path.exists(result)
-        return HttpResponse(
-            f"✅ <strong>Success!</strong><br>"
-            f"Django found the file at: <code>{result}</code><br>"
-            f"File exists on disk: <strong>{file_exists}</strong>"
-        )
-    else:
-        # List where Django is currently looking
-        from django.conf import settings
-        search_locations = "<br>".join([str(d) for d in settings.STATICFILES_DIRS])
-        
-        return HttpResponse(
-            f"❌ <strong>File Not Found!</strong><br>"
-            f"Django could not find <code>{worker_file}</code> in any static directories.<br><br>"
-            f"<strong>Searching in:</strong><br>{search_locations}",
-            status=404
-        )
 
 _plugin_logger = logging.getLogger('plugins')
 
@@ -62,6 +32,7 @@ def scanner(request):
                 event_code = str(data_from_post["comp_code"])
                 match_num = int(data_from_post["matchNumber"])
                 scout_name = str(data_from_post.get("name", ""))[:100]
+                comment = str(data_from_post.get("comment", ""))[:256]
             except (KeyError, ValueError, TypeError):
                 return JsonResponse({"error": "Missing or invalid field in submission"}, status=400)
 
@@ -87,7 +58,7 @@ def scanner(request):
                 'scout_name': scout_name,
                 'quantifier': quantifier_val,
                 'start_pos': int(get_value("startPos", 0)),
-                'comment': get_value("comment", ""),
+                'comment': comment,
                 'is_broken': bool(int(get_value("isBroken", 0))),
                 'is_disabled': bool(int(get_value("isDisabled", 0))),
                 'is_tipped': bool(int(get_value("isTipped", 0))),

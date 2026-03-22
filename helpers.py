@@ -1,9 +1,12 @@
+import functools
+
 from django.conf import settings
 from django.http import HttpResponseRedirect, JsonResponse
 from django.core.cache import cache
 
 
 def login_required(function):
+    @functools.wraps(function)
     def wrapper(request, *args, **kw):
         if not request.session.get("email"):
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -22,6 +25,7 @@ def rate_limit(max_calls, period_seconds):
     period_seconds: window length in seconds
     """
     def decorator(function):
+        @functools.wraps(function)
         def wrapper(request, *args, **kw):
             remote_addr = request.META.get('REMOTE_ADDR', 'unknown')
             trusted_proxies = getattr(settings, 'TRUSTED_PROXIES', [])

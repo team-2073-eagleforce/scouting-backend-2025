@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 
 logger = logging.getLogger(__name__)
 from pathlib import Path
@@ -18,7 +19,11 @@ from strategy.models import PickList_Data
 from teams.models import Team_Match_Data
 from utils import config_loader
 
+_SAFE_COMP_CODE = re.compile(r'^[A-Za-z0-9_\-]{1,20}$')
+
 def get_json_path(comp_code):
+    if not comp_code or not _SAFE_COMP_CODE.match(comp_code):
+        return None
     # Get the project root directory
     BASE_DIR = Path(__file__).resolve().parent.parent
     # Create a picklists directory if it doesn't exist
@@ -28,6 +33,8 @@ def get_json_path(comp_code):
 
 def read_json_picklist(comp_code):
     json_path = get_json_path(comp_code)
+    if json_path is None:
+        return None
     if json_path.exists():
         with open(json_path, 'r') as f:
             data = json.load(f)
@@ -43,6 +50,8 @@ def read_json_picklist(comp_code):
 
 def write_json_picklist(comp_code, data):
     json_path = get_json_path(comp_code)
+    if json_path is None:
+        raise ValueError("Invalid competition code")
     json_data = {
         'timestamp': int(time() * 1000),  # Current time in milliseconds
         'data': data
@@ -202,7 +211,11 @@ def picklist_submit(request):
                 'timestamp': int(time() * 1000)
             })
 
-        if int(client_timestamp) >= json_data['timestamp']:
+        try:
+            client_ts = int(client_timestamp)
+        except (ValueError, TypeError):
+            client_ts = 0
+        if client_ts >= json_data['timestamp']:
             return JsonResponse({
                 'status': 'no_change',
                 'timestamp': json_data['timestamp']
