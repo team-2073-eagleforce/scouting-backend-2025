@@ -3,6 +3,11 @@
 env/
 venv/
 
+# TLS/SSL certificates and private keys — never commit these
+*.key
+*.crt
+*.pem
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -90,3 +95,6 @@ bundlesize.json
 
 picklists/
 .opencode
+
+# Local SQLite database (not used in production - Supabase is the database)
+db.sqlite3

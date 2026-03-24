@@ -1,12 +1,15 @@
 import json
+import logging
 import os
+import re
+
+logger = logging.getLogger(__name__)
 from pathlib import Path
 from time import time
 
 from django.db.models import Avg, Count
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
 
 from api.tba import get_single_match, get_teams_list
 from teams import models
@@ -16,7 +19,11 @@ from strategy.models import PickList_Data
 from teams.models import Team_Match_Data
 from utils import config_loader
 
+_SAFE_COMP_CODE = re.compile(r'^[A-Za-z0-9_\-]{1,20}$')
+
 def get_json_path(comp_code):
+    if not comp_code or not _SAFE_COMP_CODE.match(comp_code):
+        return None
     # Get the project root directory
     BASE_DIR = Path(__file__).resolve().parent.parent
     # Create a picklists directory if it doesn't exist
@@ -26,6 +33,8 @@ def get_json_path(comp_code):
 
 def read_json_picklist(comp_code):
     json_path = get_json_path(comp_code)
+    if json_path is None:
+        return None
     if json_path.exists():
         with open(json_path, 'r') as f:
             data = json.load(f)
@@ -41,6 +50,8 @@ def read_json_picklist(comp_code):
 
 def write_json_picklist(comp_code, data):
     json_path = get_json_path(comp_code)
+    if json_path is None:
+        raise ValueError("Invalid competition code")
     json_data = {
         'timestamp': int(time() * 1000),  # Current time in milliseconds
         'data': data
@@ -53,19 +64,48 @@ def rankings(request):
     comp_code = request.GET.get('comp')
     quantifier = request.GET.get('quantifier', 'Quals')
     config = config_loader.get_config()
-    
+
+    VALID_SORT_FIELDS = {
+        'autoScore', 'autoPass', 'autoClimb',
+        'teleScore', 'telePass',
+        'totalShooting', 'totalPass', 'totalTotal',
+    }
+    sort_by = request.GET.get('sort_by', 'totalShooting')
+    if sort_by not in VALID_SORT_FIELDS:
+        sort_by = 'totalShooting'
+
+    SORT_OPTIONS = [
+        ('autoScore',     'Auto Score'),
+        ('autoPass',      'Auto Pass'),
+        ('autoClimb',     'Auto Climb'),
+        ('teleScore',     'Teleop Score'),
+        ('telePass',      'Teleop Pass'),
+        ('totalShooting', 'Total Score'),
+        ('totalPass',     'Total Pass'),
+        ('totalTotal',    'Total Total'),
+    ]
+
     teams = models.Teams.objects.filter(event=comp_code).order_by("team_number")
     team_averages = {}
-    
+
     for team in teams:
         if models.Team_Match_Data.objects.filter(team_number=team.team_number, event=comp_code, quantifier=quantifier).exists():
-            team_averages[team.team_number] = fetch_team_match_averages(team.team_number, comp_code, quantifier)
-            
+            stats = fetch_team_match_averages(team.team_number, comp_code, quantifier)
+            stats['totalPass']     = round((stats.get('autoPass', 0) or 0) + (stats.get('telePass', 0) or 0), 3)
+            stats['totalShooting'] = round((stats.get('autoScore', 0) or 0) + (stats.get('teleScore', 0) or 0), 3)
+            stats['totalTotal']    = round((stats.get('totalShooting', 0) or 0) + (stats.get('totalPass', 0) or 0), 3)
+            team_averages[team.team_number] = stats
+
+    team_averages = dict(sorted(team_averages.items(), key=lambda x: x[1].get(sort_by, 0), reverse=True))
+
     return render(request, "strategy/rankings.html", {
         'team_averages': team_averages,
         'comp_code': comp_code,
         'selected_quantifier': quantifier,
-        'config_metrics': config.get('metrics', [])
+        'config_metrics': config.get('metrics', []),
+        'rankings_columns': config.get('rankings', []),
+        'sort_by': sort_by,
+        'sort_options': SORT_OPTIONS,
     })
 
 @login_required
@@ -77,22 +117,38 @@ def picklist(request):
     second_pick_teams = []
     third_pick_teams = []
     dn_pick_teams = []
-    if comp_code == None or comp_code == 'Testing':
+    if not comp_code or comp_code.lower() == 'testing':
         return render(request, "strategy/picklist.html", {'teams': teams})
     else:
+        # Read JSON timestamp so JS won't overwrite server-rendered data on first load
+        json_data = read_json_picklist(comp_code)
+        json_timestamp = json_data['timestamp'] if json_data else 0
+
         if len(PickList_Data.objects.filter(event=comp_code)) == 0:
             teams_data = get_teams_list(comp_code)
             for team in teams_data:
                 teams.append(team["team_number"])
             teams.sort()
+            # If JSON exists, use it to populate lists so server render matches JSON state
+            if json_data and json_data.get('data'):
+                d = json_data['data']
+                no_pick_teams   = d[0] if len(d) > 0 else []
+                first_pick_teams  = d[1] if len(d) > 1 else []
+                second_pick_teams = d[2] if len(d) > 2 else []
+                third_pick_teams  = d[3] if len(d) > 3 else []
+                dn_pick_teams     = d[4] if len(d) > 4 else []
+                # Only show teams in the pool that aren't already categorized
+                categorized = set(no_pick_teams + first_pick_teams + second_pick_teams + third_pick_teams + dn_pick_teams)
+                teams = [t for t in teams if str(t) not in categorized and t not in categorized]
             return render(request, "strategy/picklist.html", {'teams': teams,
                                                           'comp_code' : comp_code,
+                                                          'json_timestamp': json_timestamp,
                                                           'no_pick_teams' : no_pick_teams,
                                                           'first_pick_teams' : first_pick_teams,
                                                           'second_pick_teams' : second_pick_teams,
                                                           'third_pick_teams' : third_pick_teams,
                                                           'dn_pick_teams' : dn_pick_teams,})
-        
+
         picklist_data = PickList_Data.objects.filter(event=comp_code).values()[0]
         no_pick_teams = picklist_data['no_pick']
         first_pick_teams = picklist_data['first_pick']
@@ -101,13 +157,14 @@ def picklist(request):
         dn_pick_teams = picklist_data['dn_pick']
         return render(request, "strategy/picklist.html", {'teams': teams,
                                                           'comp_code' : comp_code,
+                                                          'json_timestamp': json_timestamp,
                                                           'no_pick_teams' : no_pick_teams,
                                                           'first_pick_teams' : first_pick_teams,
                                                           'second_pick_teams' : second_pick_teams,
                                                           'third_pick_teams' : third_pick_teams,
                                                           'dn_pick_teams' : dn_pick_teams})
         
-@csrf_exempt
+@login_required
 def picklist_submit(request):
     comp_code = request.GET.get('comp')
     client_timestamp = request.GET.get('timestamp', '0')
@@ -138,10 +195,11 @@ def picklist_submit(request):
                 'timestamp': int(time() * 1000)
             })
             
-        except Exception as e:
+        except Exception:
+            logger.exception("picklist_submit POST failed")
             return JsonResponse({
                 'status': 'error',
-                'message': str(e)
+                'message': 'An unexpected error occurred'
             }, status=500)
 
     elif request.method == 'GET':
@@ -153,7 +211,11 @@ def picklist_submit(request):
                 'timestamp': int(time() * 1000)
             })
 
-        if int(client_timestamp) >= json_data['timestamp']:
+        try:
+            client_ts = int(client_timestamp)
+        except (ValueError, TypeError):
+            client_ts = 0
+        if client_ts >= json_data['timestamp']:
             return JsonResponse({
                 'status': 'no_change',
                 'timestamp': json_data['timestamp']
@@ -171,7 +233,6 @@ def picklist_submit(request):
     }, status=405)
 
 @login_required
-@csrf_exempt
 def dashboard(request):
     comp_code = request.GET.get('comp')
     config = config_loader.get_config()
@@ -229,8 +290,8 @@ def dashboard(request):
 
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON format"}, status=400)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+        except Exception:
+            return JsonResponse({"error": "An unexpected error occurred"}, status=500)
 
     return render(request, "strategy/dashboard.html", {
         'config_metrics': config.get('metrics', []),
@@ -300,6 +361,7 @@ def fetch_team_match_averages(team_number, comp_code, quantifier):
     
     return result
 
+@login_required
 def get_path_data(request, team_number):
     """API endpoint for retrieving match data - auto_path removed"""
     comp_code = request.GET.get('comp')
@@ -341,5 +403,5 @@ def get_path_data(request, team_number):
         
         return JsonResponse(response)
         
-    except Exception as e:
-        return JsonResponse({'error': f'Server error: {str(e)}'}, status=500)
+    except Exception:
+        return JsonResponse({'error': 'An unexpected error occurred'}, status=500)

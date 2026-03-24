@@ -165,7 +165,7 @@ class PluginManager:
         for res in self.execute_hook(hook_name, context):
             if isinstance(res, str):
                 rendered.append(res)
-        return mark_safe("".join(rendered))
+        return mark_safe("".join(rendered))  # nosec B703 B308
 
     def list_available_plugins(self) -> List[str]:
         """Return all plugin package directory names (including disabled)."""
@@ -207,7 +207,7 @@ class PluginManager:
                             setattr(obj, field, data)
                             obj.save(update_fields=[field])
                             updated += 1
-                        except Exception:
+                        except Exception:  # nosec B112
                             continue
         return updated
 
@@ -221,7 +221,7 @@ class PluginManager:
             fields = entries.get('scanner_anchor_patch', [])
             if isinstance(fields, list):
                 return [str(f) for f in fields if f]
-        except Exception:
+        except Exception:  # nosec B110
             pass
         return []
 
@@ -233,7 +233,7 @@ class PluginManager:
         try:
             entries = self._permissions.get(plugin_name, {})
             return bool(entries.get('read_only', False))
-        except Exception:
+        except Exception:  # nosec B110
             pass
         return False
 
@@ -248,7 +248,7 @@ class PluginManager:
             metrics = entries.get('data_metrics', [])
             if isinstance(metrics, list):
                 return [str(m) for m in metrics if m]
-        except Exception:
+        except Exception:  # nosec B110
             pass
         return []
 

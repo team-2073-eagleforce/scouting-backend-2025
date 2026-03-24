@@ -3,55 +3,93 @@
 {% block Title %}Teams{% endblock %}
 
 {% block Content %}
-<h2>Teams</h2>
-
-<div class="table-responsive theme-table-container">
-    <table class="table table-bordered table-sm theme-table">
-        <thead>
-            <tr>
-                <th>Team</th>
-                <th>Pit Scout Status</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for team in all_teams %}
-            <tr>
-                <!-- Team Number -->
-                <td>
-                    <a class="team-link"
-                       href="{% url 'team_page' team %}{% if request.GET.comp %}?comp={{ request.GET.comp }}{% endif %}">
-                        {{ team }}
-                    </a>
-                </td>
-
-                <!-- Pit Scout Status -->
-                {% if team in pit_scouted %}
-                    <td class="status-complete">
-                        Pit Scouted <span class="checkmark">✔</span>
-                    </td>
-                {% else %}
-                    <td>
-                        <a class="status-action"
-                           href="{% url 'pit_scouting' team %}{% if request.GET.comp %}?comp={{ request.GET.comp }}{% endif %}">
-                            Pit Scout
-                        </a>
-                    </td>
-                {% endif %}
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
 
 <style>
+/* =========================
+   Page Header
+   ========================= */
+.teams-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding-top: 0.75rem;
+}
+
+.teams-header h2 {
+    margin: 0;
+    font-weight: 800;
+    font-size: 1.6rem;
+    color: var(--text);
+}
+
+.teams-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.team-count-badge {
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 12%, var(--bg-elevated));
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border));
+}
+
+/* =========================
+   Search
+   ========================= */
+.search-wrapper {
+    position: relative;
+}
+
+.search-wrapper svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted-text);
+    pointer-events: none;
+}
+
+#team-search {
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 7px 12px 7px 34px;
+    font-size: 0.9rem;
+    width: 220px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+}
+
+#team-search:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+#team-search::placeholder { color: var(--muted-text); }
+
 /* =========================
    Table Container
    ========================= */
 .theme-table-container {
-    background-color: var(--bg);
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+}
+
+html.inverted .theme-table-container {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
 }
 
 /* =========================
@@ -59,98 +97,206 @@
    ========================= */
 .theme-table {
     width: 100%;
-    border: 1px solid var(--border) !important;
-    background-color: var(--bg-elevated) !important;
-    color: var(--text) !important;
-    border-radius: 0.25rem;
+    border-collapse: collapse;
+    background: transparent;
+    color: var(--text);
 }
 
 .theme-table th,
 .theme-table td {
-    border-color: var(--border) !important;
-    padding: 10px 15px;
+    padding: 11px 16px;
     vertical-align: middle;
-    background-color: var(--bg-elevated) !important;
-    color: var(--text) !important;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
 }
 
-/* Header */
 .theme-table thead th {
-    background-color: var(--bg) !important;
-    color: var(--accent) !important;
-    font-weight: 600;
+    background: var(--bg);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     position: sticky;
     top: 0;
     z-index: 10;
-    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.3);
-    text-align: left;
+    border-bottom: 2px solid var(--border);
 }
 
-/* Hover row */
+/* Row hover */
+.theme-table tbody tr {
+    transition: background 0.15s ease;
+}
+
 .theme-table tbody tr:hover {
-    background-color: rgba(196, 22, 42, 0.08);
+    background: color-mix(in srgb, var(--accent) 6%, var(--bg-elevated));
+}
+
+.theme-table tbody tr:last-child td { border-bottom: none; }
+
+/* Zebra */
+.theme-table tbody tr:nth-child(even) {
+    background: color-mix(in srgb, var(--bg) 50%, var(--bg-elevated));
+}
+.theme-table tbody tr:nth-child(even):hover {
+    background: color-mix(in srgb, var(--accent) 6%, var(--bg-elevated));
+}
+
+/* Staggered row entry */
+.theme-table tbody tr {
+    animation: rowSlideIn 0.32s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both;
+}
+
+@keyframes rowSlideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: none; }
 }
 
 /* =========================
    Links & Status
    ========================= */
 .team-link {
-    color: var(--text) !important;
-    font-weight: 600;
+    color: var(--text);
+    font-weight: 700;
     text-decoration: none;
-    transition: color 0.2s;
+    transition: color 0.18s;
+    font-size: 0.95rem;
 }
 
-.team-link:hover {
-    color: var(--accent) !important;
-    text-decoration: underline;
-}
+.team-link:hover { color: var(--accent); }
 
-/* Pit Scouted Status */
+/* Pit Scouted badge */
 .status-complete {
-    color: #28a745; /* green for scouted */
-    font-weight: 600;
-    background-color: rgba(40, 167, 69, 0.1); /* subtle green background */
-    text-align: center;
-    border-radius: 4px;
-    padding: 4px 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: rgba(34,197,94,0.12);
+    color: #16a34a;
+    border: 1px solid rgba(34,197,94,0.3);
 }
 
-/* Checkmark */
-.checkmark {
-    color: #28a745;
-    margin-left: 6px;
-    font-size: 0.85em;
+html.inverted .status-complete {
+    color: #4ade80;
+    background: rgba(74,222,128,0.1);
+    border-color: rgba(74,222,128,0.25);
 }
 
-/* Pit Scout Action Link */
+.checkmark { font-size: 0.75em; }
+
+/* Pit Scout action */
 .status-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated));
     color: var(--accent);
-    font-weight: 600;
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
     text-decoration: none;
-    transition: color 0.2s;
-    padding: 4px 6px;
-    display: inline-block;
+    transition: background 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
 }
 
 .status-action:hover {
-    color: var(--accent-hover, var(--accent));
-    text-decoration: underline;
-    background-color: rgba(196, 22, 42, 0.05);
-    border-radius: 4px;
+    background: color-mix(in srgb, var(--accent) 18%, var(--bg-elevated));
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(177,18,38,0.2);
 }
 
-/* =========================
-   Responsive
-   ========================= */
-.table-responsive {
-    max-width: 100%;
-    overflow-x: auto;
-}
-
-/* Optional: alternate row shading */
-.theme-table tbody tr:nth-child(even) {
-    background-color: rgba(0,0,0,0.02);
+/* No results */
+.no-results {
+    text-align: center;
+    color: var(--muted-text);
+    padding: 2rem;
+    font-size: 0.95rem;
+    display: none;
 }
 </style>
+
+<div class="teams-header">
+    <h2>Teams</h2>
+    <div class="teams-meta">
+        <span class="team-count-badge" id="team-count-badge">{{ all_teams|length }} teams</span>
+        <div class="search-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input type="text" id="team-search" placeholder="Search team…" autocomplete="off">
+        </div>
+    </div>
+</div>
+
+<div class="theme-table-container">
+    <table class="theme-table" id="teams-table">
+        <thead>
+            <tr>
+                <th>Team</th>
+                <th>Pit Scout Status</th>
+            </tr>
+        </thead>
+        <tbody id="teams-tbody">
+        {% for team in all_teams %}
+            <tr style="animation-delay: {{ forloop.counter0 }}0ms" data-team="{{ team }}">
+                <td>
+                    <a class="team-link"
+                       href="{% url 'team_page' team %}{% if request.GET.comp %}?comp={{ request.GET.comp }}{% endif %}">
+                        {{ team }}
+                    </a>
+                </td>
+                {% if team in pit_scouted %}
+                    <td>
+                        <span class="status-complete">
+                            <span class="checkmark">✔</span> Pit Scouted
+                        </span>
+                    </td>
+                {% else %}
+                    <td>
+                        <a class="status-action"
+                           href="{% url 'pit_scouting' team %}{% if request.GET.comp %}?comp={{ request.GET.comp }}{% endif %}">
+                            + Pit Scout
+                        </a>
+                    </td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <div class="no-results" id="no-results">No teams match your search.</div>
+</div>
+
+<script>
+(function () {
+    var input    = document.getElementById('team-search');
+    var tbody    = document.getElementById('teams-tbody');
+    var noResult = document.getElementById('no-results');
+    var badge    = document.getElementById('team-count-badge');
+    var allRows  = Array.from(tbody.querySelectorAll('tr'));
+    var total    = allRows.length;
+
+    input.addEventListener('input', function () {
+        var q = input.value.trim().toLowerCase();
+        var visible = 0;
+        allRows.forEach(function (row) {
+            var team = row.getAttribute('data-team').toLowerCase();
+            var show = !q || team.includes(q);
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+        badge.textContent = (q ? visible + ' / ' + total : total) + ' teams';
+        noResult.style.display = visible === 0 ? 'block' : 'none';
+    });
+
+    /* Cap stagger delay so long lists don't wait forever */
+    allRows.forEach(function (row, i) {
+        row.style.animationDelay = Math.min(i * 18, 300) + 'ms';
+    });
+})();
+</script>
+
 {% endblock %}

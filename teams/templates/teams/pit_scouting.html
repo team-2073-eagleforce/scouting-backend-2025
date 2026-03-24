@@ -4,265 +4,899 @@
 {% block Title %}Pit Scouting - Team {{ team_number }}{% endblock %}
 
 {% block Content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Pit Scouting – Team {{ team_number }}</h2>
+<div class="pit-page-header">
+    <div>
+        <h2>Pit Scouting</h2>
+        <span class="pit-team-badge">Team {{ team_number }}</span>
+    </div>
     <span id="autosave-indicator" class="autosave idle">Draft not saved</span>
 </div>
 
 <!-- Completion Progress -->
-<div class="progress-wrapper mb-4">
+<div class="progress-wrapper">
     <div class="progress-label">
-        Completion: <span id="progress-percent">0%</span>
+        <span>Completion</span>
+        <span id="progress-percent">0%</span>
     </div>
     <div class="progress">
         <div id="progress-bar" class="progress-bar"></div>
     </div>
 </div>
 
-<form method="POST" enctype="multipart/form-data" novalidate>
+<form method="POST" enctype="multipart/form-data" novalidate id="pit-form">
     {% csrf_token %}
 
     {% for q in questions %}
-    <div class="form-group mb-4" data-q="{{ q.key }}">
-        <label class="form-label fw-semibold">
-            {{ q.display_name }}
-            {% if q.required %}<span class="text-danger">*</span>{% endif %}
+    <div class="form-group" data-q="{{ q.key }}" style="animation-delay:{{ forloop.counter0 }}0ms">
+        <label class="form-label" data-i18n="pit.{{ q.key }}">
+            {{ q.display_name }}{% if q.required %} <span class="req-star">*</span>{% endif %}
         </label>
 
         {% if q.type == "text" %}
             <input type="text" name="{{ q.key }}"
-                   class="form-control theme-input"
+                   class="theme-input"
                    value="{{ existing_data|get_item:q.key|default:'' }}"
-                   data-required="{{ q.required }}">
+                   data-required="{{ q.required }}"
+                   placeholder="{{ q.display_name }}">
 
         {% elif q.type == "number" %}
-            <input type="number" name="{{ q.key }}"
-                   class="form-control theme-input"
-                   value="{{ existing_data|get_item:q.key|default:'' }}"
-                   {% if q.min is not None %}min="{{ q.min }}"{% endif %}
-                   {% if q.max is not None %}max="{{ q.max }}"{% endif %}
-                   step="any"
-                   data-required="{{ q.required }}"
-                   data-min="{{ q.min }}"
-                   data-max="{{ q.max }}">
+            <div class="num-stepper">
+                <button type="button" class="step-btn" data-dir="-1">−</button>
+                <input type="number" name="{{ q.key }}"
+                       class="theme-input stepper-input"
+                       value="{{ existing_data|get_item:q.key|default:'' }}"
+                       {% if q.min is not None %}min="{{ q.min }}"{% endif %}
+                       {% if q.max is not None %}max="{{ q.max }}"{% endif %}
+                       step="1"
+                       data-required="{{ q.required }}"
+                       data-min="{{ q.min }}"
+                       data-max="{{ q.max }}"
+                       placeholder="0">
+                <button type="button" class="step-btn" data-dir="1">+</button>
+            </div>
+            {% if q.min is not None or q.max is not None %}
+            <div class="field-hint">
+                {% if q.min is not None and q.max is not None %}
+                    Range: {{ q.min }} – {{ q.max }}
+                {% elif q.min is not None %}
+                    Min: {{ q.min }}
+                {% else %}
+                    Max: {{ q.max }}
+                {% endif %}
+            </div>
+            {% endif %}
 
         {% elif q.type == "textarea" %}
             <textarea name="{{ q.key }}"
                       rows="3"
-                      class="form-control theme-input"
-                      data-required="{{ q.required }}">{{ existing_data|get_item:q.key|default:'' }}</textarea>
+                      class="theme-input"
+                      data-required="{{ q.required }}"
+                      placeholder="{{ q.display_name }}">{{ existing_data|get_item:q.key|default:'' }}</textarea>
 
         {% elif q.type == "select" %}
-            <select name="{{ q.key }}" class="theme-select" data-required="{{ q.required }}">
-                <option value="">— Select —</option>
+            <input type="hidden" name="{{ q.key }}" value="{{ existing_data|get_item:q.key|default:'' }}" data-required="{{ q.required }}" class="hidden-select-input">
+            <div class="btn-group-select" data-for="{{ q.key }}" role="group">
                 {% for opt in q.options %}
-                    <option value="{{ opt }}"
-                        {% if existing_data|get_item:q.key == opt %}selected{% endif %}>
-                        {{ opt }}
-                    </option>
+                <button type="button" class="opt-btn{% if existing_data|get_item:q.key == opt %} active{% endif %}" data-value="{{ opt }}">
+                    {{ opt }}
+                </button>
                 {% endfor %}
-            </select>
+            </div>
 
         {% elif q.type == "multiselect" %}
-            <div class="multiselect-list" data-required="{{ q.required }}" data-multiselect-name="{{ q.key }}">
+            <div class="pill-select" data-multiselect-name="{{ q.key }}" data-required="{{ q.required }}" role="group">
                 {% for opt in q.options %}
-                <label class="multiselect-item">
-                    <input type="checkbox"
-                           name="{{ q.key }}"
-                           value="{{ opt }}"
-                           {% if existing_data and opt in existing_data|get_item:q.key %}checked{% endif %}>
-                    <span>{{ opt }}</span>
-                </label>
+                <button type="button"
+                        class="pill-btn{% if existing_data and opt in existing_data|get_item:q.key %} active{% endif %}"
+                        data-value="{{ opt }}"
+                        data-name="{{ q.key }}">
+                    {{ opt }}
+                </button>
                 {% endfor %}
+                <!-- hidden inputs injected by JS on init and toggle -->
             </div>
 
         {% elif q.type == "boolean" %}
-            <div class="form-check theme-check">
-                <input class="form-check-input" type="checkbox" name="{{ q.key }}"
-                       {% if existing_data|get_item:q.key %}checked{% endif %}>
-                <label class="form-check-label">Yes</label>
+            <input type="hidden" name="{{ q.key }}" value="{% if existing_data|get_item:q.key %}on{% endif %}" class="hidden-bool-input">
+            <div class="bool-toggle{% if existing_data|get_item:q.key %} is-on{% endif %}" data-for="{{ q.key }}" role="switch" tabindex="0">
+                <span class="bool-no">No</span>
+                <div class="toggle-track">
+                    <div class="toggle-thumb"></div>
+                </div>
+                <span class="bool-yes">Yes</span>
             </div>
         {% endif %}
 
-        <div class="invalid-feedback d-none" id="error-{{ q.key }}"></div>
+        <div class="invalid-feedback" id="error-{{ q.key }}"></div>
     </div>
     {% endfor %}
 
-    <!-- Required File -->
-    <div class="form-group mb-4" data-q="robot_picture">
-        <label class="form-label fw-semibold">
-            Robot Picture <span class="text-danger">*</span>
+    <!-- Robot Picture -->
+    <div class="form-group" data-q="robot_picture">
+        <label class="form-label">Robot Picture {% if not has_robot_picture %}<span class="req-star">*</span>{% endif %}</label>
+        {% if has_robot_picture %}
+            <p style="font-size:0.82rem;color:var(--muted-text);margin-bottom:0.5rem;">A picture is already saved. Upload a new one to replace it.</p>
+        {% endif %}
+        <label class="file-drop-zone" id="file-drop-zone">
+            <input type="file" name="robot_picture" accept="image/*" {% if not has_robot_picture %}data-required="true"{% endif %} id="robot-file-input" class="visually-hidden">
+            <span class="file-icon">📷</span>
+            <span class="file-label" id="file-label">Tap to choose or drag &amp; drop</span>
         </label>
-        <input type="file"
-               name="robot_picture"
-               class="form-control theme-input"
-               accept="image/*"
-               data-required="true">
-        <div class="invalid-feedback d-none" id="error-robot_picture"></div>
+        <div class="invalid-feedback" id="error-robot_picture"></div>
     </div>
 
-    <button type="submit" class="btn btn-lg theme-btn">Submit</button>
+    <button type="submit" class="theme-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        Submit
+    </button>
 </form>
 
 <style>
-/* Autosave indicator */
-.autosave { font-size: 0.9em; padding: 4px 10px; border-radius: 999px; transition: all 0.3s ease; }
-.autosave.idle { background: var(--border); color: var(--text); }
-.autosave.saving { background: #ffc107; color: #000; }
-.autosave.saved { background: #28a745; color: #fff; }
-
-/* Completion progress */
-.progress { height: 12px; background: var(--border); border-radius: 999px; overflow: hidden; }
-.progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.6s ease; }
-
-/* Theme inputs */
-.theme-input { background: var(--bg-elevated); color: var(--text); border: 1px solid var(--border); }
-.theme-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 0.2rem rgba(196,22,42,0.2); }
-
-/* Multiselect */
-.multiselect-list { display: flex; flex-direction: column; gap: 8px; padding: 5px; border-radius: 6px; border: 1px solid var(--border); transition: all 0.3s ease; }
-.multiselect-list.is-invalid { border: 2px solid var(--accent); background: rgba(196,22,42,0.08); }
-.multiselect-item { padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-
-/* Select customization */
-.theme-select {
-    width: 100%;
-    padding: 6px 10px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    background-color: var(--bg-elevated);
-    color: var(--text);
-    cursor: pointer;
+/* =========================
+   Page header
+   ========================= */
+.pit-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
 }
-.theme-select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 0.2rem rgba(196,22,42,0.2); }
 
-/* Buttons */
-.theme-btn { background: var(--accent); color: #fff; }
-.theme-btn:hover { background: rgba(196,22,42,0.8); }
+.pit-page-header h2 {
+    margin: 0 0 0.4rem;
+    font-weight: 900;
+    font-size: 2rem;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: var(--text);
+}
 
-/* Validation feedback */
-.invalid-feedback { color: var(--accent); }
+.pit-team-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 12%, var(--bg-elevated));
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border));
+}
+
+/* Autosave indicator */
+.autosave {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--muted-text);
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+    white-space: nowrap;
+}
+.autosave::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted-text);
+    transition: background 0.3s;
+    flex-shrink: 0;
+}
+.autosave.saving  { border-color: #f59e0b; color: #f59e0b; }
+.autosave.saving::before { background: #f59e0b; animation: pulseDot 0.8s ease infinite; }
+.autosave.saved   { border-color: #22c55e; color: #22c55e; }
+.autosave.saved::before  { background: #22c55e; }
+
+@keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(0.65); }
+}
+
+/* =========================
+   Progress bar
+   ========================= */
+.progress-wrapper { margin-bottom: 1.5rem; }
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted-text);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.progress {
+    height: 6px;
+    background: var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #ff6b6b));
+    width: 0%;
+    transition: width 0.55s cubic-bezier(0.22,1,0.36,1);
+    border-radius: 999px;
+}
+
+/* =========================
+   Form Groups
+   ========================= */
+@keyframes formGroupIn {
+    from { opacity: 0; transform: translateY(16px); filter: blur(2px); }
+    to   { opacity: 1; transform: none; filter: blur(0); }
+}
+
+.form-group {
+    padding: 1.5rem 1.75rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    margin-bottom: 1.25rem;
+    transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+    animation: formGroupIn 0.4s cubic-bezier(0.22,1,0.36,1) both;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+}
+
+.form-group:nth-child(n) {
+    animation-delay: calc(var(--n, 0) * 80ms);
+}
+
+.form-group:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+html.inverted .form-group {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+html.inverted .form-group:hover {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.form-group:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.form-group.is-invalid {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 4%, var(--bg-elevated));
+}
+
+.form-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.8rem;
+    display: block;
+    letter-spacing: 0.01em;
+}
+
+.req-star { color: var(--accent); }
+
+.field-hint {
+    font-size: 0.72rem;
+    color: var(--muted-text);
+    margin-top: 0.35rem;
+}
+
+/* =========================
+   Theme inputs (text / textarea)
+   ========================= */
+.theme-input {
+    background: color-mix(in srgb, var(--bg) 50%, var(--bg-elevated));
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    outline: none;
+    font-family: inherit;
+    resize: vertical;
+}
+.theme-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.theme-input.is-invalid { border-color: var(--accent); }
+
+/* =========================
+   Number stepper
+   ========================= */
+.num-stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--bg) 50%, var(--bg-elevated));
+    max-width: 200px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.num-stepper:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.step-btn {
+    background: var(--bg-elevated);
+    border: none;
+    color: var(--text);
+    font-size: 1.5rem;
+    font-weight: 600;
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+    flex-shrink: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.step-btn:hover { background: color-mix(in srgb, var(--accent) 15%, var(--bg-elevated)); color: var(--accent); }
+.step-btn:active { transform: scale(0.9); }
+
+.stepper-input {
+    border: none;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-radius: 0;
+    text-align: center;
+    flex: 1;
+    min-width: 0;
+    box-shadow: none !important;
+}
+.stepper-input::-webkit-inner-spin-button,
+.stepper-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+/* =========================
+   Button-group select
+   ========================= */
+.btn-group-select {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.opt-btn {
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 50%, var(--bg-elevated));
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.12s;
+    font-family: inherit;
+}
+.opt-btn:hover {
+    background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated));
+    border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+.opt-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    transform: scale(1.02);
+}
+.opt-btn:active { transform: scale(0.96); }
+
+/* =========================
+   Pill multiselect
+   ========================= */
+.pill-select {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.pill-btn {
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 50%, var(--bg-elevated));
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.12s;
+    font-family: inherit;
+}
+.pill-btn:hover {
+    background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated));
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+.pill-btn.active {
+    background: color-mix(in srgb, var(--accent) 18%, var(--bg-elevated));
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.pill-btn:active { transform: scale(0.94); }
+
+/* =========================
+   Boolean toggle
+   ========================= */
+.bool-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 0;
+}
+.bool-toggle:focus { outline: 2px solid var(--accent); border-radius: 999px; }
+
+.toggle-track {
+    width: 52px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--border);
+    border: 2px solid var(--border);
+    position: relative;
+    transition: background 0.25s, border-color 0.25s;
+}
+.bool-toggle.is-on .toggle-track {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.toggle-thumb {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.bool-toggle.is-on .toggle-thumb { transform: translateX(24px); }
+
+.bool-no, .bool-yes {
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: color 0.2s;
+}
+.bool-no  { color: var(--muted-text); }
+.bool-yes { color: var(--muted-text); }
+.bool-toggle.is-on .bool-yes { color: var(--accent); }
+.bool-toggle.is-on .bool-no  { color: var(--muted-text); }
+
+/* =========================
+   File drop zone
+   ========================= */
+.file-drop-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 2.5rem;
+    border: 2px dashed color-mix(in srgb, var(--border) 60%, var(--accent));
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--bg) 50%, var(--bg-elevated));
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    text-align: center;
+}
+.file-drop-zone:hover, .file-drop-zone.drag-over {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 5%, var(--bg));
+}
+.file-icon { font-size: 2rem; }
+.file-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted-text);
+}
+.visually-hidden {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+}
+
+/* =========================
+   Submit Button
+   ========================= */
+.theme-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 0.5rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    padding: 16px 24px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 30%, transparent);
+    margin-top: 1rem;
+    font-family: inherit;
+}
+.theme-btn:hover {
+    background: var(--accent-hover, #8f0f1f);
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 50%, transparent);
+    transform: translateY(-1px);
+}
+.theme-btn:active { transform: scale(0.97); }
+
+/* =========================
+   Validation feedback
+   ========================= */
+.invalid-feedback {
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 8px;
+    display: none;
+    animation: slideDownFade 0.3s cubic-bezier(0.22,1,0.36,1);
+}
+
+@keyframes slideDownFade {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.is-invalid .invalid-feedback,
+.invalid-feedback:not(:empty) { display: block; }
+
+/* =========================
+   Mobile Responsiveness
+   ========================= */
+@media (max-width: 640px) {
+    .pit-page-header h2 {
+        font-size: 1.6rem;
+    }
+    
+    .form-group {
+        padding: 1.25rem 1rem;
+        border-radius: 16px;
+    }
+
+    .num-stepper {
+        max-width: 100%;
+    }
+
+    .step-btn {
+        width: 64px;
+        height: 64px;
+        font-size: 1.6rem;
+    }
+    
+    .stepper-input {
+        font-size: 1.1rem;
+    }
+
+    .theme-input {
+        padding: 14px 16px;
+        font-size: 1.05rem;
+    }
+
+    .opt-btn, .pill-btn {
+        flex: 1 1 calc(50% - 6px);
+        text-align: center;
+        padding: 12px 10px;
+    }
+
+    .theme-btn {
+        padding: 18px 24px;
+        font-size: 1.15rem;
+    }
+
+    .file-drop-zone {
+        padding: 2rem 1rem;
+    }
+}
 </style>
 
 <script>
 (function() {
-    const form = document.querySelector('form');
+    const form    = document.getElementById('pit-form');
     const STORAGE_KEY = 'pit_draft_{{ team_number }}';
-    const indicator = document.getElementById('autosave-indicator');
+    const indicator   = document.getElementById('autosave-indicator');
     const progressBar = document.getElementById('progress-bar');
-    const progressPercent = document.getElementById('progress-percent');
+    const progressPct = document.getElementById('progress-percent');
 
-    /* =========================
-       Helper Functions
-    ========================= */
-    function setIndicator(state, text){
+    /* ---- Helpers ---- */
+    function setIndicator(state, text) {
         indicator.className = 'autosave ' + state;
         indicator.textContent = text;
     }
 
-    function saveDraft(){
+    /* ---- Number steppers ---- */
+    form.querySelectorAll('.num-stepper').forEach(function (wrap) {
+        var input = wrap.querySelector('input[type="number"]');
+        wrap.querySelectorAll('.step-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var dir  = parseInt(btn.dataset.dir);
+                var val  = parseFloat(input.value) || 0;
+                var min  = input.min !== '' ? parseFloat(input.min) : -Infinity;
+                var max  = input.max !== '' ? parseFloat(input.max) :  Infinity;
+                var next = Math.min(max, Math.max(min, val + dir));
+                input.value = next;
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        });
+    });
+
+    /* ---- Button-group selects ---- */
+    form.querySelectorAll('.btn-group-select').forEach(function (group) {
+        var fieldName  = group.dataset.for;
+        var hiddenInput = form.querySelector('input[name="' + fieldName + '"].hidden-select-input');
+        group.querySelectorAll('.opt-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                group.querySelectorAll('.opt-btn').forEach(function (b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                hiddenInput.value = btn.dataset.value;
+                hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+        });
+    });
+
+    /* ---- Pill multiselect ---- */
+    form.querySelectorAll('.pill-select').forEach(function (wrap) {
+        var fieldName = wrap.dataset.multiselectName;
+
+        function syncHiddens() {
+            /* remove old hiddens */
+            wrap.querySelectorAll('input[type="hidden"]').forEach(function (h) { h.remove(); });
+            /* add one per active pill */
+            wrap.querySelectorAll('.pill-btn.active').forEach(function (btn) {
+                var h = document.createElement('input');
+                h.type  = 'hidden';
+                h.name  = fieldName;
+                h.value = btn.dataset.value;
+                wrap.appendChild(h);
+            });
+            wrap.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        wrap.querySelectorAll('.pill-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                btn.classList.toggle('active');
+                syncHiddens();
+            });
+        });
+
+        /* init hidden inputs for pre-checked pills */
+        syncHiddens();
+    });
+
+    /* ---- Boolean toggles ---- */
+    form.querySelectorAll('.bool-toggle').forEach(function (toggle) {
+        var fieldName   = toggle.dataset.for;
+        var hiddenInput = form.querySelector('input[name="' + fieldName + '"].hidden-bool-input');
+
+        function flip(force) {
+            var on = force !== undefined ? force : !toggle.classList.contains('is-on');
+            toggle.classList.toggle('is-on', on);
+            hiddenInput.value = on ? 'on' : '';
+            hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        toggle.addEventListener('click', function () { flip(); });
+        toggle.addEventListener('keydown', function (e) {
+            if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); }
+        });
+    });
+
+    /* ---- File drop zone ---- */
+    var fileInput = document.getElementById('robot-file-input');
+    var fileLabel = document.getElementById('file-label');
+    var dropZone  = document.getElementById('file-drop-zone');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function () {
+            fileLabel.textContent = fileInput.files[0] ? fileInput.files[0].name : 'Tap to choose or drag & drop';
+        });
+        dropZone.addEventListener('dragover', function (e) { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', function () { dropZone.classList.remove('drag-over'); });
+        dropZone.addEventListener('drop', function (e) {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files[0]) {
+                fileInput.files = e.dataTransfer.files;
+                fileLabel.textContent = e.dataTransfer.files[0].name;
+            }
+        });
+    }
+
+    /* ---- Draft save ---- */
+    function saveDraft() {
         setIndicator('saving', 'Saving…');
-        const data = {};
-        form.querySelectorAll('input, textarea, select').forEach(el => {
-            if(!el.name) return;
-            if(el.type === 'checkbox') {
+        var data = {};
+        form.querySelectorAll('input, textarea, select').forEach(function (el) {
+            if (!el.name) return;
+            if (el.type === 'file') return;
+            if (el.type === 'hidden') {
+                /* collect hidden selects and booleans */
+                data[el.name] = data[el.name] !== undefined ? data[el.name] : el.value;
+                /* for multiselect hidden inputs, collect as array */
+            }
+            if (el.type === 'checkbox') {
                 data[el.name] = data[el.name] || [];
-                if(el.checked) data[el.name].push(el.value);
-            } else if(el.type !== 'file') {
+                if (el.checked) data[el.name].push(el.value);
+            } else {
                 data[el.name] = el.value;
             }
         });
+        /* multiselect: collect all hidden inputs per name */
+        var multiWrap = form.querySelectorAll('.pill-select');
+        multiWrap.forEach(function (wrap) {
+            var name = wrap.dataset.multiselectName;
+            data[name] = Array.from(wrap.querySelectorAll('input[type="hidden"]')).map(function (h) { return h.value; });
+        });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        setTimeout(()=>setIndicator('saved', 'Draft saved ✓'), 300);
+        setTimeout(function () { setIndicator('saved', 'Draft saved ✓'); }, 300);
         updateProgress();
     }
 
+    /* ---- Draft restore ---- */
     function restoreDraft() {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if(!raw) return;
-        const data = JSON.parse(raw);
-        Object.entries(data).forEach(([name, val])=>{
-            form.querySelectorAll(`[name="${name}"]`).forEach(el=>{
-                if(el.type==='checkbox') el.checked = val.includes(el.value);
-                else el.value = val;
-            });
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        var data;
+        try { data = JSON.parse(raw); } catch(e) { return; }
+
+        Object.entries(data).forEach(function (entry) {
+            var name = entry[0], val = entry[1];
+
+            /* Multiselect pills */
+            var pillWrap = form.querySelector('.pill-select[data-multiselect-name="' + name + '"]');
+            if (pillWrap && Array.isArray(val)) {
+                pillWrap.querySelectorAll('.pill-btn').forEach(function (btn) {
+                    btn.classList.toggle('active', val.includes(btn.dataset.value));
+                });
+                pillWrap.querySelectorAll('input[type="hidden"]').forEach(function (h) { h.remove(); });
+                val.forEach(function (v) {
+                    var h = document.createElement('input');
+                    h.type = 'hidden'; h.name = name; h.value = v;
+                    pillWrap.appendChild(h);
+                });
+                return;
+            }
+
+            /* Button-group select */
+            var btnGroup = form.querySelector('.btn-group-select[data-for="' + name + '"]');
+            if (btnGroup) {
+                var hidden = form.querySelector('input[name="' + name + '"].hidden-select-input');
+                if (hidden) hidden.value = val;
+                btnGroup.querySelectorAll('.opt-btn').forEach(function (btn) {
+                    btn.classList.toggle('active', btn.dataset.value === val);
+                });
+                return;
+            }
+
+            /* Boolean toggle */
+            var toggle = form.querySelector('.bool-toggle[data-for="' + name + '"]');
+            if (toggle) {
+                var on = val === 'on' || val === true || val === 'true';
+                toggle.classList.toggle('is-on', on);
+                var boolHidden = form.querySelector('input[name="' + name + '"].hidden-bool-input');
+                if (boolHidden) boolHidden.value = on ? 'on' : '';
+                return;
+            }
+
+            /* Regular inputs */
+            var el = form.querySelector('[name="' + name + '"]:not(.hidden-select-input):not(.hidden-bool-input):not([type="hidden"])');
+            if (el) el.value = val;
         });
+
         setIndicator('saved', 'Draft restored ✓');
         updateProgress();
     }
 
-    function validateField(el){
-        const required = el.dataset.required==='True' || el.dataset.required==='true';
-        if(!required) return true;
+    /* ---- Progress ---- */
+    function updateProgress() {
+        var total = 0, filled = 0;
 
-        let valid = true;
-        if(el.dataset.multiselectName) {
-            valid = el.querySelectorAll('input:checked').length > 0;
-            el.classList.toggle('is-invalid', !valid);
-        } else if(el.type==='file') {
-            valid = el.files.length>0;
-            el.classList.toggle('is-invalid', !valid);
-        } else if(el.type==='checkbox') {
-            valid = el.checked;
-            el.closest('.form-group').classList.toggle('is-invalid', !valid);
-        } else if(el.type==='number') {
-            const val = parseFloat(el.value);
-            const min = el.dataset.min ? parseFloat(el.dataset.min) : null;
-            const max = el.dataset.max ? parseFloat(el.dataset.max) : null;
-            valid = el.value && el.value.trim()!=='';
-            if(valid && min !== null && val < min) valid = false;
-            if(valid && max !== null && val > max) valid = false;
-            el.classList.toggle('is-invalid', !valid);
-        } else {
-            valid = el.value && el.value.trim()!=='';
-            el.classList.toggle('is-invalid', !valid);
-        }
+        /* Count select button groups */
+        form.querySelectorAll('.btn-group-select').forEach(function (g) {
+            var hidden = form.querySelector('input[name="' + g.dataset.for + '"].hidden-select-input');
+            var req    = hidden && (hidden.dataset.required === 'true' || hidden.dataset.required === 'True');
+            if (!req) return;
+            total++;
+            if (hidden && hidden.value) filled++;
+        });
+
+        /* Count pill multiselects */
+        form.querySelectorAll('.pill-select').forEach(function (wrap) {
+            if (!(wrap.dataset.required === 'true' || wrap.dataset.required === 'True')) return;
+            total++;
+            if (wrap.querySelectorAll('input[type="hidden"]').length > 0) filled++;
+        });
+
+        /* Count regular inputs */
+        form.querySelectorAll('input[data-required="true"], input[data-required="True"], textarea[data-required="true"], textarea[data-required="True"]').forEach(function (el) {
+            if (el.classList.contains('hidden-select-input') || el.classList.contains('hidden-bool-input')) return;
+            if (el.type === 'file') {
+                total++;
+                if (el.files && el.files.length > 0) filled++;
+                return;
+            }
+            total++;
+            if (el.value && el.value.trim() !== '') filled++;
+        });
+
+        var pct = total ? Math.round(filled / total * 100) : 0;
+        progressBar.style.width = pct + '%';
+        progressPct.textContent = pct + '%';
+    }
+
+    /* ---- Validation ---- */
+    function validateAll() {
+        var valid = true;
+
+        /* Button-group selects */
+        form.querySelectorAll('.btn-group-select').forEach(function (g) {
+            var hidden = form.querySelector('input[name="' + g.dataset.for + '"].hidden-select-input');
+            var req    = hidden && (hidden.dataset.required === 'true' || hidden.dataset.required === 'True');
+            if (!req) return;
+            var group  = g.closest('.form-group');
+            if (!hidden || !hidden.value) {
+                group.classList.add('is-invalid');
+                valid = false;
+            } else {
+                group.classList.remove('is-invalid');
+            }
+        });
+
+        /* Pill multiselects */
+        form.querySelectorAll('.pill-select').forEach(function (wrap) {
+            if (!(wrap.dataset.required === 'true' || wrap.dataset.required === 'True')) return;
+            var group = wrap.closest('.form-group');
+            if (wrap.querySelectorAll('input[type="hidden"]').length === 0) {
+                group.classList.add('is-invalid');
+                valid = false;
+            } else {
+                group.classList.remove('is-invalid');
+            }
+        });
+
+        /* Regular inputs */
+        form.querySelectorAll('input[data-required="true"], input[data-required="True"], textarea[data-required="true"], textarea[data-required="True"], select[data-required="true"], select[data-required="True"]').forEach(function (el) {
+            if (el.classList.contains('hidden-select-input') || el.classList.contains('hidden-bool-input')) return;
+            var group = el.closest('.form-group');
+            var ok = true;
+            if (el.type === 'file')   ok = el.files && el.files.length > 0;
+            else if (el.type === 'number') ok = el.value.trim() !== '';
+            else ok = el.value.trim() !== '';
+            if (!ok) { group && group.classList.add('is-invalid'); valid = false; }
+            else { group && group.classList.remove('is-invalid'); }
+        });
+
         return valid;
     }
 
-    function updateProgress(){
-        const requiredFields = form.querySelectorAll('[data-required="true"], [data-required="True"]');
-        let filled=0;
-        requiredFields.forEach(el=>{
-            if(el.dataset.multiselectName){
-                if(el.querySelectorAll('input:checked').length>0) filled++;
-            } else if(el.type==='file'){
-                if(el.files.length>0) filled++;
-            } else if(el.type==='checkbox'){
-                if(el.checked) filled++;
-            } else if(el.type==='number'){
-                const val = parseFloat(el.value);
-                const min = el.dataset.min ? parseFloat(el.dataset.min) : null;
-                const max = el.dataset.max ? parseFloat(el.dataset.max) : null;
-                let valid = el.value && el.value.trim()!=='';
-                if(valid && min !== null && val < min) valid = false;
-                if(valid && max !== null && val > max) valid = false;
-                if(valid) filled++;
-            } else {
-                if(el.value && el.value.trim()!=='') filled++;
-            }
-        });
-        const percent = requiredFields.length ? Math.round(filled/requiredFields.length*100) : 0;
-        progressBar.style.width = percent+'%';
-        progressPercent.textContent = percent+'%';
-    }
-
-    /* =========================
-       Event Listeners
-    ========================= */
-    form.addEventListener('input', saveDraft);
+    /* ---- Event listeners ---- */
+    form.addEventListener('input',  saveDraft);
     form.addEventListener('change', saveDraft);
 
-    form.addEventListener('submit', e=>{
-        let valid=true;
-        form.querySelectorAll('[data-required="true"], [data-required="True"]').forEach(el=>{
-            if(!validateField(el)) valid=false;
-        });
-        updateProgress();
-        if(!valid){
+    form.addEventListener('submit', function (e) {
+        if (!validateAll()) {
             e.preventDefault();
-            const first=form.querySelector('.is-invalid');
-            if(first) window.scrollTo({top:first.offsetTop-100, behavior:'smooth'});
+            updateProgress();
+            var first = form.querySelector('.is-invalid');
+            if (first) window.scrollTo({ top: first.offsetTop - 80, behavior: 'smooth' });
         } else {
             localStorage.removeItem(STORAGE_KEY);
         }
@@ -270,6 +904,16 @@
 
     restoreDraft();
     updateProgress();
+
+    /* Stagger form groups on load */
+    form.querySelectorAll('.form-group').forEach(function (el, i) {
+        el.style.animationDelay = Math.min(i * 25, 280) + 'ms';
+    });
+
+    /* Apply i18n on load */
+    if (window.applyTranslations) {
+        window.applyTranslations(localStorage.getItem('lang') || 'en');
+    }
 })();
 </script>
 {% endblock %}

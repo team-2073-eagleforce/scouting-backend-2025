@@ -12,7 +12,8 @@ def get_team_events():
     config = config_loader.get_config()
     year = str(config.get('year', 2025))
     resp = requests.get(f"https://www.thebluealliance.com/api/v3/team/{TEAM_KEY}/events/{year}",
-                        headers={"X-TBA-Auth-Key": X_TBA_Auth_Key})
+                        headers={"X-TBA-Auth-Key": X_TBA_Auth_Key},
+                        timeout=10)
     events = {}
 
     # If the API didn't return success, return a sensible default
@@ -55,21 +56,32 @@ def get_team_events():
 
 def get_match_schedule(event_key):
     matches_at_event = requests.get(f"https://www.thebluealliance.com/api/v3/event/{event_key}/matches/simple",
-                                    headers={"X-TBA-Auth-Key": X_TBA_Auth_Key}).json()
+                                    headers={"X-TBA-Auth-Key": X_TBA_Auth_Key},
+                                    timeout=10).json()
     return matches_at_event
 
 
 def get_teams_list(event_key):
-    teams_at_event = requests.get(f"https://www.thebluealliance.com/api/v3/event/{event_key}/teams/simple",
-                                  headers={"X-TBA-Auth-Key": X_TBA_Auth_Key}).json()
-    return teams_at_event
+    try:
+        resp = requests.get(f"https://www.thebluealliance.com/api/v3/event/{event_key}/teams/simple",
+                            headers={"X-TBA-Auth-Key": X_TBA_Auth_Key},
+                            timeout=10)
+        if resp.status_code != 200:
+            return []
+        data = resp.json()
+        if not isinstance(data, list):
+            return []
+        return data
+    except Exception:
+        return []
 
 
 def get_single_match(event_key, match_id):
     match_key = event_key + "_" + match_id
     try:
         response = requests.get(f"https://www.thebluealliance.com/api/v3/match/{match_key}/simple",
-                               headers={"X-TBA-Auth-Key": X_TBA_Auth_Key})
+                               headers={"X-TBA-Auth-Key": X_TBA_Auth_Key},
+                               timeout=10)
         
         if response.status_code != 200:
             return None

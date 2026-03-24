@@ -6,76 +6,86 @@
 {% block Title %}Team {{ team_number }}{% endblock %}
 
 {% block Content %}
-<div class="team-header">
-    {% if team and team.logo_url %}
-        <img src="{{ team.logo_url }}"
-             alt="Team {{ team_number }} logo"
-             class="team-logo"
-             onerror="this.style.display='none'">
-    {% else %}
-        <img src="/static/images/teams/{{ team_number }}.png"
-             alt="Team {{ team_number }} logo"
-             class="team-logo"
-             onerror="this.style.display='none'">
-    {% endif %}
-    <h2 style="margin:0;">Team {{ team_number }}</h2>
+<div class="team-hero">
+    <div class="team-hero-left">
+        {% if team and team.logo_url %}
+            <img src="{{ team.logo_url }}"
+                 alt="Team {{ team_number }} logo"
+                 class="team-logo"
+                 onerror="this.style.display='none'">
+        {% else %}
+            <img src="/static/images/teams/{{ team_number }}.png"
+                 alt="Team {{ team_number }} logo"
+                 class="team-logo"
+                 onerror="this.style.display='none'">
+        {% endif %}
+        <div>
+            <div class="team-hero-label">Team</div>
+            <h2 class="team-hero-number">{{ team_number }}</h2>
+        </div>
+    </div>
+    <a href="{% url 'teams' %}{% if request.GET.comp %}?comp={{ request.GET.comp }}{% endif %}" class="btn btn-sm btn-outline-secondary">← All Teams</a>
 </div>
 
 {% plugin_hook 'team_page_header' %}
 
 {% if team %}
-<div class="card mb-4">
-    <div class="card-header">Pit Data</div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-8">
+<div class="pit-card">
+    <div class="pit-card-header">
+        <span class="pit-card-title">Pit Data</span>
+        {% if team.pit_scout_status %}
+            <span class="pit-scouted-badge">Scouted</span>
+        {% endif %}
+    </div>
+    <div class="pit-card-body">
+        <div class="pit-data-layout">
+            <div class="pit-data-info">
                 {% if team.pit_scout_status %}
+                    <dl class="pit-dl">
                     {% for key, value in team.pit_data.items %}
-                        <p class="mb-1"><b>{{ key|title }}:</b> 
-                        {% if value is not None %}
-                            {% if value is iterable and value is not string %}
-                                {{ value|join:", " }}
-                            {% else %}
-                                {{ value }}
-                            {% endif %}
-                        {% else %}
-                            N/A
-                        {% endif %}
-                        </p>
+                        <div class="pit-dl-row">
+                            <dt>{{ key|prettify_key }}</dt>
+                            <dd>{{ value|format_pit_value }}</dd>
+                        </div>
                     {% empty %}
-                        <p>No Pit Data Collected</p>
+                        <p class="pit-empty">No pit data fields recorded.</p>
                     {% endfor %}
-                    
-                    <!-- Buttons -->
-                    <div class="d-flex gap-2 mt-2">
-                        <a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}" class="btn btn-sm btn-warning">Edit Pit Data</a>
+                    </dl>
 
-                        <!-- Clear Pit Data form -->
-                        <form id="clear-pit-form" method="POST" style="display:inline;">
+                    <div class="pit-actions">
+                        <a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}" class="pit-btn pit-btn-edit">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            Edit Pit Data
+                        </a>
+                        <form action="{% url 'clear_pit_data' team_number %}" method="POST" style="display:inline;">
                             {% csrf_token %}
-                            <input type="hidden" name="team_number" value="{{ team_number }}">
                             <input type="hidden" name="comp_code" value="{{ comp_code }}">
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirmClearPitData();">Clear Pit Data</button>
+                            <button type="submit" class="pit-btn pit-btn-clear" onclick="return confirmClearPitData();">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                                Clear
+                            </button>
                         </form>
                     </div>
                 {% else %}
-                    <p>No Pit Data Collected</p>
-                    <a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}" class="btn btn-sm btn-primary">Pit Scout</a>
+                    <p class="pit-empty">No pit data collected yet.</p>
+                    <a href="{% url 'pit_scouting' team_number %}?comp={{ comp_code }}" class="pit-btn pit-btn-scout">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                        Pit Scout
+                    </a>
                 {% endif %}
             </div>
-            <div class="col-md-4">
-                {% if team.robot_picture %}
-                    <img src="{{ team.robot_picture }}" class="img-fluid rounded" alt="Robot Picture">
-                {% else %}
-                    <p>No robot picture available.</p>
-                {% endif %}
+
+            {% if team.robot_picture %}
+            <div class="pit-robot-img-wrap">
+                <img src="{{ team.robot_picture }}" class="pit-robot-img" alt="Robot Picture">
             </div>
+            {% endif %}
         </div>
     </div>
 </div>
 {% endif %}
 
-<h3>Match History</h3>
+<div class="section-heading">Match History</div>
 <div class="table-responsive">
     <table class="table table-bordered table-sm theme-table" id="match_data">
         <thead>
@@ -122,34 +132,212 @@
 
 <style>
 /* =========================
-   Team Header
+   Team Hero
    ========================= */
-.team-logo {
-    width: 80px;
-    height: auto;
-}
-
-.team-header {
+.team-hero {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 1rem;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    animation: pageEnter 0.4s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both;
 }
+
+.team-hero-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.team-hero-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted-text);
+}
+
+.team-hero-number {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.team-logo {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+    border-radius: 10px;
+    background: #fff;
+    padding: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s var(--ease-spring, cubic-bezier(0.34,1.56,0.64,1));
+}
+
+.team-logo:hover { transform: scale(1.06); }
 
 /* =========================
-   Cards
+   Pit Data Card
    ========================= */
-.card {
+.pit-card {
     background: var(--bg-elevated);
-    color: var(--text);
     border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+    animation: pageEnter 0.38s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both;
 }
 
-.card-header {
+.pit-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 1rem;
     background: var(--bg);
-    color: var(--accent);
-    font-weight: 600;
     border-bottom: 1px solid var(--border);
+}
+
+.pit-card-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+}
+
+.pit-scouted-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: color-mix(in srgb, #22c55e 12%, var(--bg-elevated));
+    color: #22c55e;
+    border: 1px solid color-mix(in srgb, #22c55e 30%, var(--border));
+}
+
+.pit-card-body { padding: 1rem; }
+
+.pit-data-layout {
+    display: flex;
+    gap: 1.25rem;
+    align-items: flex-start;
+}
+
+.pit-data-info { flex: 1; min-width: 0; }
+
+.pit-dl { margin: 0 0 0.85rem; }
+
+.pit-dl-row {
+    display: flex;
+    gap: 0.5rem;
+    padding: 5px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+    font-size: 0.85rem;
+}
+.pit-dl-row:last-child { border-bottom: none; }
+
+.pit-dl-row dt {
+    font-weight: 700;
+    color: var(--muted-text);
+    white-space: nowrap;
+    min-width: 120px;
+}
+
+.pit-dl-row dd {
+    margin: 0;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.pit-na { color: var(--muted-text); font-style: italic; }
+
+.pit-empty {
+    color: var(--muted-text);
+    font-size: 0.88rem;
+    margin-bottom: 0.75rem;
+}
+
+.pit-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.pit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: background 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
+    font-family: inherit;
+}
+
+.pit-btn-edit {
+    background: color-mix(in srgb, var(--accent) 12%, var(--bg-elevated));
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+.pit-btn-edit:hover {
+    background: color-mix(in srgb, var(--accent) 20%, var(--bg-elevated));
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.pit-btn-clear {
+    background: color-mix(in srgb, #ef4444 10%, var(--bg-elevated));
+    color: #ef4444;
+    border: 1px solid color-mix(in srgb, #ef4444 30%, var(--border));
+}
+.pit-btn-clear:hover {
+    background: color-mix(in srgb, #ef4444 18%, var(--bg-elevated));
+    border-color: #ef4444;
+    transform: translateY(-1px);
+}
+
+.pit-btn-scout {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.pit-btn-scout:hover {
+    background: var(--accent-hover, #8f0f1f);
+    box-shadow: 0 5px 16px color-mix(in srgb, var(--accent) 45%, transparent);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.pit-robot-img-wrap {
+    flex-shrink: 0;
+    width: 160px;
+}
+
+.pit-robot-img {
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    object-fit: cover;
+}
+
+@media (max-width: 600px) {
+    .pit-data-layout { flex-direction: column-reverse; }
+    .pit-robot-img-wrap { width: 100%; }
+    .pit-dl-row dt { min-width: 100px; }
 }
 
 /* =========================
@@ -218,13 +406,40 @@
     overflow: auto;
     width: 100%;
 }
+
+/* Match history row entry */
+#match_data tbody tr {
+    animation: rowSlideIn 0.28s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both;
+}
+
+@keyframes rowSlideIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* Section heading */
+.section-heading {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 1.25rem 0 0.6rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--border);
+}
 </style>
 
 <script>
-// Confirmation before clearing pit data
 function confirmClearPitData() {
     return confirm("Are you sure you want to clear all pit data for this team? This cannot be undone.");
 }
+
+(function () {
+    /* Stagger match history rows */
+    var rows = document.querySelectorAll('#match_data tbody tr');
+    rows.forEach(function (row, i) {
+        row.style.animationDelay = Math.min(i * 16, 260) + 'ms';
+    });
+})();
 </script>
 
 {% plugin_hook 'team_page_footer' %}

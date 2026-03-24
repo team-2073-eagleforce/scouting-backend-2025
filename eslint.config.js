@@ -26,6 +26,12 @@ export default [
         // Browser globals that might not be recognized
         'ResizeObserver': 'readonly',
         'HTMLElement': 'readonly',
+        'confirm': 'readonly',
+        'prompt': 'readonly',
+        'setInterval': 'readonly',
+        'clearInterval': 'readonly',
+        'requestAnimationFrame': 'readonly',
+        'MutationObserver': 'readonly',
       },
     },
     rules: {
