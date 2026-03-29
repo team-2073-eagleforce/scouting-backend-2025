@@ -119,6 +119,7 @@ body {
   width: 32px;
   height: 32px;
   object-fit: contain;
+  border-radius: 6px;
   animation: brandLogoEntry 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   filter: drop-shadow(0 2px 4px color-mix(in srgb, var(--accent) 30%, transparent));
@@ -745,6 +746,19 @@ html.inverted .card-lift:hover {
 Comfortable
 </button>
 </li>
+
+{% if request.session.name %}
+<li><hr class="dropdown-divider my-2"></li>
+<li>
+  <span class="dropdown-item-text small" style="color:var(--muted-text);">{{ request.session.name }}</span>
+</li>
+<li>
+  <form method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button type="submit" class="dropdown-item" style="color:var(--accent);">Logout</button>
+  </form>
+</li>
+{% endif %}
 
 </ul>
 </li>

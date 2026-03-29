@@ -47,9 +47,10 @@ if not SECRET_KEY:
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = [
-    'localhost', 
-    '127.0.0.1', 
+    'localhost',
+    '127.0.0.1',
     "scouting.chrisccluk.live",
+    "scout.chrisccluk.live",
 ]
 
 # IPs allowed to set X-Forwarded-For (e.g. Render's load balancer, nginx)
@@ -61,7 +62,8 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'https://localhost:8000',
     'http://127.0.0.1:8000',
-    'https://scouting.chrisccluk.live'
+    'https://scouting.chrisccluk.live',
+    'http://scout.chrisccluk.live',
 ]
 
 # Application definition

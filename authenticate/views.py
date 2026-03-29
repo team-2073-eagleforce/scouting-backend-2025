@@ -29,12 +29,14 @@ client_config = {
         "redirect_uris": [
             "http://localhost:8000/auth/oauth2callback/",
             "http://127.0.0.1:8000/auth/oauth2callback/",
-            "https://scouting.chrisccluk.live/auth/oauth2callback/"
+            "https://scouting.chrisccluk.live/auth/oauth2callback/",
+            "http://scout.chrisccluk.live/auth/oauth2callback/"
         ],
         "javascript_origins": [
             "http://localhost:8000",
             "http://127.0.0.1:8000",
-            "https://scouting.chrisccluk.live"
+            "https://scouting.chrisccluk.live",
+            "http://scout.chrisccluk.live"
         ]
     }
 }
@@ -119,6 +121,8 @@ def oauth2callback(request):
     return redirect('/')
 
 
+@login_required
+@require_POST
 def logout(request):
     request.session.flush()
     return redirect('/auth/')
