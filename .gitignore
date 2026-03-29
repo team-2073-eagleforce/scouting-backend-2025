@@ -98,3 +98,5 @@ picklists/
 
 # Local SQLite database (not used in production - Supabase is the database)
 db.sqlite3
+
+TRUSTED_PROXIES=146.235.221.145

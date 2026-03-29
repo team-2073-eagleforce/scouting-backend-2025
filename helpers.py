@@ -27,11 +27,13 @@ def rate_limit(max_calls, period_seconds):
     def decorator(function):
         @functools.wraps(function)
         def wrapper(request, *args, **kw):
-            forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR', '')
-            if forwarded_for:
-                ip = forwarded_for.split(',')[0].strip()
+            remote_addr = request.META.get('REMOTE_ADDR', 'unknown')
+            trusted_proxies = getattr(settings, 'TRUSTED_PROXIES', [])
+            if remote_addr in trusted_proxies:
+                forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR', '')
+                ip = forwarded_for.split(',')[0].strip() or remote_addr
             else:
-                ip = request.META.get('REMOTE_ADDR', 'unknown')
+                ip = remote_addr
             cache_key = f"rl:{function.__name__}:{ip}"
             count = cache.get(cache_key, 0)
             if count >= max_calls:
