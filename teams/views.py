@@ -1,4 +1,5 @@
 import os
+import re
 from PIL import Image
 
 import cloudinary
@@ -85,10 +86,12 @@ def team_page(request, team_number):
     return render(request, 'teams/team_page.html', context)
 
 
+_SAFE_COMP_CODE = re.compile(r'^[A-Za-z0-9_\-]{1,20}$')
+
 @login_required
 def pit_scouting(request, team_number):
     comp_code = request.GET.get('comp')
-    if not comp_code:
+    if not comp_code or not _SAFE_COMP_CODE.match(comp_code):
         return HttpResponse('Competition code required. Add ?comp=EVENT_CODE to URL', status=400)
     
     config = config_loader.get_config()
@@ -98,8 +101,6 @@ def pit_scouting(request, team_number):
         # Handle image upload (Anchor field)
         img_url = None
         logo_url = None
-        allowed_types = ['image/png', 'image/jpeg', 'image/jpg']
-
         if 'robot_picture' in request.FILES:
             image_file = request.FILES['robot_picture']
             try:
@@ -224,6 +225,8 @@ def pit_scouting(request, team_number):
 def clear_pit_data(request, team_number):
     if request.method == 'POST':
         comp_code = request.POST.get('comp_code')
+        if comp_code and not _SAFE_COMP_CODE.match(comp_code):
+            comp_code = None
         if comp_code:
             team = Teams.objects.filter(team_number=team_number, event=comp_code).first()
             if team:

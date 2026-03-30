@@ -29,12 +29,14 @@ client_config = {
         "redirect_uris": [
             "http://localhost:8000/auth/oauth2callback/",
             "http://127.0.0.1:8000/auth/oauth2callback/",
-            "https://scouting.chrisccluk.live/auth/oauth2callback/"
+            "https://scouting.chrisccluk.live/auth/oauth2callback/",
+            "https://scout.chrisccluk.live/auth/oauth2callback/"
         ],
         "javascript_origins": [
             "http://localhost:8000",
             "http://127.0.0.1:8000",
-            "https://scouting.chrisccluk.live"
+            "https://scouting.chrisccluk.live",
+            "https://scout.chrisccluk.live"
         ]
     }
 }
@@ -99,7 +101,8 @@ def oauth2callback(request):
     cred = credentials_to_dict(credentials)
     request.session['credentials'] = cred
 
-    r = requests.get(f'https://www.googleapis.com/oauth2/v2/userinfo?access_token={cred["token"]}',
+    r = requests.get('https://www.googleapis.com/oauth2/v2/userinfo',
+                     headers={'Authorization': f'Bearer {cred["token"]}'},
                      timeout=10).json()
 
     request.session["name"] = r["given_name"] + " " + r["family_name"]
@@ -119,6 +122,8 @@ def oauth2callback(request):
     return redirect('/')
 
 
+@login_required
+@require_POST
 def logout(request):
     request.session.flush()
     return redirect('/auth/')

@@ -1,3 +1,4 @@
+import functools
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, JsonResponse
 from django.views.decorators.http import require_POST
@@ -17,6 +18,7 @@ def _is_ajax(request):
 
 
 def admin_required(function):
+    @functools.wraps(function)
     def wrapper(request, *args, **kw):
         email = request.session.get("email")
         if not email:

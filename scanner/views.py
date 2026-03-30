@@ -2,6 +2,8 @@ import json
 import logging
 from django.http import JsonResponse
 from django.shortcuts import render
+
+logger = logging.getLogger(__name__)
 from teams.models import Teams, Team_Match_Data
 from plugins import plugin_manager
 from utils import config_loader
@@ -191,6 +193,7 @@ def scanner(request):
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON format"}, status=400)
         except Exception:
+            logger.exception("scanner POST failed")
             return JsonResponse({"error": "An unexpected error occurred"}, status=500)
 
     return render(request, "qr_scanner.html")

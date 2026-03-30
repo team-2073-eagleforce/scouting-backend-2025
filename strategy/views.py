@@ -171,9 +171,11 @@ def picklist_submit(request):
     save_to_db = request.GET.get('save_to_db') == 'true'
 
     if request.method == 'POST':
+        if not comp_code or not _SAFE_COMP_CODE.match(comp_code):
+            return JsonResponse({'status': 'error', 'message': 'Invalid or missing competition code'}, status=400)
         try:
             picklist_data = json.loads(request.body.decode('utf-8'))
-            
+
             # Save to JSON file first
             write_json_picklist(comp_code, picklist_data)
             
