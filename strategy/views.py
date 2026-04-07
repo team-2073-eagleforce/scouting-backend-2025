@@ -63,12 +63,15 @@ def write_json_picklist(comp_code, data):
 def rankings(request):
     comp_code = request.GET.get('comp')
     quantifier = request.GET.get('quantifier', 'Quals')
+    exclude_zeros = request.GET.get('exclude_zeros', 'true') == 'true'
+    min_matches = int(request.GET.get('min_matches', '0'))
     config = config_loader.get_config()
 
     VALID_SORT_FIELDS = {
         'autoScore', 'autoPass', 'autoClimb',
         'teleScore', 'telePass',
         'totalShooting', 'totalPass', 'totalTotal',
+        'match_count',
     }
     sort_by = request.GET.get('sort_by', 'totalShooting')
     if sort_by not in VALID_SORT_FIELDS:
@@ -83,14 +86,21 @@ def rankings(request):
         ('totalShooting', 'Total Score'),
         ('totalPass',     'Total Pass'),
         ('totalTotal',    'Total Total'),
+        ('match_count',   'Matches Played'),
     ]
+
+    # Get excluded match IDs from session
+    excluded_ids = set(request.session.get('excluded_match_ids', []))
 
     teams = models.Teams.objects.filter(event=comp_code).order_by("team_number")
     team_averages = {}
 
     for team in teams:
         if models.Team_Match_Data.objects.filter(team_number=team.team_number, event=comp_code, quantifier=quantifier).exists():
-            stats = fetch_team_match_averages(team.team_number, comp_code, quantifier)
+            stats = fetch_team_match_averages(team.team_number, comp_code, quantifier,
+                                              exclude_zeros=exclude_zeros, excluded_ids=excluded_ids)
+            if stats.get('match_count', 0) < min_matches:
+                continue
             stats['totalPass']     = round((stats.get('autoPass', 0) or 0) + (stats.get('telePass', 0) or 0), 3)
             stats['totalShooting'] = round((stats.get('autoScore', 0) or 0) + (stats.get('teleScore', 0) or 0), 3)
             stats['totalTotal']    = round((stats.get('totalShooting', 0) or 0) + (stats.get('totalPass', 0) or 0), 3)
@@ -106,6 +116,9 @@ def rankings(request):
         'rankings_columns': config.get('rankings', []),
         'sort_by': sort_by,
         'sort_options': SORT_OPTIONS,
+        'exclude_zeros': exclude_zeros,
+        'min_matches': min_matches,
+        'excluded_count': len(excluded_ids),
     })
 
 @login_required
@@ -300,7 +313,7 @@ def dashboard(request):
         'config_metrics_json': json.dumps(config.get('metrics', []))
     })
 
-def fetch_team_match_averages(team_number, comp_code, quantifier):
+def fetch_team_match_averages(team_number, comp_code, quantifier, exclude_zeros=True, excluded_ids=None):
     """Dynamic calculation of team averages based on game_config.json with legacy key support"""
     config = config_loader.get_config()
     
@@ -310,40 +323,48 @@ def fetch_team_match_averages(team_number, comp_code, quantifier):
         match_number__lt=100,
         quantifier=quantifier
     )
+
+    # Exclude manually excluded matches
+    if excluded_ids:
+        team_match_data = team_match_data.exclude(id__in=excluded_ids)
+
+    # Filter out all-zero data matches (incomplete scans)
+    if exclude_zeros:
+        filtered = []
+        for match in team_match_data:
+            if match.data:
+                numeric_vals = [float(v) for v in match.data.values() if isinstance(v, (int, float))]
+                if numeric_vals and any(v != 0 for v in numeric_vals):
+                    filtered.append(match)
+        team_match_data_list = filtered
+    else:
+        team_match_data_list = list(team_match_data)
     
-    if not team_match_data.exists():
+    if not team_match_data_list:
         return {}
     
-    result = {}
+    result = {'match_count': len(team_match_data_list)}
     
-    # Add anchor field averages
+    # Add anchor field averages (only count non-zero values)
     anchor_fields = ['driverRanking', 'defenseRanking', 'autoLeave']
     for field in anchor_fields:
-        values = [getattr(match, field, 0) for match in team_match_data if getattr(match, field, 0) > 0]
-        if values:
-            result[field] = round(sum(values) / len(values), 3)
-        else:
-            result[field] = 0
+        values = [getattr(match, field, 0) for match in team_match_data_list if getattr(match, field, 0) > 0]
+        result[field] = round(sum(values) / len(values), 3) if values else 0
     
-    # Dynamic metrics from config
+    # Dynamic metrics from config — per-metric non-zero averaging
     for metric in config['metrics']:
         key = metric['key']
         aggregation = metric.get('aggregation', 'avg')
         legacy_keys = metric.get('legacy_keys', [])
         
-        # Extract values with legacy key fallback
         values = []
-        for match in team_match_data:
-            # Try current key first
+        for match in team_match_data_list:
             value = match.data.get(key)
-            
-            # If not found, try legacy keys
             if value is None and legacy_keys:
                 for legacy_key in legacy_keys:
                     value = match.data.get(legacy_key)
                     if value is not None:
                         break
-            
             if value is not None:
                 values.append(float(value))
         
@@ -358,10 +379,56 @@ def fetch_team_match_averages(team_number, comp_code, quantifier):
             result[key] = 0
     
     # Add start_pos from first match
-    first_match = team_match_data.first()
-    result['start_pos'] = first_match.start_pos if first_match else 0
+    result['start_pos'] = team_match_data_list[0].start_pos if team_match_data_list else 0
     
     return result
+
+
+@login_required
+def toggle_exclude_match(request):
+    """Toggle exclusion of a specific match from rankings calculations."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    try:
+        body = json.loads(request.body.decode('utf-8'))
+        match_id = int(body['match_id'])
+    except (json.JSONDecodeError, KeyError, ValueError, TypeError):
+        return JsonResponse({'error': 'Invalid match_id'}, status=400)
+
+    excluded = set(request.session.get('excluded_match_ids', []))
+    if match_id in excluded:
+        excluded.discard(match_id)
+        action = 'included'
+    else:
+        excluded.add(match_id)
+        action = 'excluded'
+    request.session['excluded_match_ids'] = list(excluded)
+    return JsonResponse({'status': action, 'match_id': match_id, 'excluded_count': len(excluded)})
+
+
+@login_required
+def team_matches_detail(request, team_number):
+    """Return individual match data for a team so strategists can review/exclude."""
+    comp_code = request.GET.get('comp')
+    quantifier = request.GET.get('quantifier', 'Quals')
+    if not comp_code:
+        return JsonResponse({'error': 'comp required'}, status=400)
+
+    matches = Team_Match_Data.objects.filter(
+        team_number=team_number, event=comp_code, quantifier=quantifier
+    ).order_by('match_number')
+
+    excluded = set(request.session.get('excluded_match_ids', []))
+    result = []
+    for m in matches:
+        result.append({
+            'id': m.id,
+            'match_number': m.match_number,
+            'scout_name': m.scout_name,
+            'data': m.data,
+            'excluded': m.id in excluded,
+        })
+    return JsonResponse({'matches': result})
 
 @login_required
 def get_path_data(request, team_number):

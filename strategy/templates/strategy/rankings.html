@@ -249,21 +249,36 @@ body.comfortable #rankings_table td {
             <h2 class="rankings-title">Rankings</h2>
             <p class="rankings-subtitle">{{ selected_quantifier }} · {{ comp_code }}</p>
         </div>
-        <!-- Controls: quantifier + sort + search -->
+        <!-- Controls: quantifier + sort + filters + search -->
         <form method="get" action="{% url 'rankings' %}" class="rankings-controls" id="rankings-form">
             <input type="hidden" name="comp" value="{{ comp_code }}">
             <select name="quantifier" id="quantifier" onchange="this.form.submit()">
                 <option value="Prac" {% if selected_quantifier == 'Prac' %}selected{% endif %}>Practice</option>
                 <option value="Quals" {% if selected_quantifier == 'Quals' %}selected{% endif %}>Qualifiers</option>
-                <option value="Play Off" {% if selected_quantifier == 'Play Off' %}selected{% endif %}>Playoffs</option>
+                <option value="Playoff" {% if selected_quantifier == 'Playoff' %}selected{% endif %}>Playoffs</option>
             </select>
             <select name="sort_by" id="sort_by" onchange="this.form.submit()">
                 {% for key, label in sort_options %}
                 <option value="{{ key }}" {% if sort_by == key %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
+            <label style="display:flex;align-items:center;gap:4px;font-size:0.8rem;color:var(--muted-text);cursor:pointer;">
+                <input type="checkbox" name="exclude_zeros" value="true"
+                       {% if exclude_zeros %}checked{% endif %} onchange="this.form.submit()">
+                Skip empty
+            </label>
+            <select name="min_matches" onchange="this.form.submit()" style="width:auto;">
+                <option value="0" {% if min_matches == 0 %}selected{% endif %}>Min 0 matches</option>
+                <option value="1" {% if min_matches == 1 %}selected{% endif %}>Min 1 match</option>
+                <option value="2" {% if min_matches == 2 %}selected{% endif %}>Min 2 matches</option>
+                <option value="3" {% if min_matches == 3 %}selected{% endif %}>Min 3 matches</option>
+                <option value="5" {% if min_matches == 5 %}selected{% endif %}>Min 5 matches</option>
+            </select>
             <input type="search" id="team-search" placeholder="Jump to team #" autocomplete="off"
                    inputmode="numeric">
+            {% if excluded_count > 0 %}
+            <span style="font-size:0.75rem;color:var(--accent);">{{ excluded_count }} match{{ excluded_count|pluralize:"es" }} excluded</span>
+            {% endif %}
         </form>
     </div>
 
@@ -281,6 +296,7 @@ body.comfortable #rankings_table td {
                                 <th>{{ col.display_name }}</th>
                             {% endif %}
                         {% endfor %}
+                        <th onclick="sortTable({{ rankings_columns|length|add:1 }}, 'match_count')">Matches ↕</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -299,6 +315,10 @@ body.comfortable #rankings_table td {
                                 <td>{{ team_stats|get_item:col.key }}</td>
                             {% endif %}
                         {% endfor %}
+                        <td>
+                            <a href="#" onclick="showMatchDetail({{ team_number }}, '{{ comp_code }}', '{{ selected_quantifier }}'); return false;"
+                               style="cursor:pointer;">{{ team_stats.match_count }}</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -307,18 +327,119 @@ body.comfortable #rankings_table td {
     </div>
 
 </div>
+
+<!-- Match Detail Modal -->
+<div id="match-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
+    <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;max-width:700px;width:92%;max-height:80vh;overflow:auto;padding:20px;position:relative;">
+        <button onclick="document.getElementById('match-modal').style.display='none'"
+                style="position:absolute;top:10px;right:14px;background:none;border:none;color:var(--text);font-size:1.4rem;cursor:pointer;">&times;</button>
+        <h3 id="modal-title" style="margin:0 0 12px;color:var(--text);font-weight:700;"></h3>
+        <p style="font-size:0.8rem;color:var(--muted-text);margin:0 0 10px;">Click ✕ to exclude a match from rankings. Click ✓ to re-include.</p>
+        <table id="modal-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead><tr id="modal-thead"></tr></thead>
+            <tbody id="modal-tbody"></tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}
 
 {% block Scripts %}
 <script src="{% static 'strategy/ranking.js' %}"></script>
 <script>
 (function () {
-    /* Cap stagger so large tables don't delay forever */
     var rows = document.querySelectorAll('#rankings_table tbody tr');
     rows.forEach(function (row, i) {
         row.style.animationDelay = Math.min(i * 14, 280) + 'ms';
     });
 })();
+</script>
+
+<script>
+function showMatchDetail(teamNum, comp, quantifier) {
+    var modal = document.getElementById('match-modal');
+    document.getElementById('modal-title').textContent = 'Team ' + teamNum + ' — Individual Matches';
+    modal.style.display = 'flex';
+
+    fetch('/api/team_matches/' + teamNum + '/?comp=' + comp + '&quantifier=' + quantifier)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var thead = document.getElementById('modal-thead');
+            var tbody = document.getElementById('modal-tbody');
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            if (!data.matches || !data.matches.length) {
+                tbody.innerHTML = '<tr><td style="padding:12px;color:var(--muted-text);">No matches found</td></tr>';
+                return;
+            }
+
+            // Build header
+            var cols = ['Action', 'Match', 'Scout'];
+            var dataKeys = Object.keys(data.matches[0].data || {});
+            cols = cols.concat(dataKeys);
+            cols.forEach(function(c) {
+                var th = document.createElement('th');
+                th.textContent = c;
+                th.style.cssText = 'padding:6px 8px;border-bottom:2px solid var(--border);color:var(--accent);font-size:0.72rem;text-transform:uppercase;white-space:nowrap;';
+                thead.appendChild(th);
+            });
+
+            data.matches.forEach(function(m) {
+                var tr = document.createElement('tr');
+                if (m.excluded) tr.style.opacity = '0.45';
+
+                // Action button
+                var tdAct = document.createElement('td');
+                tdAct.style.cssText = 'padding:4px 8px;text-align:center;';
+                var btn = document.createElement('button');
+                btn.textContent = m.excluded ? '✓' : '✕';
+                btn.title = m.excluded ? 'Re-include this match' : 'Exclude this match';
+                btn.style.cssText = 'cursor:pointer;border:none;background:' + (m.excluded ? '#22c55e' : '#ef4444') + ';color:#fff;border-radius:6px;padding:2px 10px;font-size:0.85rem;';
+                btn.onclick = (function(matchId, row, match) {
+                    return function() {
+                        fetch('/api/toggle_exclude_match/', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()},
+                            body: JSON.stringify({match_id: matchId})
+                        }).then(function(r) { return r.json(); }).then(function(res) {
+                            match.excluded = res.status === 'excluded';
+                            row.style.opacity = match.excluded ? '0.45' : '1';
+                            btn.textContent = match.excluded ? '✓' : '✕';
+                            btn.title = match.excluded ? 'Re-include this match' : 'Exclude this match';
+                            btn.style.background = match.excluded ? '#22c55e' : '#ef4444';
+                        });
+                    };
+                })(m.id, tr, m);
+                tdAct.appendChild(btn);
+                tr.appendChild(tdAct);
+
+                // Match number + scout
+                var tdM = document.createElement('td');
+                tdM.textContent = m.match_number;
+                tdM.style.cssText = 'padding:4px 8px;';
+                tr.appendChild(tdM);
+                var tdS = document.createElement('td');
+                tdS.textContent = m.scout_name;
+                tdS.style.cssText = 'padding:4px 8px;white-space:nowrap;';
+                tr.appendChild(tdS);
+
+                // Data columns
+                dataKeys.forEach(function(k) {
+                    var td = document.createElement('td');
+                    td.textContent = m.data[k] != null ? m.data[k] : '';
+                    td.style.cssText = 'padding:4px 8px;text-align:center;';
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            });
+        });
+}
+
+function getCsrf() {
+    var c = document.cookie.match(/csrftoken=([^;]+)/);
+    return c ? c[1] : '';
+}
 </script>
 
 <script>
@@ -331,7 +452,6 @@ body.comfortable #rankings_table td {
     searchInput.addEventListener('input', function () {
         var q = this.value.trim();
 
-        // Clear existing highlight
         document.querySelectorAll('#rankings_table tbody tr.team-highlight')
             .forEach(function (r) { r.classList.remove('team-highlight'); });
         clearTimeout(highlightTimer);
@@ -340,11 +460,10 @@ body.comfortable #rankings_table td {
 
         var rows = document.querySelectorAll('#rankings_table tbody tr');
         for (var i = 0; i < rows.length; i++) {
-            var cell = rows[i].cells[1]; // team number is always TD[1]
+            var cell = rows[i].cells[1];
             if (cell && cell.textContent.trim() === q) {
                 rows[i].classList.add('team-highlight');
                 rows[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // Auto-remove highlight after 3 s
                 highlightTimer = setTimeout(function (row) {
                     row.classList.remove('team-highlight');
                 }.bind(null, rows[i]), 3000);
@@ -353,7 +472,6 @@ body.comfortable #rankings_table td {
         }
     });
 
-    // Prevent the search input from submitting the form on Enter
     searchInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') e.preventDefault();
     });
