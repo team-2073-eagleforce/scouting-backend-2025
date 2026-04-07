@@ -402,7 +402,7 @@ body.comfortable #rankings_table td {
     {% if filterable_pit %}
     <div class="pit-filter-panel" id="pit-panel">
         <button type="button" class="pit-toggle" onclick="document.getElementById('pit-filters').classList.toggle('open'); this.classList.toggle('active');">
-            🔍 Robot Attributes
+            Robot Attributes
             {% if active_pit_filters %}<span class="pit-badge">{{ active_pit_filters|length }}</span>{% endif %}
         </button>
         <div id="pit-filters" class="pit-grid {% if active_pit_filters %}open{% endif %}">
