@@ -51,10 +51,13 @@ def scanner(request):
                 val = data_from_post.get(key)
                 return val if val not in [None, ""] else default
 
-            # Build anchor fields
-            quantifier_val = data_from_post.get("quantifier")
-            if quantifier_val not in ['Quals', 'Playoff', 'Prac']:
-                quantifier_val = 'Quals'
+            # Build anchor fields — normalize quantifier from QR display labels
+            QUANTIFIER_MAP = {
+                'Quals': 'Quals', 'Qualifications': 'Quals',
+                'Playoff': 'Playoff', 'Play Off': 'Playoff', 'Playoffs': 'Playoff',
+                'Prac': 'Prac', 'Practice': 'Prac',
+            }
+            quantifier_val = QUANTIFIER_MAP.get(data_from_post.get("quantifier", ""), "Quals")
 
             match_data_defaults = {
                 'scout_name': scout_name,

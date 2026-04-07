@@ -93,8 +93,11 @@ def sanitize_scan_data(scan_data):
         if field in scan_data:
             sanitized[field] = str(scan_data[field]).strip()
     
-    # Handle quantifier with default
-    sanitized['quantifier'] = str(scan_data.get('quantifier', 'Prac')).strip() or 'Prac'
+    # Handle quantifier with default — normalize display labels to DB keys
+    _q_map = {'Quals': 'Quals', 'Qualifications': 'Quals',
+              'Playoff': 'Playoff', 'Play Off': 'Playoff', 'Playoffs': 'Playoff',
+              'Prac': 'Prac', 'Practice': 'Prac'}
+    sanitized['quantifier'] = _q_map.get(str(scan_data.get('quantifier', 'Prac')).strip(), 'Prac')
     
     # Copy and validate numeric fields
     numeric_fields = [
