@@ -237,6 +237,122 @@ body.comfortable #rankings_table td {
     padding: 12px 16px;
     font-size: 15px;
 }
+
+/* ========================
+   Pit Scouting Filter Panel
+   ======================== */
+.pit-filter-panel {
+    margin-bottom: 1rem;
+}
+
+.pit-toggle {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: var(--text);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.pit-toggle:hover,
+.pit-toggle.active {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--bg-elevated));
+}
+
+.pit-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    margin-left: 6px;
+    padding: 0 5px;
+}
+
+.pit-grid {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.pit-grid.open {
+    max-height: 600px;
+}
+
+.pit-grid-inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 12px 0 4px;
+}
+
+.pit-group {
+    min-width: 140px;
+}
+
+.pit-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted-text);
+    margin-bottom: 4px;
+}
+
+.pit-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.pit-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 0.8rem;
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.pit-chip input { display: none; }
+
+.pit-chip:hover {
+    border-color: var(--accent);
+}
+
+.pit-chip-active,
+.pit-chip:has(input:checked) {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+.pit-clear {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.pit-clear:hover {
+    text-decoration: underline;
+}
 </style>
 {% endblock %}
 
@@ -281,6 +397,48 @@ body.comfortable #rankings_table td {
             {% endif %}
         </form>
     </div>
+
+    <!-- Pit Scouting Attribute Filters -->
+    {% if filterable_pit %}
+    <div class="pit-filter-panel" id="pit-panel">
+        <button type="button" class="pit-toggle" onclick="document.getElementById('pit-filters').classList.toggle('open'); this.classList.toggle('active');">
+            🔍 Robot Attributes
+            {% if active_pit_filters %}<span class="pit-badge">{{ active_pit_filters|length }}</span>{% endif %}
+        </button>
+        <div id="pit-filters" class="pit-grid {% if active_pit_filters %}open{% endif %}">
+            <form method="get" action="{% url 'rankings' %}" id="pit-form">
+                <!-- Carry forward existing params -->
+                <input type="hidden" name="comp" value="{{ comp_code }}">
+                <input type="hidden" name="quantifier" value="{{ selected_quantifier }}">
+                <input type="hidden" name="sort_by" value="{{ sort_by }}">
+                {% if exclude_zeros %}<input type="hidden" name="exclude_zeros" value="true">{% endif %}
+                <input type="hidden" name="min_matches" value="{{ min_matches }}">
+
+                <div class="pit-grid-inner">
+                    {% for q in filterable_pit %}
+                    <div class="pit-group">
+                        <label class="pit-label">{{ q.display_name }}</label>
+                        <div class="pit-options">
+                            {% for opt in q.options %}
+                            <label class="pit-chip {% if opt in active_pit_filters|get_item:q.key %}pit-chip-active{% endif %}">
+                                <input type="checkbox" name="pit__{{ q.key }}" value="{{ opt }}"
+                                       {% if active_pit_filters %}{% with vals=active_pit_filters|get_item:q.key %}{% if vals %}{% for v in vals %}{% if v == opt %}checked{% endif %}{% endfor %}{% endif %}{% endwith %}{% endif %}
+                                       onchange="document.getElementById('pit-form').submit();">
+                                {{ opt }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if active_pit_filters %}
+                <a href="{% url 'rankings' %}?comp={{ comp_code }}&quantifier={{ selected_quantifier }}&sort_by={{ sort_by }}{% if exclude_zeros %}&exclude_zeros=true{% endif %}&min_matches={{ min_matches }}"
+                   class="pit-clear">Clear all filters</a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Table Card -->
     <div class="table-card">

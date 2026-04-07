@@ -92,10 +92,49 @@ def rankings(request):
     # Get excluded match IDs from session
     excluded_ids = set(request.session.get('excluded_match_ids', []))
 
+    # --- Pit scouting attribute filters ---
+    pit_questions = config.get('pit_questions', [])
+    # Deduplicate by key (config has some dupes)
+    seen_keys = set()
+    filterable_pit = []
+    for q in pit_questions:
+        if q['type'] in ('select', 'multiselect') and q['key'] not in seen_keys:
+            seen_keys.add(q['key'])
+            filterable_pit.append(q)
+
+    # Collect active pit filters from query params (pit__<key>=value)
+    active_pit_filters = {}
+    for q in filterable_pit:
+        vals = request.GET.getlist('pit__' + q['key'])
+        if vals:
+            active_pit_filters[q['key']] = vals
+
+    # Build a set of team numbers that pass pit filters
+    pit_filtered_teams = None
+    if active_pit_filters:
+        pit_filtered_teams = set()
+        for team in models.Teams.objects.filter(event=comp_code, pit_scout_status=True):
+            pit_data = team.pit_data or {}
+            passes = True
+            for key, required_vals in active_pit_filters.items():
+                team_val = pit_data.get(key)
+                if isinstance(team_val, list):
+                    if not any(rv in team_val for rv in required_vals):
+                        passes = False
+                        break
+                else:
+                    if str(team_val) not in required_vals:
+                        passes = False
+                        break
+            if passes:
+                pit_filtered_teams.add(team.team_number)
+
     teams = models.Teams.objects.filter(event=comp_code).order_by("team_number")
     team_averages = {}
 
     for team in teams:
+        if pit_filtered_teams is not None and team.team_number not in pit_filtered_teams:
+            continue
         if models.Team_Match_Data.objects.filter(team_number=team.team_number, event=comp_code, quantifier=quantifier).exists():
             stats = fetch_team_match_averages(team.team_number, comp_code, quantifier,
                                               exclude_zeros=exclude_zeros, excluded_ids=excluded_ids)
@@ -118,6 +157,8 @@ def rankings(request):
         'sort_options': SORT_OPTIONS,
         'exclude_zeros': exclude_zeros,
         'min_matches': min_matches,
+        'filterable_pit': filterable_pit,
+        'active_pit_filters': active_pit_filters,
         'excluded_count': len(excluded_ids),
     })
 
