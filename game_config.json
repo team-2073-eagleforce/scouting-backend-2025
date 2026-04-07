@@ -125,6 +125,20 @@
       "required": true
     },
     {
+      "key": "Volume",
+      "type": "number",
+      "display_name": "How much fuel can robot hold?",
+      "min": 0,
+      "max": 100
+    },
+    {
+      "key": "Shooter",
+      "type": "multiselect",
+      "display_name": "Shooter design",
+      "options": ["Turret", "Double Shooter", "Both", "None"],
+      "required": true
+    },
+    {
       "key": "intake_design",
       "type": "multiselect",
       "display_name": "Intake Design",
@@ -210,4 +224,3 @@
     }
   ]
 }
-
