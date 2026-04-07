@@ -21,3 +21,17 @@ def get_item(dictionary, key):
     if hasattr(dictionary, 'get'):
         return dictionary.get(key)
     return None
+
+@register.filter
+def prettify_key(value):
+    """Turn snake_case keys into Title Case labels: drive_type → Drive Type"""
+    return str(value).replace('_', ' ').title()
+
+@register.filter
+def format_pit_value(value):
+    """Render pit data values cleanly: join lists with ', ', pass everything else through."""
+    if isinstance(value, list):
+        return ', '.join(str(v) for v in value) if value else '—'
+    if value is None or value == '':
+        return '—'
+    return value

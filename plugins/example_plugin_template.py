@@ -82,7 +82,7 @@ class Plugin:
         if 'startPos' in qr:
             try:
                 patch['start_pos'] = int(qr['startPos'])
-            except Exception:
+            except Exception:  # nosec B110
                 pass
         return patch or None
     

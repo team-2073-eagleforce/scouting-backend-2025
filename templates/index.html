@@ -3,25 +3,32 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#b11226">
 
 <title>{% block Title %}{{ app_name }}{% endblock %}</title>
 <link rel="icon" href="{{ logo_url }}" type="image/png">
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&display=swap" rel="stylesheet">
 
 <style>
 /* ======================================================
    THEME VARIABLES
 ====================================================== */
 :root {
-  --bg: #f5f5f5;
+  --bg: #fafafa;
   --bg-elevated: #ffffff;
   --text: #1a1a1a;
-  --muted-text: #555555;
-  --accent: #b11226;
-  --accent-hover: #8f0f1f;
-  --border: #dddddd;
+  --muted-text: #666666;
+  --accent: #E63946;
+  --accent-hover: #D62828;
+  --border: #e0e0e0;
 
   --pad-xs: 0.25rem;
   --pad-sm: 0.5rem;
@@ -29,13 +36,13 @@
 }
 
 html.inverted {
-  --bg: #1c1e21;
-  --bg-elevated: #2b2f34;
-  --text: #e6e6e6;
-  --muted-text: #a9a9a9;
-  --accent: #c4162a;
-  --accent-hover: #e01e37;
-  --border: #4b5055;
+  --bg: #121212;
+  --bg-elevated: #1e1e1e;
+  --text: #f5f5f5;
+  --muted-text: #a0a0a0;
+  --accent: #FF4D4D;
+  --accent-hover: #FF6666;
+  --border: #333333;
 }
 
 /* ======================================================
@@ -75,83 +82,94 @@ html[data-density="compact"] {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI",
+  font-family: 'Inter', system-ui, -apple-system, "Segoe UI",
                Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 16px;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ======================================================
    NAVBAR
 ====================================================== */
 .navbar {
-  background: var(--bg-elevated);
+  background: color-mix(in srgb, var(--bg-elevated) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   padding-top: var(--navbar-padding);
   padding-bottom: var(--navbar-padding);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
-/* BRAND ANIMATION (ADDITIVE) */
-.navbar-brand h3 {
+/* ======================================================
+   BRAND (LOGO + TEXT)
+====================================================== */
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+  animation: brandLogoEntry 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 2px 4px color-mix(in srgb, var(--accent) 30%, transparent));
+}
+
+@keyframes brandLogoEntry {
+  from { opacity: 0; transform: scale(0.4) rotate(-20deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+.navbar-brand:hover .brand-logo {
+  transform: rotate(-6deg) scale(1.1);
+  box-shadow: 0 4px 14px rgba(177,18,38,0.3);
+}
+
+.brand-text {
   margin: 0;
   color: var(--accent);
   font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.03em;
   position: relative;
-  animation: brandFadeSlide 0.6s ease-out both;
+  animation: brandTextEntry 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
 }
 
-@keyframes brandFadeSlide {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes brandTextEntry {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: none; }
 }
 
-.navbar-brand h3::after {
+.brand-text::after {
   content: "";
   position: absolute;
   left: 0;
-  bottom: -3px;
+  bottom: -2px;
   width: 0;
   height: 2px;
-  background-color: var(--accent);
-  transition: width 0.25s ease;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+  transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.navbar-brand:hover h3::after {
+.navbar-brand:hover .brand-text::after {
   width: 100%;
 }
-/* ======================================================
-   REFINED BRAND UNDERLINE (SOLID + GLOW)
-====================================================== */
 
-.navbar-brand h3::after {
-  height: 3px;
-  border-radius: 999px;
-  background-color: var(--accent);
-
-  /* Solid glow, no transparency fade */
-  box-shadow:
-    0 0 6px var(--accent),
-    0 0 12px var(--accent),
-    0 0 18px rgba(0, 0, 0, 0); /* keeps glow edge clean */
-
-  transition:
-    width 0.25s ease,
-    box-shadow 0.25s ease;
-}
-
-/* Slight glow intensification on hover */
-.navbar-brand:hover h3::after {
-  box-shadow:
-    0 0 8px var(--accent),
-    0 0 16px var(--accent);
-}
-
-/* Dark mode tuning */
-html.inverted .navbar-brand h3::after {
-  box-shadow:
-    0 0 10px var(--accent),
-    0 0 20px var(--accent);
-}
+html.inverted .light-mode-logo { display: none !important; }
+.dark-mode-logo { display: none !important; }
+html.inverted .dark-mode-logo { display: inline-block !important; }
 
 
 /* ======================================================
@@ -347,17 +365,79 @@ html.inverted #comp {
 }
 
 /* ======================================================
-   SETTINGS GEAR (THEME AWARE)
+   ICON BUTTONS (SETTINGS + LANGUAGE)
 ====================================================== */
-#settings-toggle {
+.nav-icon-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 7px 10px;
+  background: transparent;
   color: var(--text);
-  border-color: var(--border);
-  transition: background-color 0.2s ease, color 0.2s ease;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
+  line-height: 1;
 }
 
-#settings-toggle:hover {
-  background-color: rgba(196, 22, 42, 0.12);
+.nav-icon-btn:hover {
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated));
   color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+.nav-icon-btn:active { transform: scale(0.95); }
+
+/* Hide Bootstrap's default caret on icon buttons */
+.nav-icon-btn.dropdown-toggle::after { display: none; }
+
+/* ======================================================
+   LANGUAGE MENU
+====================================================== */
+.lang-menu {
+  min-width: 160px;
+  padding: 0.4rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.lang-menu-header {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-text);
+  padding: 0.5rem 1rem 0.25rem;
+}
+
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+  text-align: left;
+}
+
+.lang-option:hover {
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-elevated));
+  color: var(--accent);
+}
+
+.lang-option.active {
+  color: var(--accent);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-elevated));
 }
 
 /* ======================================================
@@ -379,17 +459,223 @@ html.inverted #comp {
   transform: rotate(180deg) scale(0.8);
   opacity: 0;
 }
+
+/* ======================================================
+   ANIMATION TIMING TOKENS
+====================================================== */
+:root {
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast:    150ms;
+  --dur-normal:  260ms;
+  --dur-slow:    420ms;
+}
+
+/* ======================================================
+   PAGE ENTRY
+====================================================== */
+.page-content {
+  animation: pageEnter 0.38s var(--ease-out) both;
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ======================================================
+   SCROLL REVEAL
+====================================================== */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px) scale(0.98);
+  transition:
+    opacity  var(--dur-slow) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out);
+  will-change: opacity, transform;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+.reveal-delay-1 { transition-delay: 70ms;  }
+.reveal-delay-2 { transition-delay: 140ms; }
+.reveal-delay-3 { transition-delay: 210ms; }
+.reveal-delay-4 { transition-delay: 280ms; }
+.reveal-delay-5 { transition-delay: 350ms; }
+
+/* ======================================================
+   TOP LOADING BAR
+====================================================== */
+#page-loading-bar {
+  position: fixed;
+  top: 0; left: 0;
+  width: 0%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent) 0%, #ff6b6b 100%);
+  z-index: 99999;
+  pointer-events: none;
+  box-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent);
+  transition: width 0.25s var(--ease-out), opacity 0.4s ease;
+  opacity: 0;
+}
+#page-loading-bar.navigating {
+  opacity: 1;
+  width: 82%;
+}
+
+/* ======================================================
+   TOAST NOTIFICATIONS
+====================================================== */
+#toast-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 99998;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+.toast-item {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  padding: 0.8rem 1.1rem;
+  min-width: 250px;
+  max-width: 360px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transform: translateY(16px) scale(0.95);
+  opacity: 0;
+  transition:
+    transform 0.32s var(--ease-spring),
+    opacity   0.22s ease;
+  cursor: pointer;
+}
+.toast-item.show {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+.toast-item.toast-success { border-left-color: #22c55e; }
+.toast-item.toast-error   { border-left-color: #ef4444; }
+.toast-item.toast-warning { border-left-color: #f59e0b; }
+.toast-item.toast-info    { border-left-color: #3b82f6; }
+.toast-icon { font-size: 1rem; flex-shrink: 0; }
+
+/* ======================================================
+   BUTTON RIPPLE
+====================================================== */
+.btn { position: relative; overflow: hidden; }
+.ripple-wave {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.28);
+  transform: scale(0);
+  animation: rippleAnim 0.52s linear;
+  pointer-events: none;
+}
+html.inverted .ripple-wave { background: rgba(255,255,255,0.15); }
+@keyframes rippleAnim { to { transform: scale(4); opacity: 0; } }
+
+/* ======================================================
+   ACTIVE NAV HIGHLIGHT
+====================================================== */
+.nav-link.active-page {
+  color: var(--accent) !important;
+  font-weight: 700;
+  position: relative;
+}
+.nav-link.active-page::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 0;
+  width: 100%; height: 2px;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+/* ======================================================
+   GLOBAL CARD ELEVATION
+====================================================== */
+.card-lift {
+  transition: transform 0.24s var(--ease-out), box-shadow 0.24s var(--ease-out);
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 36px rgba(0,0,0,0.13);
+}
+html.inverted .card-lift:hover {
+  box-shadow: 0 14px 36px rgba(0,0,0,0.45);
+}
+
+/* ======================================================
+   MOBILE TOUCH IMPROVEMENTS
+====================================================== */
+@media (max-width: 768px) {
+  .nav-link {
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .btn {
+    min-height: 44px;
+  }
+
+  .container-fluid.page-content {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Prevent text size adjustment on rotation */
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+}
+
+/* ======================================================
+   SKELETON SHIMMER
+====================================================== */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--border) 25%,
+    var(--bg-elevated) 50%,
+    var(--border) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s infinite;
+  border-radius: 6px;
+}
+@keyframes shimmer {
+  0%   { background-position: -800px 0; }
+  100% { background-position:  800px 0; }
+}
 </style>
 
 {% block Styles %}{% endblock %}
 </head>
 
 <body>
+<div id="page-loading-bar"></div>
+<div id="toast-container"></div>
 <header>
 <nav class="navbar navbar-expand-lg">
 <div class="container-fluid">
 
-<a class="navbar-brand" href="/"><h3>{{ app_name }}</h3></a>
+<a class="navbar-brand" href="/">
+  <img src="{% static 'images/logo.png' %}" class="brand-logo" alt="{{ app_name }} logo">
+  <span class="brand-text">{{ app_name }}</span>
+</a>
 
 <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
   <span class="navbar-toggler-icon"></span>
@@ -398,15 +684,15 @@ html.inverted #comp {
 <div class="collapse navbar-collapse" id="navbarSupportedContent">
 
 <ul class="navbar-nav me-auto">
-  <li class="nav-item"><a class="nav-link" href="{% url 'scanner' %}">QR Scanner</a></li>
-  <li class="nav-item"><a class="nav-link" href="{% url 'teams' %}">Teams</a></li>
+  <li class="nav-item"><a class="nav-link" href="{% url 'scanner' %}" data-i18n="nav.scanner">QR Scanner</a></li>
+  <li class="nav-item"><a class="nav-link" href="{% url 'teams' %}" data-i18n="nav.teams">Teams</a></li>
 
   <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown">Strategy</a>
+    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" data-i18n="nav.strategy">Strategy</a>
     <ul class="dropdown-menu">
-      <li><a class="dropdown-item" href="{% url 'rankings' %}">Rankings</a></li>
-      <li><a class="dropdown-item" href="{% url 'dashboard' %}">Dashboard</a></li>
-      <li><a class="dropdown-item" href="{% url 'picklist' %}">Picklist</a></li>
+      <li><a class="dropdown-item" href="{% url 'rankings' %}" data-i18n="nav.rankings">Rankings</a></li>
+      <li><a class="dropdown-item" href="{% url 'dashboard' %}" data-i18n="nav.dashboard">Dashboard</a></li>
+      <li><a class="dropdown-item" href="{% url 'picklist' %}" data-i18n="nav.picklist">Picklist</a></li>
     </ul>
   </li>
 
@@ -415,37 +701,73 @@ html.inverted #comp {
   </li>
 </ul>
 
-<ul class="navbar-nav ms-auto">
+<ul class="navbar-nav ms-auto align-items-center gap-1">
+
+<!-- Language selector -->
 <li class="nav-item dropdown">
-
-<button id="settings-toggle" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-⚙️
+<button id="lang-toggle" class="nav-icon-btn dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="Language">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+  </svg>
+  <span id="lang-label">EN</span>
 </button>
+<ul class="dropdown-menu dropdown-menu-end lang-menu">
+  <li class="lang-menu-header" data-i18n="settings.language">Language</li>
+  <li><button class="lang-option active" data-lang="en" data-label="EN">🇺🇸 English</button></li>
+  <li><button class="lang-option" data-lang="es" data-label="ES">🇪🇸 Español</button></li>
+  <li><button class="lang-option" data-lang="fr" data-label="FR">🇫🇷 Français</button></li>
+  <li><button class="lang-option" data-lang="pt" data-label="PT">🇧🇷 Português</button></li>
+  <li><button class="lang-option" data-lang="de" data-label="DE">🇩🇪 Deutsch</button></li>
+</ul>
+</li>
 
+<!-- Settings -->
+<li class="nav-item dropdown">
+<button id="settings-toggle" class="nav-icon-btn dropdown-toggle" data-bs-toggle="dropdown" aria-label="Settings">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
 <ul class="dropdown-menu dropdown-menu-end p-3" style="min-width:220px;">
 
 <li>
-<b>Theme</b><br>
+<b data-i18n="settings.theme">Theme</b><br>
 <button id="theme-toggle" class="btn btn-sm btn-outline-secondary mt-1 theme-toggle-btn">
-  <span id="theme-icon" class="theme-icon">🌙</span>
+  <span id="theme-icon" class="theme-icon">🌚</span>
   <span id="theme-text">Dark Mode</span>
 </button>
 </li>
 
 <li>
-<b>Density</b><br>
+<b data-i18n="settings.density">Density</b><br>
 <button id="density-toggle" class="btn btn-sm btn-outline-secondary mt-1">
 Comfortable
 </button>
 </li>
 
+{% if request.session.name %}
+<li><hr class="dropdown-divider my-2"></li>
+<li>
+  <span class="dropdown-item-text small" style="color:var(--muted-text);">{{ request.session.name }}</span>
+</li>
+<li>
+  <form method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button type="submit" class="dropdown-item" style="color:var(--accent);">Logout</button>
+  </form>
+</li>
+{% endif %}
+
 </ul>
 </li>
+
 </ul>
 
 {% if not request.session.name %}
 <form class="d-flex">
-  <button class="btn btn-outline-primary" type="button" onclick="location.assign('/auth')">
+  <button class="btn btn-outline-primary" type="button" onclick="location.assign('/auth')" data-i18n="auth.login">
     Login with Google
   </button>
 </form>
@@ -456,7 +778,7 @@ Comfortable
 </nav>
 </header>
 
-<div class="container-fluid" style="max-width:98%;">
+<div class="container-fluid page-content" style="max-width:98%;">
 {% block Content %}{% endblock %}
 </div>
 
@@ -500,6 +822,195 @@ if(localStorage.getItem("comp") && !window.location.search){
 </script>
 
 <!-- ======================================================
+     TRANSLATIONS DICTIONARY
+====================================================== -->
+<script>
+window._T = {
+  en: {
+    'nav.scanner':        'QR Scanner',
+    'nav.teams':          'Teams',
+    'nav.strategy':       'Strategy',
+    'nav.rankings':       'Rankings',
+    'nav.dashboard':      'Dashboard',
+    'nav.picklist':       'Picklist',
+    'settings.language':  'Language',
+    'settings.theme':     'Theme',
+    'settings.dark_mode': 'Dark Mode',
+    'settings.light_mode':'Light Mode',
+    'settings.density':   'Density',
+    'settings.comfortable':'Comfortable',
+    'settings.compact':   'Compact',
+    'auth.login':         'Login with Google',
+    'home.view_teams':    'View Teams →',
+    /* pit scouting labels */
+    'pit.drivetrain':         'Drivetrain Type',
+    'pit.weight':             'Weight (lbs)',
+    'pit.length':             'Length (inches)',
+    'pit.width':              'Width (inches)',
+    'pit.Volume':             'Fuel Capacity',
+    'pit.Shooter':            'Shooter Design',
+    'pit.intake_design':      'Intake Design',
+    'pit.Hopper':             'Has Hopper?',
+    'pit.auto_positions':     'Auto Starting Positions',
+    'pit.auto_fuel_max':      'Max Auto Fuel',
+    'pit.auto_hang':          'Auto Hang?',
+    'pit.intake_locations':   'Intake Locations',
+    'pit.shooting_distance':  'Shooting Distance',
+    'pit.tower_positions':    'Tower Positions',
+    'pit.tower_levels':       'Tower Level',
+    'pit.trench':             'Trench?',
+    'pit.Bump':               'Bump?',
+    'pit.additional_info':    'Additional Notes',
+  },
+  es: {
+    'nav.scanner':        'Escáner QR',
+    'nav.teams':          'Equipos',
+    'nav.strategy':       'Estrategia',
+    'nav.rankings':       'Clasificaciones',
+    'nav.dashboard':      'Panel',
+    'nav.picklist':       'Lista de Selección',
+    'settings.language':  'Idioma',
+    'settings.theme':     'Tema',
+    'settings.dark_mode': 'Modo Oscuro',
+    'settings.light_mode':'Modo Claro',
+    'settings.density':   'Densidad',
+    'settings.comfortable':'Cómodo',
+    'settings.compact':   'Compacto',
+    'auth.login':         'Iniciar sesión con Google',
+    'home.view_teams':    'Ver Equipos →',
+    'pit.drivetrain':         'Tipo de Chasis',
+    'pit.weight':             'Peso (lbs)',
+    'pit.length':             'Longitud (pulgadas)',
+    'pit.width':              'Ancho (pulgadas)',
+    'pit.Volume':             'Capacidad de Combustible',
+    'pit.Shooter':            'Diseño del Lanzador',
+    'pit.intake_design':      'Diseño de Intake',
+    'pit.Hopper':             '¿Tiene Tolva?',
+    'pit.auto_positions':     'Posiciones de Auto Inicio',
+    'pit.auto_fuel_max':      'Combustible Auto Máx.',
+    'pit.auto_hang':          '¿Cuelga en Auto?',
+    'pit.intake_locations':   'Ubicaciones de Intake',
+    'pit.shooting_distance':  'Distancia de Disparo',
+    'pit.tower_positions':    'Posiciones de Torre',
+    'pit.tower_levels':       'Niveles de Torre',
+    'pit.trench':             '¿Zanja?',
+    'pit.Bump':               '¿Choque?',
+    'pit.additional_info':    'Notas Adicionales',
+  },
+  fr: {
+    'nav.scanner':        'Scanner QR',
+    'nav.teams':          'Équipes',
+    'nav.strategy':       'Stratégie',
+    'nav.rankings':       'Classements',
+    'nav.dashboard':      'Tableau de bord',
+    'nav.picklist':       'Liste de sélection',
+    'settings.language':  'Langue',
+    'settings.theme':     'Thème',
+    'settings.dark_mode': 'Mode sombre',
+    'settings.light_mode':'Mode clair',
+    'settings.density':   'Densité',
+    'settings.comfortable':'Confortable',
+    'settings.compact':   'Compact',
+    'auth.login':         'Connexion avec Google',
+    'home.view_teams':    'Voir les Équipes →',
+    'pit.drivetrain':         'Type de Châssis',
+    'pit.weight':             'Poids (lbs)',
+    'pit.length':             'Longueur (pouces)',
+    'pit.width':              'Largeur (pouces)',
+    'pit.Volume':             'Capacité de Carburant',
+    'pit.Shooter':            'Conception du Lanceur',
+    'pit.intake_design':      'Conception du Intake',
+    'pit.Hopper':             'A un Trémie?',
+    'pit.auto_positions':     'Positions de Départ Auto',
+    'pit.auto_fuel_max':      'Carburant Auto Max.',
+    'pit.auto_hang':          'Accrochage Auto?',
+    'pit.intake_locations':   'Emplacements Intake',
+    'pit.shooting_distance':  'Distance de Tir',
+    'pit.tower_positions':    'Positions Tour',
+    'pit.tower_levels':       'Niveaux Tour',
+    'pit.trench':             'Tranchée?',
+    'pit.Bump':               'Choc?',
+    'pit.additional_info':    'Notes Supplémentaires',
+  },
+  pt: {
+    'nav.scanner':        'Scanner QR',
+    'nav.teams':          'Times',
+    'nav.strategy':       'Estratégia',
+    'nav.rankings':       'Classificações',
+    'nav.dashboard':      'Painel',
+    'nav.picklist':       'Lista de Seleção',
+    'settings.language':  'Idioma',
+    'settings.theme':     'Tema',
+    'settings.dark_mode': 'Modo Escuro',
+    'settings.light_mode':'Modo Claro',
+    'settings.density':   'Densidade',
+    'settings.comfortable':'Confortável',
+    'settings.compact':   'Compacto',
+    'auth.login':         'Entrar com Google',
+    'home.view_teams':    'Ver Times →',
+    'pit.drivetrain':         'Tipo de Chassi',
+    'pit.weight':             'Peso (lbs)',
+    'pit.length':             'Comprimento (polegadas)',
+    'pit.width':              'Largura (polegadas)',
+    'pit.Volume':             'Capacidade de Combustível',
+    'pit.Shooter':            'Design do Lançador',
+    'pit.intake_design':      'Design do Intake',
+    'pit.Hopper':             'Tem Tremonha?',
+    'pit.auto_positions':     'Posições de Início Auto',
+    'pit.auto_fuel_max':      'Combustível Auto Máx.',
+    'pit.auto_hang':          'Suspensão Auto?',
+    'pit.intake_locations':   'Locais do Intake',
+    'pit.shooting_distance':  'Distância de Disparo',
+    'pit.tower_positions':    'Posições da Torre',
+    'pit.tower_levels':       'Níveis da Torre',
+    'pit.trench':             'Vala?',
+    'pit.Bump':               'Colisão?',
+    'pit.additional_info':    'Notas Adicionais',
+  },
+  de: {
+    'nav.scanner':        'QR-Scanner',
+    'nav.teams':          'Teams',
+    'nav.strategy':       'Strategie',
+    'nav.rankings':       'Rangliste',
+    'nav.dashboard':      'Dashboard',
+    'nav.picklist':       'Auswahlliste',
+    'settings.language':  'Sprache',
+    'settings.theme':     'Design',
+    'settings.dark_mode': 'Dunkelmodus',
+    'settings.light_mode':'Hellmodus',
+    'settings.density':   'Dichte',
+    'settings.comfortable':'Komfortabel',
+    'settings.compact':   'Kompakt',
+    'auth.login':         'Mit Google anmelden',
+    'home.view_teams':    'Teams anzeigen →',
+    'pit.drivetrain':         'Antriebstyp',
+    'pit.weight':             'Gewicht (lbs)',
+    'pit.length':             'Länge (Zoll)',
+    'pit.width':              'Breite (Zoll)',
+    'pit.Volume':             'Kraftstoffkapazität',
+    'pit.Shooter':            'Schussvorrichtung',
+    'pit.intake_design':      'Intake-Design',
+    'pit.Hopper':             'Hat Trichter?',
+    'pit.auto_positions':     'Auto-Startpositionen',
+    'pit.auto_fuel_max':      'Max. Auto-Kraftstoff',
+    'pit.auto_hang':          'Auto-Aufhängung?',
+    'pit.intake_locations':   'Intake-Standorte',
+    'pit.shooting_distance':  'Schussdistanz',
+    'pit.tower_positions':    'Turmpositionen',
+    'pit.tower_levels':       'Turmetagen',
+    'pit.trench':             'Graben?',
+    'pit.Bump':               'Stoß?',
+    'pit.additional_info':    'Zusätzliche Notizen',
+  },
+};
+window.t = function(key) {
+  var lang = localStorage.getItem('lang') || 'en';
+  var dict = window._T[lang] || window._T.en;
+  return dict[key] || window._T.en[key] || key;
+};
+</script>
+
+<!-- ======================================================
      THEME TOGGLE (ENHANCED, NON-DESTRUCTIVE)
 ====================================================== -->
 <script>
@@ -511,8 +1022,8 @@ if(localStorage.getItem("comp") && !window.location.search){
   function updateUI(isDark){
     icon.classList.add("rotate");
     setTimeout(() => {
-      icon.textContent = isDark ? "🌞" : "🌙";
-      text.textContent = isDark ? "Light Mode" : "Dark Mode";
+      icon.textContent = isDark ? "🌝" : "🌚";
+      text.textContent = window.t ? window.t(isDark ? 'settings.light_mode' : 'settings.dark_mode') : (isDark ? "Light Mode" : "Dark Mode");
       icon.classList.remove("rotate");
     }, 180);
   }
@@ -544,7 +1055,7 @@ if(localStorage.getItem("comp") && !window.location.search){
   function setDensity(mode){
     document.documentElement.setAttribute("data-density", mode);
     localStorage.setItem("density", mode);
-    if(btn) btn.textContent = mode === "compact" ? "Compact" : "Comfortable";
+    if(btn) btn.textContent = window.t ? window.t(mode === "compact" ? 'settings.compact' : 'settings.comfortable') : (mode === "compact" ? "Compact" : "Comfortable");
   }
 
   if(btn){
@@ -559,6 +1070,168 @@ if(localStorage.getItem("comp") && !window.location.search){
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- ======================================================
+     LANGUAGE SELECTOR + i18n ENGINE
+====================================================== -->
+<script>
+(function () {
+  var stored = localStorage.getItem('lang') || 'en';
+  var label  = document.getElementById('lang-label');
+
+  function applyTranslations(lang) {
+    var dict = (window._T && window._T[lang]) || (window._T && window._T.en) || {};
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n');
+      var val = dict[key] !== undefined ? dict[key] : (window._T && window._T.en && window._T.en[key]);
+      if (val !== undefined) el.textContent = val;
+    });
+    /* Refresh dynamically-managed text elements */
+    var themeText = document.getElementById('theme-text');
+    if (themeText) {
+      var isDark = document.documentElement.classList.contains('inverted');
+      themeText.textContent = window.t(isDark ? 'settings.light_mode' : 'settings.dark_mode');
+    }
+    var densityBtn = document.getElementById('density-toggle');
+    if (densityBtn) {
+      var mode = document.documentElement.getAttribute('data-density') || 'comfortable';
+      densityBtn.textContent = window.t(mode === 'compact' ? 'settings.compact' : 'settings.comfortable');
+    }
+  }
+
+  /* Expose globally so other templates can call it */
+  window.applyTranslations = applyTranslations;
+
+  function setLang(lang, lbl) {
+    localStorage.setItem('lang', lang);
+    document.documentElement.setAttribute('lang', lang);
+    if (label) label.textContent = lbl;
+    document.querySelectorAll('.lang-option').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.lang === lang);
+    });
+    applyTranslations(lang);
+    window.showToast && window.showToast(window.t('settings.language') + ': ' + lbl, 'success', 2000);
+  }
+
+  /* Event delegation — after Bootstrap, so no race condition */
+  var menu = document.querySelector('.lang-menu');
+  if (menu) {
+    menu.addEventListener('click', function (e) {
+      var btn = e.target.closest('.lang-option');
+      if (!btn) return;
+      e.stopPropagation();
+      setLang(btn.dataset.lang, btn.dataset.label);
+    });
+  }
+
+  /* Restore on load */
+  var activeBtn = document.querySelector('.lang-option[data-lang="' + stored + '"]');
+  if (activeBtn) setLang(stored, activeBtn.dataset.label);
+  else applyTranslations(stored);
+})();
+</script>
+
+<!-- ======================================================
+     GLOBAL ANIMATION SYSTEM
+====================================================== -->
+<script>
+(function () {
+  /* --- Scroll Reveal --- */
+  const revealObs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        revealObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.07, rootMargin: '0px 0px -36px 0px' });
+
+  function observeReveals(root) {
+    (root || document).querySelectorAll('.reveal').forEach(function (el) {
+      revealObs.observe(el);
+    });
+  }
+  observeReveals();
+
+  /* Watch for dynamically added reveals */
+  new MutationObserver(function (mutations) {
+    mutations.forEach(function (m) {
+      m.addedNodes.forEach(function (node) {
+        if (node.nodeType !== 1) return;
+        if (node.classList && node.classList.contains('reveal')) revealObs.observe(node);
+        observeReveals(node);
+      });
+    });
+  }).observe(document.body, { childList: true, subtree: true });
+
+  /* --- Button Ripple --- */
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.btn');
+    if (!btn) return;
+    var rect = btn.getBoundingClientRect();
+    var size = Math.max(rect.width, rect.height);
+    var r = document.createElement('span');
+    r.className = 'ripple-wave';
+    r.style.cssText = 'width:' + size + 'px;height:' + size + 'px;'
+      + 'left:' + (e.clientX - rect.left - size / 2) + 'px;'
+      + 'top:'  + (e.clientY - rect.top  - size / 2) + 'px;';
+    btn.appendChild(r);
+    r.addEventListener('animationend', function () { r.remove(); });
+  });
+
+  /* --- Top Loading Bar --- */
+  var bar = document.getElementById('page-loading-bar');
+  if (bar) {
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest('a[href]');
+      if (!a) return;
+      var href = a.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('javascript') || a.target === '_blank') return;
+      bar.classList.add('navigating');
+    });
+  }
+
+  /* --- Toast System --- */
+  window.showToast = function (message, type, duration) {
+    type     = type     || 'info';
+    duration = duration || 3500;
+    var icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+    var container = document.getElementById('toast-container');
+    var el = document.createElement('div');
+    el.className = 'toast-item toast-' + type;
+    var iconSpan = document.createElement('span');
+    iconSpan.className = 'toast-icon';
+    iconSpan.textContent = icons[type] || 'ℹ';
+    var msgSpan = document.createElement('span');
+    msgSpan.textContent = message;
+    el.appendChild(iconSpan);
+    el.appendChild(msgSpan);
+    el.addEventListener('click', function () {
+      el.classList.remove('show');
+      el.addEventListener('transitionend', function () { el.remove(); }, { once: true });
+    });
+    container.appendChild(el);
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { el.classList.add('show'); });
+    });
+    setTimeout(function () {
+      el.classList.remove('show');
+      el.addEventListener('transitionend', function () { el.remove(); }, { once: true });
+    }, duration);
+    return el;
+  };
+
+  /* --- Active Nav Link --- */
+  var path = window.location.pathname;
+  document.querySelectorAll('.nav-link[href]').forEach(function (link) {
+    var href = link.getAttribute('href');
+    if (href && href !== '/' && path.startsWith(href)) {
+      link.classList.add('active-page');
+    }
+  });
+})();
+</script>
+
 {% block Scripts %}{% endblock %}
 </body>
 </html>

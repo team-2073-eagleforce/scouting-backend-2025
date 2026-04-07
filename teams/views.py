@@ -1,4 +1,6 @@
 import os
+import re
+from PIL import Image
 
 import cloudinary
 import cloudinary.api
@@ -21,9 +23,21 @@ cloudinary.config(
 
 
 def home(request):
-    return render(request, 'home.html')
+    robot_picture = None
+    try:
+        comp_code = request.GET.get('comp', 'testing')
+        own_team = Teams.objects.filter(team_number=2073, event=comp_code).first()
+        if own_team and own_team.robot_picture:
+            url = str(own_team.robot_picture)
+            # Only pass external HTTPS URLs (Cloudinary). Skip local dev / IP-only URLs.
+            if url.startswith('https://'):
+                robot_picture = url
+    except Exception:  # nosec B110
+        pass
+    return render(request, 'home.html', {'robot_picture': robot_picture})
 
 
+@login_required
 def get_events(request):
     return JsonResponse(get_team_events())
 
@@ -54,7 +68,7 @@ def team_page(request, team_number):
     context = {
         'team_number': team_number,
         'comp_code': comp_code,
-        'config_metrics': config.get('metrics', [])
+        'config_metrics': config.get('metrics', []),
     }
 
     if comp_code:
@@ -72,10 +86,12 @@ def team_page(request, team_number):
     return render(request, 'teams/team_page.html', context)
 
 
+_SAFE_COMP_CODE = re.compile(r'^[A-Za-z0-9_\-]{1,20}$')
+
 @login_required
 def pit_scouting(request, team_number):
     comp_code = request.GET.get('comp')
-    if not comp_code:
+    if not comp_code or not _SAFE_COMP_CODE.match(comp_code):
         return HttpResponse('Competition code required. Add ?comp=EVENT_CODE to URL', status=400)
     
     config = config_loader.get_config()
@@ -85,14 +101,18 @@ def pit_scouting(request, team_number):
         # Handle image upload (Anchor field)
         img_url = None
         logo_url = None
-        allowed_types = ['image/png', 'image/jpeg', 'image/jpg']
-
         if 'robot_picture' in request.FILES:
             image_file = request.FILES['robot_picture']
-            if image_file.content_type not in allowed_types:
+            try:
+                img = Image.open(image_file)
+                img.verify()
+                if img.format not in ('PNG', 'JPEG'):
+                    raise ValueError("Unsupported format")
+                image_file.seek(0)
+            except Exception:
                 return JsonResponse({
                     'status': 'error',
-                    'message': 'Invalid file type. Only PNG, JPEG, and JPG are allowed.'
+                    'message': 'Invalid file type. Only PNG and JPEG images are allowed.'
                 }, status=400)
 
             image_response = cloudinary.uploader.upload(image_file)
@@ -104,10 +124,16 @@ def pit_scouting(request, team_number):
         # Optional team logo upload
         if 'team_logo' in request.FILES:
             logo_file = request.FILES['team_logo']
-            if logo_file.content_type not in allowed_types:
+            try:
+                img = Image.open(logo_file)
+                img.verify()
+                if img.format not in ('PNG', 'JPEG'):
+                    raise ValueError("Unsupported format")
+                logo_file.seek(0)
+            except Exception:
                 return JsonResponse({
                     'status': 'error',
-                    'message': 'Invalid logo file type. Only PNG, JPEG, and JPG are allowed.'
+                    'message': 'Invalid logo file type. Only PNG and JPEG images are allowed.'
                 }, status=400)
 
             logo_response = cloudinary.uploader.upload(logo_file)
@@ -191,14 +217,33 @@ def pit_scouting(request, team_number):
         'team_number': team_number,
         'questions': config.get('pit_questions', []),
         'existing_data': existing_data,
+        'has_robot_picture': bool(team.robot_picture),
+        'comp_code': comp_code,
     })
     
+@login_required
+def clear_pit_data(request, team_number):
+    if request.method == 'POST':
+        comp_code = request.POST.get('comp_code')
+        if comp_code and not _SAFE_COMP_CODE.match(comp_code):
+            comp_code = None
+        if comp_code:
+            team = Teams.objects.filter(team_number=team_number, event=comp_code).first()
+            if team:
+                team.pit_data = {}
+                team.pit_scout_status = False
+                team.robot_picture = None
+                team.save()
+        if comp_code:
+            return redirect(f'/teams/{team_number}/?comp={comp_code}')
+        return redirect(f'/teams/{team_number}/')
+    return redirect(f'/teams/{team_number}/')
+
 @login_required
 def human_player_submit(request, team_number):
     comp_code = request.GET.get('comp')
     if request.method == 'POST':
         form = NewHumanScoutingData(request.POST)
-        print(form)
         if form.is_valid():
             Human_Player_Match.objects.create(team_number=team_number,
                                               event=comp_code,

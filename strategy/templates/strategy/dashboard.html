@@ -6,66 +6,38 @@
 {% block Content %}
 <div class="container-fluid py-4">
 
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="fw-bold mb-0">Dashboard</h1>
-            <div class="text-muted small">
-                Match performance overview & strategic insights
-            </div>
-        </div>
-    </div>
-
-    <!-- Controls Card -->
-    <div class="card dashboard-card mb-4">
-        <div class="card-body">
-            <form class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Match Type</label>
-                    <select id="quantifier" class="form-select">
-                        <option value="Prac">Practice</option>
-                        <option value="Quals" selected>Qualifications</option>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Match Number</label>
-                    <input
-                        id="match"
-                        class="form-control"
-                        placeholder="e.g. 42"
-                        type="text"
-                        inputmode="numeric"
-                    >
-                </div>
-
-                <div class="col-md-3">
-                    <button
-                        id="match_button"
-                        class="btn btn-primary w-100"
-                        type="button"
-                    >
-                        Load Match Data
-                    </button>
-                </div>
-            </form>
+    <!-- Controls -->
+    <div class="dash-controls">
+        <h2 class="dash-title">Dashboard</h2>
+        <div class="dash-inputs">
+            <select id="quantifier" class="dash-select">
+                <option value="Prac">Practice</option>
+                <option value="Quals" selected>Qualifications</option>
+            </select>
+            <input
+                id="match"
+                class="dash-input"
+                placeholder="Match #"
+                type="text"
+                inputmode="numeric"
+            >
+            <button id="match_button" class="btn dash-btn" type="button">Load</button>
         </div>
     </div>
 
     <!-- Dashboard Table -->
-    <div class="card dashboard-card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-sm mb-0" id="dashboard_table">
+    <div class="dash-table-wrap">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0" id="dashboard_table">
                     <thead>
                         <tr>
                             <th>Position</th>
-                            <th>Team</th>
+                            <th>Team #</th>
                             <th>Auto Leave</th>
                             {% for metric in config_metrics %}
                                 <th>{{ metric.display_name }}</th>
                             {% endfor %}
-                            <th>Driver</th>
+                            <th>Driver Ranking</th>
                             <th>Defense</th>
                             <th>Start Pos</th>
                         </tr>
@@ -74,7 +46,6 @@
                         <!-- Populated by JS -->
                     </tbody>
                 </table>
-            </div>
         </div>
     </div>
 
@@ -83,95 +54,129 @@
 
 {% block Styles %}
 <style>
-/* =========================
-   Dashboard Cards
-   ========================= */
-.dashboard-card {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+/* Controls row */
+.dash-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-top: 0.5rem;
 }
 
-/* =========================
-   Table Layout
-   ========================= */
+.dash-title {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    letter-spacing: -0.03em;
+    color: var(--text);
+}
+
+.dash-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.dash-select,
+.dash-input {
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.dash-select:focus,
+.dash-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.dash-input { width: 100px; }
+
+.dash-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 18px;
+    font-weight: 700;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.dash-btn:hover { background: var(--accent-hover, #8f0f1f); }
+
+/* Table wrapper */
+.dash-table-wrap {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+}
+
+html.inverted .dash-table-wrap {
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+}
+
 .table-responsive {
-    max-height: 65vh;
+    max-height: 68vh;
     overflow: auto;
 }
 
-/* Sticky headers */
 #dashboard_table thead th {
     position: sticky;
     top: 0;
     z-index: 5;
     background: var(--bg-elevated);
-    color: var(--text);
-    font-weight: 600;
+    color: var(--accent);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
     border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+    padding: 10px 14px;
 }
 
-/* Cells */
 #dashboard_table td,
 #dashboard_table th {
     border: 1px solid var(--border);
-    padding: 6px 10px;
-    font-size: 13px;
+    padding: 7px 14px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
     color: var(--text);
 }
 
-/* Zebra rows */
 #dashboard_table tbody tr:nth-child(even) {
-    background: rgba(0,0,0,0.03);
+    background: color-mix(in srgb, var(--bg) 50%, var(--bg-elevated));
 }
 
-/* Hover */
+#dashboard_table tbody tr {
+    transition: background 0.12s ease;
+    animation: rowSlideIn 0.26s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both;
+}
+
 #dashboard_table tbody tr:hover {
-    background: rgba(196, 22, 42, 0.10);
-    transition: background 0.15s ease-in-out;
+    background: color-mix(in srgb, var(--accent) 8%, var(--bg-elevated));
 }
 
-/* =========================
-   Controls
-   ========================= */
-.form-select,
-.form-control {
-    background: var(--bg-elevated);
-    color: var(--text);
-    border: 1px solid var(--border);
-}
-
-.form-label {
-    margin-bottom: 4px;
-}
-
-.btn-primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    font-weight: 600;
-}
-
-.btn-primary:hover {
-    background: var(--accent-hover, var(--accent));
-}
-
-/* =========================
-   Scrollbars
-   ========================= */
-.table-responsive::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-
+.table-responsive::-webkit-scrollbar { width: 8px; height: 8px; }
 .table-responsive::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,0.25);
-    border-radius: 6px;
-}
-
-html.inverted .table-responsive::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.25);
+    background: var(--border);
+    border-radius: 4px;
 }
 </style>
 {% endblock %}

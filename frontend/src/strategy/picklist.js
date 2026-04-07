@@ -3,7 +3,8 @@
  * Handles drag-and-drop team selection for match strategy
  */
 
-import { postJSON, triggerHapticFeedback, getCookie } from '@shared/api';
+/* eslint-disable no-console */
+import { postJSON, triggerHapticFeedback } from '@shared/api';
 import { getElementById, querySelector, addEventListener, createElement, debounce } from '@shared/utils';
 
 class TeamPicklist {
@@ -143,8 +144,8 @@ class TeamPicklist {
       const data = this.getTeamData();
       
       const response = await postJSON(
-        `/strategy/picklist/submit/?comp=${this.compCode}&save_to_db=true`, 
-        data
+        `/strategy/picklist/submit/?comp=${this.compCode}&save_to_db=true`,
+        data,
       );
 
       this.showStatus('Sent to database!', 'success');
@@ -360,7 +361,7 @@ class TeamPicklist {
    * Handle global drop (cleanup)
    * @param {DragEvent} event - Drop event
    */
-  handleGlobalDrop(event) {
+  handleGlobalDrop(_event) {
     if (this.draggedItem) {
       this.draggedItem.classList.remove('being-dragged');
       this.draggedItem = null;
@@ -381,7 +382,7 @@ class TeamPicklist {
       const offset = y - box.top - box.height / 2;
       
       if (offset < 0 && offset > closest.offset) {
-        return { offset: offset, element: child };
+        return { offset, element: child };
       } else {
         return closest;
       }

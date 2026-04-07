@@ -45,15 +45,13 @@ function sortTable(n, className) {
             /* Check if the two rows should switch place,
             based on the direction, asc or desc: */
             if (dir === "asc" || className === "team_number") {
-                console.log(parseFloat(x.innerHTML))
-                console.log(parseFloat(y.innerHTML))
-                if (parseFloat(x.innerHTML) > parseFloat(y.innerHTML)) {
+                if (parseFloat(x.textContent) > parseFloat(y.textContent)) {
                     // If so, mark as a switch and break the loop:
                     shouldSwitch = true;
                     break;
                 }
             } else if (dir === "desc") {
-                if (parseFloat(x.innerHTML) < parseFloat(y.innerHTML)) {
+                if (parseFloat(x.textContent) < parseFloat(y.textContent)) {
                     // If so, mark as a switch and break the loop:
                     shouldSwitch = true;
                     break;
