@@ -36,6 +36,7 @@ urlpatterns = [
     path('strategy/picklist/submit/', strategy_views.picklist_submit, name='picklist_submit'),
     path('api/get_path_data/<int:team_number>/', strategy_views.get_path_data, name='get_path_data'),
     path('api/team_matches/<int:team_number>/', strategy_views.team_matches_detail, name='team_matches_detail'),
+    path('api/team_info/<int:team_number>/', strategy_views.team_info, name='team_info'),
     path('api/toggle_exclude_match/', strategy_views.toggle_exclude_match, name='toggle_exclude_match'),
     path("auth/", include("authenticate.urls")),
     path('admin-panel/', admin_views.admin_panel, name='admin_panel'),
