@@ -185,8 +185,8 @@ def pit_scouting(request, team_number):
         # Merge validation errors
         if validation_errors:
             for err in validation_errors:
-                field_errors['_general'] = field_errors.get('_general', []) if isinstance(field_errors.get('_general'), list) else []
-                field_errors['_general'].append(err)
+                field_errors['general'] = field_errors.get('general', []) if isinstance(field_errors.get('general'), list) else []
+                field_errors['general'].append(err)
 
         if field_errors:
             # Return form with errors and previously entered values

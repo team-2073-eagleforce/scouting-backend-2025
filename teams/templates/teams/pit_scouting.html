@@ -26,9 +26,9 @@
 {% if field_errors %}
 <div style="background:color-mix(in srgb,var(--accent) 10%,var(--bg-elevated));border:1px solid var(--accent);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;font-size:0.88rem;color:var(--accent);font-weight:600;">
     Please fix the errors below before submitting.
-    {% if field_errors._general %}
+    {% if field_errors.general %}
     <ul style="margin:0.5rem 0 0;padding-left:1.25rem;">
-        {% for err in field_errors._general %}<li>{{ err }}</li>{% endfor %}
+        {% for err in field_errors.general %}<li>{{ err }}</li>{% endfor %}
     </ul>
     {% endif %}
 </div>
