@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from PIL import Image
@@ -64,17 +65,19 @@ def display_teams(request):
 def team_page(request, team_number):
     comp_code = request.GET.get('comp')
     config = config_loader.get_config()
-    
+    excluded_ids = set(request.session.get('excluded_match_ids', []))
+
     context = {
         'team_number': team_number,
         'comp_code': comp_code,
         'config_metrics': config.get('metrics', []),
+        'excluded_match_ids_json': json.dumps(list(excluded_ids)),
     }
 
     if comp_code:
         team, created = Teams.objects.get_or_create(team_number=team_number, event=comp_code)
         all_team_match_data = Team_Match_Data.objects.filter(
-            team_number=team_number, 
+            team_number=team_number,
             event=comp_code
         ).order_by('-match_number')
 
@@ -82,7 +85,7 @@ def team_page(request, team_number):
             'team': team,
             'all_team_match_data': all_team_match_data,
         })
-        
+
     return render(request, 'teams/team_page.html', context)
 
 
@@ -192,6 +195,8 @@ def pit_scouting(request, team_number):
                 'questions': config.get('pit_questions', []),
                 'existing_data': pit_payload,
                 'field_errors': field_errors,
+                'comp_code': comp_code,
+                'has_robot_picture': bool(team.robot_picture),
             })
         
         # Save
@@ -250,8 +255,11 @@ def human_player_submit(request, team_number):
                                               match_number=form.cleaned_data.get('match_number'),
                                               human_player_comment=form.cleaned_data.get('human_player_comment'))
 
-            return redirect("team_page", team_number=team_number)
+            redirect_url = f'/teams/{team_number}/'
+            if comp_code:
+                redirect_url += f'?comp={comp_code}'
+            return redirect(redirect_url)
     else:
         form = NewHumanScoutingData()
-    return render(request, "teams/human_player_scout.html", {'form': form, 'team_number': team_number})
+    return render(request, "teams/human_player_scout.html", {'form': form, 'team_number': team_number, 'comp_code': comp_code})
 
