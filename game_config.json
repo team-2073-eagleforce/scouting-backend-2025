@@ -32,7 +32,7 @@
       "aggregation": "avg",
       "display_name": "Auto Climb",
       "min": 0,
-      "max": 12,
+      "max": 3,
       "required": true
     },
     {
@@ -73,7 +73,7 @@
       "aggregation": "avg",
       "display_name": "Shooting Accuracy",
       "min": 1,
-      "max": 10,
+      "max": 100,
       "required": true
     }
     ],
@@ -107,14 +107,6 @@
       "display_name": "Width (inches)",
       "min": 0,
       "max": 48,
-      "required": true
-    },
-    {
-      "key": "Volume",
-      "type": "number",
-      "display_name": "How much fuel can robot hold?",
-      "min": 0,
-      "max": 100,
       "required": true
     },
     {
