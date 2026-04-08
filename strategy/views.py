@@ -16,7 +16,7 @@ from teams import models
 from helpers import login_required
 from django.shortcuts import render, redirect
 from strategy.models import PickList_Data
-from teams.models import Team_Match_Data
+from teams.models import Team_Match_Data, Teams
 from utils import config_loader
 
 _SAFE_COMP_CODE = re.compile(r'^[A-Za-z0-9_\-]{1,20}$')
@@ -515,3 +515,50 @@ def get_path_data(request, team_number):
         
     except Exception:
         return JsonResponse({'error': 'An unexpected error occurred'}, status=500)
+
+
+@login_required
+def team_info(request, team_number):
+    """Return pit scouting info + full match history for a team — used by the rankings quick-view modal."""
+    comp_code = request.GET.get('comp')
+    quantifier = request.GET.get('quantifier', 'Quals')
+    if not comp_code:
+        return JsonResponse({'error': 'comp required'}, status=400)
+
+    team = Teams.objects.filter(team_number=team_number, event=comp_code).first()
+    matches = Team_Match_Data.objects.filter(
+        team_number=team_number, event=comp_code, quantifier=quantifier
+    ).order_by('match_number')
+
+    excluded = set(request.session.get('excluded_match_ids', []))
+    config = config_loader.get_config()
+    metrics = config.get('metrics', [])
+
+    match_list = []
+    for m in matches:
+        flags = []
+        if m.is_broken:   flags.append('Broken')
+        if m.is_disabled: flags.append('Disabled')
+        if m.is_tipped:   flags.append('Tipped')
+        match_list.append({
+            'id': m.id,
+            'match_number': m.match_number,
+            'scout_name': m.scout_name,
+            'autoLeave': m.autoLeave,
+            'driverRanking': m.driverRanking,
+            'defenseRanking': m.defenseRanking,
+            'comment': m.comment,
+            'flags': flags,
+            'data': m.data,
+            'excluded': m.id in excluded,
+        })
+
+    return JsonResponse({
+        'team_number': team_number,
+        'logo_url': team.logo_url if team else None,
+        'robot_picture': str(team.robot_picture) if team and team.robot_picture else None,
+        'pit_scout_status': team.pit_scout_status if team else False,
+        'pit_data': team.pit_data if team else {},
+        'metrics': [{'key': m['key'], 'display_name': m['display_name']} for m in metrics],
+        'matches': match_list,
+    })
