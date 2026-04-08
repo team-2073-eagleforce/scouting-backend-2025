@@ -1,233 +1,233 @@
-{
-  "version": "2026_rebuilt",
-  "home_team": 2073,
-  "year": 2026,
-  "app_name": "EagleScout",
-  "team_name": "EagleForce",
-  "metrics": [
-    {
-      "key": "autoScore",
-      "type": "number",
-      "category": "auto",
-      "aggregation": "avg",
-      "display_name": "Auto Score",
-      "min": 0,
-      "max": 999,
-      "required": true
-    },
-    {
-      "key": "autoPass",
-      "type": "number",
-      "category": "auto",
-      "aggregation": "avg",
-      "display_name": "Auto Pass",
-      "min": 0,
-      "max": 999,
-      "required": true
-    },
-    {
-      "key": "autoClimb",
-      "type": "number",
-      "category": "auto",
-      "aggregation": "avg",
-      "display_name": "Auto Climb",
-      "min": 0,
-      "max": 3,
-      "required": true
-    },
-    {
-      "key": "teleScore",
-      "type": "number",
-      "category": "teleop",
-      "aggregation": "avg",
-      "display_name": "Teleop Score",
-      "min": 0,
-      "max": 999,
-      "required": true
-    },
-    {
-      "key": "telePass",
-      "type": "number",
-      "category": "telePass",
-      "aggregation": "avg",
-      "display_name": "Teleop Pass",
-      "min": 0,
-      "max": 999,
-      "required": true
-    },
-    {
-      "key": "endClimb",
-      "type": "number",
-      "category": "subjective",
-      "aggregation": "avg",
-      "display_name": "Climb Position",
-      "min": 0,
-      "max": 9,
-      "required": true
-    },
+  {
+    "version": "2026_rebuilt",
+    "home_team": 2073,
+    "year": 2026,
+    "app_name": "EagleScout",
+    "team_name": "EagleForce",
+    "metrics": [
+      {
+        "key": "autoScore",
+        "type": "number",
+        "category": "auto",
+        "aggregation": "avg",
+        "display_name": "Auto Score",
+        "min": 0,
+        "max": 999,
+        "required": true
+      },
+      {
+        "key": "autoPass",
+        "type": "number",
+        "category": "auto",
+        "aggregation": "avg",
+        "display_name": "Auto Pass",
+        "min": 0,
+        "max": 999,
+        "required": true
+      },
+      {
+        "key": "autoClimb",
+        "type": "number",
+        "category": "auto",
+        "aggregation": "avg",
+        "display_name": "Auto Climb",
+        "min": 0,
+        "max": 3,
+        "required": true
+      },
+      {
+        "key": "teleScore",
+        "type": "number",
+        "category": "teleop",
+        "aggregation": "avg",
+        "display_name": "Teleop Score",
+        "min": 0,
+        "max": 999,
+        "required": true
+      },
+      {
+        "key": "telePass",
+        "type": "number",
+        "category": "telePass",
+        "aggregation": "avg",
+        "display_name": "Teleop Pass",
+        "min": 0,
+        "max": 999,
+        "required": true
+      },
+      {
+        "key": "endClimb",
+        "type": "number",
+        "category": "subjective",
+        "aggregation": "avg",
+        "display_name": "Climb Position",
+        "min": 0,
+        "max": 9,
+        "required": true
+      },
 
-    {
-      "key": "shootingAccuracy",
-      "type": "number",
-      "category": "subjective",
-      "aggregation": "avg",
-      "display_name": "Shooting Accuracy",
-      "min": 1,
-      "max": 100,
-      "required": true
-    }
+      {
+        "key": "shootingAccuracy",
+        "type": "number",
+        "category": "subjective",
+        "aggregation": "avg",
+        "display_name": "Shooting Accuracy",
+        "min": 0,
+        "max": 100,
+        "required": true
+      }
+      ],
+      "pit_questions": [
+      {
+        "key": "drivetrain",
+        "type": "select",
+        "display_name": "Drivetrain Type",
+        "options": ["Swerve", "Tank", "Mecanum", "Other"],
+        "required": true
+      },
+      {
+        "key": "weight",
+        "type": "number",
+        "display_name": "Weight (lbs)",
+        "min": 0,
+        "max": 115,
+        "required": true
+      },
+      {
+        "key": "length",
+        "type": "number",
+        "display_name": "Length (inches)",
+        "min": 0,
+        "max": 48,
+        "required": true
+      },
+      {
+        "key": "width",
+        "type": "number",
+        "display_name": "Width (inches)",
+        "min": 0,
+        "max": 48,
+        "required": true
+      },
+      {
+        "key": "Shooter",
+        "type": "multiselect",
+        "display_name": "Shooter design",
+        "options": ["Hood", "Turret", "Double Shooter", "Both", "None"],
+        "required": true
+      },
+      {
+        "key": "Volume",
+        "type": "number",
+        "display_name": "How much fuel can robot hold?",
+        "min": 0,
+        "max": 100
+      },
+      {
+        "key": "Shooter",
+        "type": "multiselect",
+        "display_name": "Shooter design",
+        "options": ["Turret", "Double Shooter", "Both", "None"],
+        "required": true
+      },
+      {
+        "key": "intake_design",
+        "type": "multiselect",
+        "display_name": "Intake Design",
+        "options": ["Split Bumper", "Over the Bumper", "Outpost Intake", "None"],
+        "required": true
+      },
+      {
+        "key": "Hopper",
+        "type": "select",
+        "display_name": "Has Hopper?",
+        "options": ["Yes", "No"],
+        "required": true
+      },
+      {
+        "key": "auto_positions",
+        "type": "multiselect",
+        "display_name": "Auto Starting Positions",
+        "options": ["1", "2", "3", "4", "5"],
+        "required": true
+      },
+      {
+        "key": "auto_fuel_max",
+        "type": "number",
+        "display_name": "Max Auto Fuel",
+        "min": 0,
+        "max": 99,
+        "required": true
+      },
+      {
+        "key": "auto_hang",
+        "type": "select",
+        "display_name": "Auto Hang?",
+        "options": ["Yes", "No"],
+        "required": true
+      },
+      {
+        "key": "intake_locations",
+        "type": "multiselect",
+        "display_name": "Intake Locations",
+        "options": ["Ground", "Outpost", "Depot"],
+        "required": true
+      },
+      {
+        "key": "shooting_distance",
+        "type": "multiselect",
+        "display_name": "Shooting Distance",
+        "options": ["Short", "Middle", "Far"],
+        "required": true
+      },
+      {
+        "key": "tower_positions",
+        "type": "multiselect",
+        "display_name": "Tower Positions",
+        "options": ["Left", "Middle", "Right", "None"],
+        "required": true
+      },
+      {
+        "key": "tower_levels",
+        "type": "multiselect",
+        "display_name": "Tower Level",
+        "options": ["L1", "L2", "L3", "None"],
+        "required": true
+      },
+      {
+        "key": "trench",
+        "type": "select",
+        "display_name": "Trench?",
+        "options": ["Yes", "No"],
+        "required": true
+      },
+      {
+        "key": "Bump",
+        "type": "select",
+        "display_name": "Bump?",
+        "options": ["Yes", "No"],
+        "required": true
+      },
+
+      {
+        "key": "additional_info",
+        "type": "textarea",
+        "display_name": "Additional Notes"
+      }
     ],
-     "pit_questions": [
-    {
-      "key": "drivetrain",
-      "type": "select",
-      "display_name": "Drivetrain Type",
-      "options": ["Swerve", "Tank", "Mecanum", "Other"],
-      "required": true
-    },
-    {
-      "key": "weight",
-      "type": "number",
-      "display_name": "Weight (lbs)",
-      "min": 0,
-      "max": 115,
-      "required": true
-    },
-    {
-      "key": "length",
-      "type": "number",
-      "display_name": "Length (inches)",
-      "min": 0,
-      "max": 48,
-      "required": true
-    },
-    {
-      "key": "width",
-      "type": "number",
-      "display_name": "Width (inches)",
-      "min": 0,
-      "max": 48,
-      "required": true
-    },
-    {
-      "key": "Shooter",
-      "type": "multiselect",
-      "display_name": "Shooter design",
-      "options": ["Hood", "Turret", "Double Shooter", "Both", "None"],
-      "required": true
-    },
-    {
-      "key": "Volume",
-      "type": "number",
-      "display_name": "How much fuel can robot hold?",
-      "min": 0,
-      "max": 100
-    },
-    {
-      "key": "Shooter",
-      "type": "multiselect",
-      "display_name": "Shooter design",
-      "options": ["Turret", "Double Shooter", "Both", "None"],
-      "required": true
-    },
-    {
-      "key": "intake_design",
-      "type": "multiselect",
-      "display_name": "Intake Design",
-      "options": ["Split Bumper", "Over the Bumper", "Outpost Intake", "None"],
-      "required": true
-    },
-    {
-      "key": "Hopper",
-      "type": "select",
-      "display_name": "Has Hopper?",
-      "options": ["Yes", "No"],
-      "required": true
-    },
-    {
-      "key": "auto_positions",
-      "type": "multiselect",
-      "display_name": "Auto Starting Positions",
-      "options": ["1", "2", "3", "4", "5"],
-      "required": true
-    },
-    {
-      "key": "auto_fuel_max",
-      "type": "number",
-      "display_name": "Max Auto Fuel",
-      "min": 0,
-      "max": 99,
-      "required": true
-    },
-    {
-      "key": "auto_hang",
-      "type": "select",
-      "display_name": "Auto Hang?",
-      "options": ["Yes", "No"],
-      "required": true
-    },
-    {
-      "key": "intake_locations",
-      "type": "multiselect",
-      "display_name": "Intake Locations",
-      "options": ["Ground", "Outpost", "Depot"],
-      "required": true
-    },
-    {
-      "key": "shooting_distance",
-      "type": "multiselect",
-      "display_name": "Shooting Distance",
-      "options": ["Short", "Middle", "Far"],
-      "required": true
-    },
-    {
-      "key": "tower_positions",
-      "type": "multiselect",
-      "display_name": "Tower Positions",
-      "options": ["Left", "Middle", "Right", "None"],
-      "required": true
-    },
-    {
-      "key": "tower_levels",
-      "type": "multiselect",
-      "display_name": "Tower Level",
-      "options": ["L1", "L2", "L3", "None"],
-      "required": true
-    },
-    {
-      "key": "trench",
-      "type": "select",
-      "display_name": "Trench?",
-      "options": ["Yes", "No"],
-      "required": true
-    },
-    {
-      "key": "Bump",
-      "type": "select",
-      "display_name": "Bump?",
-      "options": ["Yes", "No"],
-      "required": true
-    },
-
-    {
-      "key": "additional_info",
-      "type": "textarea",
-      "display_name": "Additional Notes"
-    }
-  ],
-  "rankings": [
-    {"key": "team_number",      "display_name": "Team #",             "sortable": true},
-    {"key": "autoLeave",        "display_name": "Auto Leave",         "sortable": true},
-    {"key": "autoScore",        "display_name": "Auto Score",         "sortable": true},
-    {"key": "autoPass",         "display_name": "Auto Pass",          "sortable": true},
-    {"key": "autoClimb",        "display_name": "Auto Climb",         "sortable": true},
-    {"key": "teleScore",        "display_name": "Teleop Score",       "sortable": true},
-    {"key": "telePass",         "display_name": "Teleop Pass",        "sortable": true},
-    {"key": "endClimb",         "display_name": "Climb Position",     "sortable": true},
-    {"key": "shootingAccuracy", "display_name": "Shooting Accuracy",  "sortable": true},
-    {"key": "driverRanking",    "display_name": "Driver Ranking",     "sortable": true},
-    {"key": "defenseRanking",   "display_name": "Defense",            "sortable": true},
-    {"key": "totalPass",        "display_name": "Total Pass",         "sortable": true, "computed": true},
-    {"key": "totalShooting",    "display_name": "Total Score",        "sortable": true, "computed": true}
-  ]
-}
+    "rankings": [
+      {"key": "team_number",      "display_name": "Team #",             "sortable": true},
+      {"key": "autoLeave",        "display_name": "Auto Leave",         "sortable": true},
+      {"key": "autoScore",        "display_name": "Auto Score",         "sortable": true},
+      {"key": "autoPass",         "display_name": "Auto Pass",          "sortable": true},
+      {"key": "autoClimb",        "display_name": "Auto Climb",         "sortable": true},
+      {"key": "teleScore",        "display_name": "Teleop Score",       "sortable": true},
+      {"key": "telePass",         "display_name": "Teleop Pass",        "sortable": true},
+      {"key": "endClimb",         "display_name": "Climb Position",     "sortable": true},
+      {"key": "shootingAccuracy", "display_name": "Shooting Accuracy",  "sortable": true},
+      {"key": "driverRanking",    "display_name": "Driver Ranking",     "sortable": true},
+      {"key": "defenseRanking",   "display_name": "Defense",            "sortable": true},
+      {"key": "totalPass",        "display_name": "Total Pass",         "sortable": true, "computed": true},
+      {"key": "totalShooting",    "display_name": "Total Score",        "sortable": true, "computed": true}
+    ]
+  }
