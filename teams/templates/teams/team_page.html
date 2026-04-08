@@ -104,14 +104,14 @@
         </thead>
         <tbody>
             {% for match in all_team_match_data %}
-            <tr>
+            <tr data-match-id="{{ match.id }}">
                 <td>{{ match.match_number }} ({{ match.quantifier }})</td>
                 <td>{{ match.autoLeave|default:"0" }}</td>
-                
+
                 {% for metric in config_metrics %}
                     <td>{{ match.data|get_item:metric.key|default:"0" }}</td>
                 {% endfor %}
-                
+
                 <td>{{ match.scout_name }}</td>
                 <td>{{ match.driverRanking|default:"0" }}</td>
                 <td>{{ match.defenseRanking|default:"0" }}</td>
@@ -120,6 +120,11 @@
                     {% if match.is_disabled %}<span class="badge bg-warning">Disabled</span>{% endif %}
                     {% if match.is_tipped %}<span class="badge bg-info">Tipped</span>{% endif %}
                     {{ match.comment }}
+                </td>
+                <td>
+                    <button class="hide-match-btn" data-match-id="{{ match.id }}" title="Hide match from rankings averages">
+                        Hide
+                    </button>
                 </td>
                 {% plugin_hook 'team_page_match_row' %}
             </tr>
@@ -407,6 +412,41 @@
     width: 100%;
 }
 
+/* =========================
+   Hidden match rows
+   ========================= */
+tr.match-hidden td {
+    color: var(--muted-text) !important;
+    text-decoration: line-through;
+    opacity: 0.5;
+}
+
+tr.match-hidden .hide-match-btn {
+    background: color-mix(in srgb, #22c55e 15%, var(--bg-elevated));
+    color: #16a34a;
+    border-color: color-mix(in srgb, #22c55e 35%, var(--border));
+}
+
+/* =========================
+   Hide match button
+   ========================= */
+.hide-match-btn {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid color-mix(in srgb, #ef4444 35%, var(--border));
+    background: color-mix(in srgb, #ef4444 10%, var(--bg-elevated));
+    color: #ef4444;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.hide-match-btn:hover {
+    background: color-mix(in srgb, #ef4444 20%, var(--bg-elevated));
+}
+
 /* Match history row entry */
 #match_data tbody tr {
     animation: rowSlideIn 0.28s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) both;
@@ -438,6 +478,68 @@ function confirmClearPitData() {
     var rows = document.querySelectorAll('#match_data tbody tr');
     rows.forEach(function (row, i) {
         row.style.animationDelay = Math.min(i * 16, 260) + 'ms';
+    });
+})();
+
+/* ── Match hide/unhide ────────────────────────────────────────── */
+(function () {
+    // Excluded match IDs from server session
+    var excludedIds = new Set({{ excluded_match_ids_json|safe }});
+
+    function getCsrf() {
+        var m = document.cookie.match(/csrftoken=([^;]+)/);
+        return m ? m[1] : '';
+    }
+
+    function applyHiddenState(row, hidden) {
+        if (hidden) {
+            row.classList.add('match-hidden');
+            row.querySelector('.hide-match-btn').textContent = 'Show';
+            row.querySelector('.hide-match-btn').title = 'Re-include match in rankings averages';
+        } else {
+            row.classList.remove('match-hidden');
+            row.querySelector('.hide-match-btn').textContent = 'Hide';
+            row.querySelector('.hide-match-btn').title = 'Hide match from rankings averages';
+        }
+    }
+
+    // Apply initial state from session
+    document.querySelectorAll('#match_data tbody tr[data-match-id]').forEach(function (row) {
+        var id = parseInt(row.dataset.matchId, 10);
+        if (excludedIds.has(id)) {
+            applyHiddenState(row, true);
+        }
+    });
+
+    // Toggle on button click
+    document.querySelectorAll('.hide-match-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var matchId = parseInt(btn.dataset.matchId, 10);
+            var row = btn.closest('tr');
+
+            fetch('/api/toggle_exclude_match/', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrf(),
+                },
+                body: JSON.stringify({ match_id: matchId }),
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                var nowExcluded = res.status === 'excluded';
+                applyHiddenState(row, nowExcluded);
+                if (nowExcluded) {
+                    excludedIds.add(matchId);
+                } else {
+                    excludedIds.delete(matchId);
+                }
+            })
+            .catch(function () {
+                alert('Failed to update match visibility. Please try again.');
+            });
+        });
     });
 })();
 </script>

@@ -263,16 +263,20 @@ const scanner = new QrScanner(video, result => setResult(camQrResult, result), {
         x: 0, y: 0,
         width:  v.videoWidth  || 640,
         height: v.videoHeight || 480,
+        downScaleFactor: 1,
     }),
 });
 
 scanner.start().then(() => {
     // ── Prevent library from zooming the video via inline styles ──
-    // The library sets video.style.width / height / transform when it
+    // The library sets video.style.width / height / transform / zoom when it
     // updates its overlay. We observe and immediately clear those.
     new MutationObserver(() => {
         if (video.style.transform && video.style.transform !== 'none') {
-            video.style.transform = '';
+            video.style.transform = 'none';
+        }
+        if (video.style.zoom && video.style.zoom !== '1') {
+            video.style.zoom = '1';
         }
         // Library sometimes shrinks the video to 0 when "hiding" it
         if (video.style.width  || video.style.height) {

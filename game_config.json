@@ -72,8 +72,8 @@
       "category": "subjective",
       "aggregation": "avg",
       "display_name": "Shooting Accuracy",
-      "min": 1,
-      "max": 10,
+      "min": 0,
+      "max": 100,
       "required": true
     }
     ],
@@ -122,20 +122,6 @@
       "type": "multiselect",
       "display_name": "Shooter design",
       "options": ["Hood", "Turret", "Double Shooter", "Both", "None"],
-      "required": true
-    },
-    {
-      "key": "Volume",
-      "type": "number",
-      "display_name": "How much fuel can robot hold?",
-      "min": 0,
-      "max": 100
-    },
-    {
-      "key": "Shooter",
-      "type": "multiselect",
-      "display_name": "Shooter design",
-      "options": ["Turret", "Double Shooter", "Both", "None"],
       "required": true
     },
     {

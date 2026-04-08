@@ -51,13 +51,25 @@ def scanner(request):
                 val = data_from_post.get(key)
                 return val if val not in [None, ""] else default
 
-            # Build anchor fields — normalize quantifier from QR display labels
+            # Build anchor fields — normalize quantifier from QR display labels.
+            # Try multiple possible field names since different scouting apps vary.
             QUANTIFIER_MAP = {
-                'Quals': 'Quals', 'Qualifications': 'Quals',
-                'Playoff': 'Playoff', 'Play Off': 'Playoff', 'Playoffs': 'Playoff',
-                'Prac': 'Prac', 'Practice': 'Prac',
+                'quals': 'Quals', 'qualifications': 'Quals', 'qual': 'Quals',
+                'playoff': 'Playoff', 'play off': 'Playoff', 'playoffs': 'Playoff',
+                'elimination': 'Playoff', 'elim': 'Playoff', 'finals': 'Playoff',
+                'prac': 'Prac', 'practice': 'Prac',
             }
-            quantifier_val = QUANTIFIER_MAP.get(data_from_post.get("quantifier", ""), "Quals")
+            quantifier_raw = (
+                data_from_post.get("quantifier") or
+                data_from_post.get("matchType") or
+                data_from_post.get("match_type") or
+                data_from_post.get("type") or
+                data_from_post.get("phase") or
+                data_from_post.get("matchPhase") or
+                data_from_post.get("match_phase") or
+                ""
+            )
+            quantifier_val = QUANTIFIER_MAP.get(str(quantifier_raw).strip().lower(), "Quals")
 
             match_data_defaults = {
                 'scout_name': scout_name,
