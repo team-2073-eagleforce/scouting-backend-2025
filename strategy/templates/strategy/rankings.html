@@ -561,6 +561,7 @@ body.comfortable #rankings_table td {
 
 <script>
 function showTeamInfo(teamNum, comp, quantifier) {
+    document.getElementById('match-modal').style.display = 'none';
     var modal = document.getElementById('team-info-modal');
     modal.style.display = 'flex';
 
@@ -661,7 +662,7 @@ function showTeamInfo(teamNum, comp, quantifier) {
                 }
 
                 var flags = (m.flags || []).join(' ');
-                var matchLabel = m.match_number + (flags ? ' ⚠' : '');
+                var matchLabel = m.match_number + (flags ? ' [!]' : '');
                 var matchCell = cell(matchLabel);
                 if (flags) matchCell.title = flags;
                 tr.appendChild(matchCell);
@@ -691,6 +692,7 @@ document.getElementById('team-info-modal').addEventListener('click', function(e)
 });
 
 function showMatchDetail(teamNum, comp, quantifier) {
+    document.getElementById('team-info-modal').style.display = 'none';
     var modal = document.getElementById('match-modal');
     document.getElementById('modal-title').textContent = 'Team ' + teamNum + ' — Individual Matches';
     modal.style.display = 'flex';
