@@ -735,7 +735,6 @@ html.inverted .card-lift:hover {
 <li>
 <b data-i18n="settings.theme">Theme</b><br>
 <button id="theme-toggle" class="btn btn-sm btn-outline-secondary mt-1 theme-toggle-btn">
-  <span id="theme-icon" class="theme-icon">🌚</span>
   <span id="theme-text">Dark Mode</span>
 </button>
 </li>
@@ -1022,7 +1021,6 @@ window.t = function(key) {
   function updateUI(isDark){
     icon.classList.add("rotate");
     setTimeout(() => {
-      icon.textContent = isDark ? "🌝" : "🌚";
       text.textContent = window.t ? window.t(isDark ? 'settings.light_mode' : 'settings.dark_mode') : (isDark ? "Light Mode" : "Dark Mode");
       icon.classList.remove("rotate");
     }, 180);
