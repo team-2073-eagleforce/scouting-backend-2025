@@ -258,6 +258,7 @@ function setResult(label, result) {
         const parts = [];
         if (parsed.name) parts.push(parsed.name);
         if (parsed.teamNumber) parts.push(`Team ${parsed.teamNumber}`);
+        if (parsed.matchNumber) parts.push(`Match ${parsed.matchNumber}`);
         if (parts.length > 0) dataText = parts.join(' · ');
     } catch (_) { /* plain string QR — show as-is */ }
     
