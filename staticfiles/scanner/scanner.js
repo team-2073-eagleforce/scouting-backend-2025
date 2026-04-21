@@ -106,6 +106,7 @@ function post_data_to_server(data, scouterName, teamNum, matchNum) {
     .then(() => {
         const name = scouterName || 'Unknown';
         setFeedback('success', `Saved — ${name}`);
+        vibrateOnSuccess(150);
         addToHistory(scouterName, teamNum, matchNum, 'success');
     })
     .catch(error => {
@@ -120,7 +121,12 @@ function setFeedback(state, text) {
     scanFeedback.textContent = text;
     scanFeedback.className   = 'scan-feedback-text feedback-' + state;
 }
-
+// ── Vibration feedback (mobile only) ──────────────
+function vibrateOnSuccess(time) {
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+        navigator.vibrate(time);
+    }
+}
 // ── QR outline canvas ─────────────────────────────────
 // Tracking state — persists across frames
 let _outlineActive  = false;  // true after first successful scan
@@ -245,8 +251,16 @@ function setResult(label, result) {
         matchNum    = parsed.match || parsed.matchNumber  || parsed.match_number || null;
     } catch (_) { /* plain string QR — not JSON */ }
 
-    // Flash the result
-    label.textContent = data;
+    // Flash the result — display name, teamNumber, and matchNumber
+    let dataText = data;
+    const parts = [];
+    if (scouterName) parts.push(scouterName);
+    if (teamNum) parts.push(`Team ${teamNum}`);
+    if (matchNum) parts.push(`Match ${matchNum}`);
+    if (parts.length > 0) dataText = parts.join(' · ');
+
+    
+    label.textContent = dataText;
     label.classList.add('flash');
     clearTimeout(label._flashTimer);
     label._flashTimer = setTimeout(() => label.classList.remove('flash'), 500);

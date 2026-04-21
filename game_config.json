@@ -75,6 +75,16 @@
       "min": 0,
       "max": 100,
       "required": true
+    },
+    {
+      "key": "Steal",
+      "type": "number",
+      "category": "subjective",
+      "aggregation": "avg",
+      "display_name": "Stole?",
+      "min": 0,
+      "max": 1,
+      "required": true
     }
     ],
      "pit_questions": [
