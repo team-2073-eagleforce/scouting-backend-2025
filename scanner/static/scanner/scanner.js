@@ -251,16 +251,14 @@ function setResult(label, result) {
         matchNum    = parsed.match || parsed.matchNumber  || parsed.match_number || null;
     } catch (_) { /* plain string QR — not JSON */ }
 
-// Flash the result — display only name and teamNumber
+    // Flash the result — display name, teamNumber, and matchNumber
     let dataText = data;
-    try {
-        const parsed = JSON.parse(data);
-        const parts = [];
-        if (parsed.name) parts.push(parsed.name);
-        if (parsed.teamNumber) parts.push(`Team ${parsed.teamNumber}`);
-        if (parsed.matchNumber) parts.push(`Match ${parsed.matchNumber}`);
-        if (parts.length > 0) dataText = parts.join(' · ');
-    } catch (_) { /* plain string QR — show as-is */ }
+    const parts = [];
+    if (scouterName) parts.push(scouterName);
+    if (teamNum) parts.push(`Team ${teamNum}`);
+    if (matchNum) parts.push(`Match ${matchNum}`);
+    if (parts.length > 0) dataText = parts.join(' · ');
+
     
     label.textContent = dataText;
     label.classList.add('flash');
