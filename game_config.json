@@ -131,7 +131,7 @@
       "key": "Shooter",
       "type": "multiselect",
       "display_name": "Shooter design",
-      "options": ["Hood", "Turret", "Double Shooter", "Both", "None"],
+      "options": ["Drum", "Turret", "Double Shooter", "Single Static", "None"],
       "required": true
     },
     {
