@@ -132,7 +132,7 @@ def rankings(request):
 
     # Bulk-fetch ALL match data for this event/quantifier in ONE query
     all_matches = list(models.Team_Match_Data.objects.filter(
-        event=comp_code, quantifier=quantifier, match_number__lt=100, is_excluded=False
+        event=comp_code, quantifier=quantifier, is_excluded=False
     ))
 
     # Group by team number
@@ -414,7 +414,6 @@ def fetch_team_match_averages(team_number, comp_code, quantifier, exclude_zeros=
     team_match_data = models.Team_Match_Data.objects.filter(
         team_number=team_number,
         event=comp_code,
-        match_number__lt=100,
         quantifier=quantifier,
         is_excluded=False,
     )
