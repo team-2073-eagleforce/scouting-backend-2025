@@ -85,6 +85,12 @@ def rankings(request):
 
     # Get excluded match IDs from session
     excluded_ids = set(request.session.get('excluded_match_ids', []))
+    logger.warning(
+        "RANKINGS user=%s session=%s excluded_ids=%s",
+        request.session.get('email', '?'),
+        request.session.session_key[:8] if request.session.session_key else '?',
+        list(excluded_ids)
+    )
 
     # --- Pit scouting attribute filters ---
     pit_questions = config.get('pit_questions', [])
@@ -485,7 +491,11 @@ def toggle_exclude_match(request):
     except (json.JSONDecodeError, KeyError, ValueError, TypeError):
         return JsonResponse({'error': 'Invalid match_id'}, status=400)
 
-    excluded = set(request.session.get('excluded_match_ids', []))
+    user = request.session.get('email', '?')
+    session_key = request.session.session_key
+    before = list(request.session.get('excluded_match_ids', []))
+
+    excluded = set(before)
     if match_id in excluded:
         excluded.discard(match_id)
         action = 'included'
@@ -493,6 +503,12 @@ def toggle_exclude_match(request):
         excluded.add(match_id)
         action = 'excluded'
     request.session['excluded_match_ids'] = list(excluded)
+
+    logger.warning(
+        "TOGGLE user=%s session=%s match_id=%d action=%s before=%s after=%s",
+        user, session_key[:8] if session_key else '?', match_id, action, before, list(excluded)
+    )
+
     return JsonResponse({'status': action, 'match_id': match_id, 'excluded_count': len(excluded)})
 
 
