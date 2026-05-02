@@ -1043,6 +1043,229 @@ Keep universal questions (drivetrain, weight), update game-specific ones.
 
 ---
 
+## Rankings Configuration
+
+The `rankings` array controls which columns appear in the rankings table, their display names, and whether they're sortable.
+
+### Rankings Column Structure
+
+```json
+{
+  "key": "autoScore",
+  "display_name": "Auto Score",
+  "sortable": true
+}
+```
+
+### Field Definitions
+
+#### `key` (string, required)
+Must match either:
+- A metric `key` from the `metrics` array (e.g., `"autoScore"`)
+- An anchor field: `"team_number"`, `"autoLeave"`, `"driverRanking"`, `"defenseRanking"`
+- A computed field: `"totalPass"`, `"totalShooting"` (see below)
+
+#### `display_name` (string, required)
+Column header text shown in the rankings table.
+
+#### `sortable` (boolean, optional)
+Whether users can sort the table by this column. Default: false.
+
+#### `computed` (boolean, optional)
+Mark as `true` for derived columns that are calculated from other metrics, not stored directly.
+
+### Computed Fields
+
+These are calculated automatically in the rankings view:
+
+| Key | Formula | Description |
+|-----|---------|-------------|
+| `totalPass` | `autoPass + telePass` | Combined passing |
+| `totalShooting` | `autoScore + teleScore` | Combined scoring |
+| `totalTotal` | `totalShooting + totalPass` | Everything combined |
+
+### Anchor Fields
+
+These are stored as dedicated database columns (not in the dynamic `data` JSONField):
+
+| Key | Description | Notes |
+|-----|-------------|-------|
+| `team_number` | FRC team number | Always first column |
+| `autoLeave` | Left starting zone in auto | 0 or 1 |
+| `driverRanking` | Subjective driver skill | 0-5 scale |
+| `defenseRanking` | Subjective defense rating | 0-5 scale |
+| `start_pos` | Starting position | 0-5 |
+
+Anchor fields are averaged only across non-zero values (so unrated matches don't drag down the average).
+
+### Example Rankings Configuration
+
+```json
+"rankings": [
+  {"key": "team_number",      "display_name": "Team #",            "sortable": true},
+  {"key": "autoLeave",        "display_name": "Auto Leave",        "sortable": true},
+  {"key": "autoScore",        "display_name": "Auto Score",        "sortable": true},
+  {"key": "autoPass",         "display_name": "Auto Pass",         "sortable": true},
+  {"key": "teleScore",        "display_name": "Teleop Score",      "sortable": true},
+  {"key": "telePass",         "display_name": "Teleop Pass",       "sortable": true},
+  {"key": "driverRanking",    "display_name": "Driver Ranking",    "sortable": true},
+  {"key": "defenseRanking",   "display_name": "Defense",           "sortable": true},
+  {"key": "totalPass",        "display_name": "Total Pass",        "sortable": true, "computed": true},
+  {"key": "totalShooting",    "display_name": "Total Score",       "sortable": true, "computed": true}
+]
+```
+
+### How Rankings Columns Connect to Config
+
+The sort dropdown and table columns are **driven by the `rankings` array**. When you add a new metric to `metrics` and want it visible in rankings:
+
+1. Add the metric to `metrics` (for data collection and aggregation)
+2. Add a matching entry to `rankings` (for display in the table)
+3. Set `"sortable": true` if users should be able to sort by it
+
+If you add a metric to `metrics` but NOT to `rankings`, it will still be collected and stored, but won't appear in the rankings table. It will still appear on team pages and in the dashboard.
+
+---
+
+## Match Exclusion System
+
+Scouts and strategists can **hide individual matches** from rankings averages. This is useful for excluding inaccurate data, broken robot matches, or outliers.
+
+### How It Works
+
+1. **Team Page**: Each match row has a "Hide" button. Clicking it dims the row (opacity 0.5, strikethrough) and saves the exclusion to the user's session.
+2. **Rankings Page**: The match detail modal also has ✕/✓ buttons to exclude/include matches. After toggling, the page reloads with recalculated averages.
+3. **Session-Based**: Exclusions are stored in the user's browser session, NOT in the database. This means:
+   - Each user has their own set of exclusions
+   - Exclusions don't affect other users
+   - Exclusions are lost when the user logs out or the session expires
+   - This is intentional — different strategists may want different exclusion sets
+
+### What Gets Excluded
+
+- Only matches with `match_number < 100` are counted in rankings averages (this is a hardcoded filter to exclude practice/test matches)
+- Hidden matches are excluded from the average calculation but remain visible (dimmed) in the UI
+- The `match_count` in rankings reflects the number of matches actually counted
+
+### Important Notes
+
+- Hiding a match on the team page takes effect on the rankings page on the next page load
+- The "X matches hidden from rankings" badge on the team page shows the total across ALL teams, not just the current team
+- To clear all exclusions, log out and log back in
+
+---
+
+## How Config Changes Affect the Running System
+
+### What Happens Instantly (Hot-Reload)
+
+The `ConfigLoader` checks the file modification time on every request. These changes apply immediately without server restart:
+
+| Change | Effect |
+|--------|--------|
+| Add a metric to `metrics` | New column appears in team pages, dashboard, scanner starts collecting it |
+| Remove a metric from `metrics` | Column disappears from views, existing data preserved in DB |
+| Change `display_name` | Labels update everywhere |
+| Change `min`/`max` | Validation bounds update for new scans |
+| Add/remove `rankings` columns | Rankings table columns update |
+| Change `pit_questions` | Pit scouting form updates |
+| Change `app_name`/`team_name` | Branding updates |
+
+### What Does NOT Change
+
+| Change | What Stays the Same |
+|--------|-------------------|
+| Rename a metric `key` (without `legacy_keys`) | Old data becomes invisible — it's still in the DB under the old key but nothing reads it |
+| Change `aggregation` type | Only affects new calculations, not stored data |
+| Remove a metric | Data stays in the `Team_Match_Data.data` JSONField forever |
+| Change pit question `options` | Existing pit data keeps old values — filters won't match if option names changed |
+
+### The Pit Data Trap
+
+**This is the most common source of bugs.** If you change pit question option values mid-season:
+
+```json
+// Before: options were ["Hood", "Turret", "Static"]
+// After:  options are  ["Drum", "Turret", "Single Static", "None"]
+```
+
+Teams scouted before the change still have `"Hood"` and `"Static"` in their `pit_data`. The rankings pit filters only show the NEW options, so those teams become invisible to filters.
+
+**Fix:** Run a data migration to update old values:
+```python
+# In Django shell (python3 manage.py shell)
+from teams.models import Teams
+
+MIGRATION = {'Hood': 'Single Static', 'Static': 'Single Static'}
+
+for team in Teams.objects.filter(pit_scout_status=True):
+    pd = team.pit_data or {}
+    shooter = pd.get('Shooter')
+    if isinstance(shooter, list):
+        new = [MIGRATION.get(v, v) for v in shooter]
+        if new != shooter:
+            pd['Shooter'] = new
+            team.pit_data = pd
+            team.save()
+            print(f'Updated team {team.team_number}: {shooter} -> {new}')
+```
+
+### Computed Fields Are Hardcoded
+
+The computed fields (`totalPass`, `totalShooting`, `totalTotal`) are calculated in `strategy/views.py`, not from the config. If you change the metric keys they depend on (e.g., rename `autoScore` to `auto_score`), the computed fields will break because they reference the old key names.
+
+**Current formulas in `strategy/views.py`:**
+```python
+stats['totalPass']     = autoPass + telePass
+stats['totalShooting'] = autoScore + teleScore
+stats['totalTotal']    = totalShooting + totalPass
+```
+
+If you rename these metrics, update the formulas in `rankings()` in `strategy/views.py`.
+
+---
+
+## Season Transition Checklist
+
+When starting a new FRC season:
+
+### Before Kickoff
+- [ ] Back up current `game_config.json` as `game_config_YEAR.json`
+- [ ] Back up the database (match data, pit data, picklists)
+- [ ] Update `version`, `year` in config
+
+### After Game Reveal
+- [ ] Watch the game reveal and read the manual
+- [ ] Identify all scoring actions (auto, teleop, endgame)
+- [ ] Draft `metrics` array — aim for 8-15 metrics
+- [ ] Draft `pit_questions` — keep universal ones (drivetrain, weight, dimensions), add game-specific ones
+- [ ] Draft `rankings` array — decide which columns to show and which are sortable
+- [ ] Validate JSON syntax
+- [ ] Test with a practice scan
+
+### Before First Competition
+- [ ] Verify scanner QR format matches metric keys
+- [ ] Test pit scouting form on mobile
+- [ ] Test rankings page loads correctly
+- [ ] Test dashboard with a real TBA event
+- [ ] Verify all sort options work
+- [ ] Train scouts on what each metric means
+
+### During Competition
+- [ ] Monitor for data quality issues
+- [ ] Use match exclusion to hide bad data
+- [ ] If renaming a metric, ALWAYS use `legacy_keys`
+- [ ] If changing pit question options, run a data migration for existing data
+- [ ] Check rankings filters still work after any config change
+
+### Mid-Season Config Changes
+- [ ] Never change a metric `key` without `legacy_keys`
+- [ ] Never change pit question `options` without migrating existing data
+- [ ] Test the change on the rankings page immediately after saving
+- [ ] Verify pit filters still return expected results
+
+---
+
 ## Support
 
 For questions or issues:
