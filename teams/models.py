@@ -37,6 +37,7 @@ class Team_Match_Data(models.Model):
     is_broken = models.BooleanField(default=False)
     is_disabled = models.BooleanField(default=False)
     is_tipped = models.BooleanField(default=False)
+    is_excluded = models.BooleanField(default=False)
     
     # Subjective Ratings (Anchor)
     driverRanking = models.IntegerField(default=0)

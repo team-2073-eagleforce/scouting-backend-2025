@@ -84,12 +84,10 @@ def rankings(request):
     SORT_OPTIONS.append(('match_count', 'Matches Played'))
 
     # Get excluded match IDs from session
-    excluded_ids = set(request.session.get('excluded_match_ids', []))
+    excluded_ids = set()  # Now handled by is_excluded field in DB
     logger.warning(
-        "RANKINGS user=%s session=%s excluded_ids=%s",
+        "RANKINGS user=%s",
         request.session.get('email', '?'),
-        request.session.session_key[:8] if request.session.session_key else '?',
-        list(excluded_ids)
     )
 
     # --- Pit scouting attribute filters ---
@@ -134,8 +132,8 @@ def rankings(request):
 
     # Bulk-fetch ALL match data for this event/quantifier in ONE query
     all_matches = list(models.Team_Match_Data.objects.filter(
-        event=comp_code, quantifier=quantifier, match_number__lt=100
-    ).exclude(id__in=excluded_ids if excluded_ids else []))
+        event=comp_code, quantifier=quantifier, match_number__lt=100, is_excluded=False
+    ))
 
     # Group by team number
     matches_by_team = defaultdict(list)
@@ -170,7 +168,7 @@ def rankings(request):
         'min_matches': min_matches,
         'filterable_pit': filterable_pit,
         'active_pit_filters': active_pit_filters,
-        'excluded_count': len(excluded_ids),
+        'excluded_count': models.Team_Match_Data.objects.filter(event=comp_code, is_excluded=True).count(),
     })
 
 @login_required
@@ -417,10 +415,11 @@ def fetch_team_match_averages(team_number, comp_code, quantifier, exclude_zeros=
         team_number=team_number,
         event=comp_code,
         match_number__lt=100,
-        quantifier=quantifier
+        quantifier=quantifier,
+        is_excluded=False,
     )
 
-    # Exclude manually excluded matches
+    # Legacy: also support session-based exclusion for backward compat
     if excluded_ids:
         team_match_data = team_match_data.exclude(id__in=excluded_ids)
 
@@ -491,25 +490,21 @@ def toggle_exclude_match(request):
     except (json.JSONDecodeError, KeyError, ValueError, TypeError):
         return JsonResponse({'error': 'Invalid match_id'}, status=400)
 
-    user = request.session.get('email', '?')
-    session_key = request.session.session_key
-    before = list(request.session.get('excluded_match_ids', []))
+    try:
+        match = models.Team_Match_Data.objects.get(id=match_id)
+    except models.Team_Match_Data.DoesNotExist:
+        return JsonResponse({'error': 'Match not found'}, status=404)
 
-    excluded = set(before)
-    if match_id in excluded:
-        excluded.discard(match_id)
-        action = 'included'
-    else:
-        excluded.add(match_id)
-        action = 'excluded'
-    request.session['excluded_match_ids'] = list(excluded)
+    match.is_excluded = not match.is_excluded
+    match.save(update_fields=['is_excluded'])
+    action = 'excluded' if match.is_excluded else 'included'
 
     logger.warning(
-        "TOGGLE user=%s session=%s match_id=%d action=%s before=%s after=%s",
-        user, session_key[:8] if session_key else '?', match_id, action, before, list(excluded)
+        "TOGGLE user=%s match_id=%d team=%d M%d action=%s",
+        request.session.get('email', '?'), match_id, match.team_number, match.match_number, action
     )
 
-    return JsonResponse({'status': action, 'match_id': match_id, 'excluded_count': len(excluded)})
+    return JsonResponse({'status': action, 'match_id': match_id})
 
 
 @login_required
@@ -533,7 +528,7 @@ def team_matches_detail(request, team_number):
             'start_pos': m.start_pos,
             'scout_name': m.scout_name,
             'data': m.data,
-            'excluded': m.id in excluded,
+            'excluded': m.is_excluded,
         })
     return JsonResponse({'matches': result})
 
@@ -596,7 +591,7 @@ def team_info(request, team_number):
         team_number=team_number, event=comp_code, quantifier=quantifier
     ).order_by('match_number')
 
-    excluded = set(request.session.get('excluded_match_ids', []))
+    excluded = set()
     config = config_loader.get_config()
     metrics = config.get('metrics', [])
 
@@ -617,7 +612,7 @@ def team_info(request, team_number):
             'comment': m.comment,
             'flags': flags,
             'data': m.data,
-            'excluded': m.id in excluded,
+            'excluded': m.is_excluded,
         })
 
     return JsonResponse({

@@ -65,14 +65,11 @@ def display_teams(request):
 def team_page(request, team_number):
     comp_code = request.GET.get('comp')
     config = config_loader.get_config()
-    excluded_ids = set(request.session.get('excluded_match_ids', []))
 
     context = {
         'team_number': team_number,
         'comp_code': comp_code,
         'config_metrics': config.get('metrics', []),
-        'excluded_match_ids_json': json.dumps(list(excluded_ids)),
-        'excluded_count': len(excluded_ids),
     }
 
     if comp_code:
@@ -82,9 +79,18 @@ def team_page(request, team_number):
             event=comp_code
         ).order_by('-match_number')
 
+        excluded_ids = [m.id for m in all_team_match_data if m.is_excluded]
+
         context.update({
             'team': team,
             'all_team_match_data': all_team_match_data,
+            'excluded_match_ids_json': json.dumps(excluded_ids),
+            'excluded_count': len(excluded_ids),
+        })
+    else:
+        context.update({
+            'excluded_match_ids_json': '[]',
+            'excluded_count': 0,
         })
 
     return render(request, 'teams/team_page.html', context)
