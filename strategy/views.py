@@ -67,27 +67,20 @@ def rankings(request):
     min_matches = int(request.GET.get('min_matches', '0'))
     config = config_loader.get_config()
 
-    VALID_SORT_FIELDS = {
-        'autoScore', 'autoPass', 'autoClimb',
-        'teleScore', 'telePass',
-        'totalShooting', 'totalPass', 'totalTotal',
-        'match_count',
-    }
+    VALID_SORT_FIELDS = {m['key'] for m in config.get('metrics', [])}
+    # Add computed and anchor fields
+    VALID_SORT_FIELDS |= {'totalShooting', 'totalPass', 'totalTotal', 'match_count',
+                          'driverRanking', 'defenseRanking', 'autoLeave'}
     sort_by = request.GET.get('sort_by', 'totalShooting')
     if sort_by not in VALID_SORT_FIELDS:
         sort_by = 'totalShooting'
 
-    SORT_OPTIONS = [
-        ('autoScore',     'Auto Score'),
-        ('autoPass',      'Auto Pass'),
-        ('autoClimb',     'Auto Climb'),
-        ('teleScore',     'Teleop Score'),
-        ('telePass',      'Teleop Pass'),
-        ('totalShooting', 'Total Score'),
-        ('totalPass',     'Total Pass'),
-        ('totalTotal',    'Total Total'),
-        ('match_count',   'Matches Played'),
-    ]
+    # Build sort options from config rankings columns + computed fields
+    SORT_OPTIONS = []
+    for col in config.get('rankings', []):
+        if col.get('sortable') and col['key'] != 'team_number':
+            SORT_OPTIONS.append((col['key'], col['display_name']))
+    SORT_OPTIONS.append(('match_count', 'Matches Played'))
 
     # Get excluded match IDs from session
     excluded_ids = set(request.session.get('excluded_match_ids', []))
@@ -465,6 +458,7 @@ def team_matches_detail(request, team_number):
         result.append({
             'id': m.id,
             'match_number': m.match_number,
+            'start_pos': m.start_pos,
             'scout_name': m.scout_name,
             'data': m.data,
             'excluded': m.id in excluded,
@@ -543,6 +537,7 @@ def team_info(request, team_number):
         match_list.append({
             'id': m.id,
             'match_number': m.match_number,
+            'start_pos': m.start_pos,
             'scout_name': m.scout_name,
             'autoLeave': m.autoLeave,
             'driverRanking': m.driverRanking,

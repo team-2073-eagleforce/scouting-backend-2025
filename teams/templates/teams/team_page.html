@@ -91,6 +91,7 @@
         <thead>
             <tr>
                 <th>Match</th>
+                <th>Start Pos</th>
                 <th>Auto Leave</th>
                 {% for metric in config_metrics %}
                     <th>{{ metric.display_name }}</th>
@@ -106,6 +107,7 @@
             {% for match in all_team_match_data %}
             <tr data-match-id="{{ match.id }}">
                 <td>{{ match.match_number }} ({{ match.quantifier }})</td>
+                <td>{{ match.start_pos|default:"0" }}</td>
                 <td>{{ match.autoLeave|default:"0" }}</td>
 
                 {% for metric in config_metrics %}

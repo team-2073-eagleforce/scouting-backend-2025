@@ -636,7 +636,7 @@ function showTeamInfo(teamNum, comp, quantifier) {
             var metricLabels = {};
             (d.metrics || []).forEach(function(m) { metricLabels[m.key] = m.display_name; });
 
-            var headers = ['Match', 'Leave', 'Scout', 'Driver', 'Defense'].concat(
+            var headers = ['Match', 'Start Pos', 'Leave', 'Scout', 'Driver', 'Defense'].concat(
                 (d.metrics || []).map(function(m) { return m.display_name; }),
                 ['Notes']
             );
@@ -667,6 +667,7 @@ function showTeamInfo(teamNum, comp, quantifier) {
                 if (flags) matchCell.title = flags;
                 tr.appendChild(matchCell);
 
+                tr.appendChild(cell(m.start_pos != null ? m.start_pos : '—'));
                 tr.appendChild(cell(m.autoLeave || 0));
                 tr.appendChild(cell(m.scout_name, 'white-space:nowrap;'));
                 tr.appendChild(cell(m.driverRanking || 0));
@@ -711,7 +712,7 @@ function showMatchDetail(teamNum, comp, quantifier) {
             }
 
             // Build header
-            var cols = ['Action', 'Match', 'Scout'];
+            var cols = ['Action', 'Match', 'Start Pos', 'Scout'];
             var dataKeys = Object.keys(data.matches[0].data || {});
             cols = cols.concat(dataKeys);
             cols.forEach(function(c) {
@@ -744,17 +745,23 @@ function showMatchDetail(teamNum, comp, quantifier) {
                             btn.textContent = match.excluded ? '✓' : '✕';
                             btn.title = match.excluded ? 'Re-include this match' : 'Exclude this match';
                             btn.style.background = match.excluded ? '#22c55e' : '#ef4444';
+                            // Reload rankings so averages recalculate
+                            window.location.reload();
                         });
                     };
                 })(m.id, tr, m);
                 tdAct.appendChild(btn);
                 tr.appendChild(tdAct);
 
-                // Match number + scout
+                // Match number + start pos + scout
                 var tdM = document.createElement('td');
                 tdM.textContent = m.match_number;
                 tdM.style.cssText = 'padding:4px 8px;';
                 tr.appendChild(tdM);
+                var tdSP = document.createElement('td');
+                tdSP.textContent = m.start_pos != null ? m.start_pos : '';
+                tdSP.style.cssText = 'padding:4px 8px;text-align:center;';
+                tr.appendChild(tdSP);
                 var tdS = document.createElement('td');
                 tdS.textContent = m.scout_name;
                 tdS.style.cssText = 'padding:4px 8px;white-space:nowrap;';
