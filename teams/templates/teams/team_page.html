@@ -108,11 +108,12 @@
                 <th>Defense</th>
                 <th>Comments</th>
                 <th>Visibility</th>
+                <th>Video</th>
             </tr>
         </thead>
         <tbody>
             {% for match in all_team_match_data %}
-            <tr data-match-id="{{ match.id }}">
+            <tr data-match-id="{{ match.id }}" data-match-number="{{ match.match_number }}" data-quantifier="{{ match.quantifier }}">
                 <td>{{ match.match_number }} ({{ match.quantifier }})</td>
                 <td>{{ match.start_pos|default:"0" }}</td>
                 <td>{{ match.autoLeave|default:"0" }}</td>
@@ -134,6 +135,9 @@
                     <button class="hide-match-btn" data-match-id="{{ match.id }}" title="Hide match from rankings averages">
                         Hide
                     </button>
+                </td>
+                <td class="video-cell" style="text-align:center;">
+                    <span style="color:var(--muted-text);font-size:0.75rem;">—</span>
                 </td>
                 {% plugin_hook 'team_page_match_row' %}
             </tr>
@@ -563,6 +567,47 @@ function confirmClearPitData() {
             });
         });
     });
+})();
+</script>
+
+<script>
+(function () {
+    var comp = '{{ comp_code }}';
+    if (!comp || comp === 'None' || comp === 'testing') return;
+
+    var LEVEL_MAP = {'Quals': 'qm', 'Playoff': 'sf', 'Prac': 'pm'};
+    var rows = document.querySelectorAll('#match_data tbody tr[data-match-number]');
+    var matchKeys = [];
+    rows.forEach(function (row) {
+        var num = row.dataset.matchNumber;
+        var q = row.dataset.quantifier;
+        var level = LEVEL_MAP[q] || 'qm';
+        matchKeys.push(comp + '_' + level + num);
+    });
+    if (!matchKeys.length) return;
+
+    // Fetch all event matches from TBA in one call
+    fetch('/api/tba_videos/?comp=' + comp, {credentials: 'same-origin'})
+        .then(function (r) { return r.ok ? r.json() : {}; })
+        .then(function (videos) {
+            rows.forEach(function (row) {
+                var num = row.dataset.matchNumber;
+                var q = row.dataset.quantifier;
+                var level = LEVEL_MAP[q] || 'qm';
+                var key = comp + '_' + level + num;
+                var cell = row.querySelector('.video-cell');
+                if (!cell) return;
+                var vid = videos[key];
+                if (vid) {
+                    cell.innerHTML = '<a href="https://www.youtube.com/watch?v=' + vid +
+                        '" target="_blank" rel="noopener" title="Watch on YouTube" ' +
+                        'style="color:var(--accent);font-size:1.1rem;text-decoration:none;">▶</a>';
+                } else {
+                    cell.innerHTML = '<span style="color:var(--muted-text);font-size:0.7rem;" title="No video posted yet">—</span>';
+                }
+            });
+        })
+        .catch(function () {});
 })();
 </script>
 

@@ -101,3 +101,26 @@ def get_single_match(event_key, match_id):
         return match
     except (KeyError, ValueError, requests.RequestException):
         return None
+
+
+def get_match_videos(event_key):
+    """Return {match_key: youtube_video_key} for all matches at an event."""
+    try:
+        resp = requests.get(
+            f"https://www.thebluealliance.com/api/v3/event/{event_key}/matches",
+            headers={"X-TBA-Auth-Key": X_TBA_Auth_Key},
+            timeout=15)
+        if resp.status_code != 200:
+            return {}
+        matches = resp.json()
+        if not isinstance(matches, list):
+            return {}
+        videos = {}
+        for m in matches:
+            for v in m.get('videos', []):
+                if v.get('type') == 'youtube':
+                    videos[m['key']] = v['key']
+                    break
+        return videos
+    except Exception:
+        return {}

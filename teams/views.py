@@ -9,7 +9,7 @@ import cloudinary.uploader
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect
 
-from api.tba import get_teams_list, get_team_events
+from api.tba import get_teams_list, get_team_events, get_match_videos
 from helpers import login_required
 from teams.models import Teams, Team_Match_Data, Human_Player_Match
 from .forms import NewHumanScoutingData
@@ -270,3 +270,11 @@ def human_player_submit(request, team_number):
         form = NewHumanScoutingData()
     return render(request, "teams/human_player_scout.html", {'form': form, 'team_number': team_number, 'comp_code': comp_code})
 
+
+
+@login_required
+def tba_videos(request):
+    comp = request.GET.get('comp', '')
+    if not comp or not re.match(r'^[A-Za-z0-9_\-]{1,20}$', comp):
+        return JsonResponse({})
+    return JsonResponse(get_match_videos(comp))
