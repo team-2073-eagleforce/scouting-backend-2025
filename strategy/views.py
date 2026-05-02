@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 from pathlib import Path
@@ -125,18 +126,29 @@ def rankings(request):
     teams = models.Teams.objects.filter(event=comp_code).order_by("team_number")
     team_averages = {}
 
+    # Bulk-fetch ALL match data for this event/quantifier in ONE query
+    all_matches = list(models.Team_Match_Data.objects.filter(
+        event=comp_code, quantifier=quantifier, match_number__lt=100
+    ).exclude(id__in=excluded_ids if excluded_ids else []))
+
+    # Group by team number
+    matches_by_team = defaultdict(list)
+    for m in all_matches:
+        matches_by_team[m.team_number].append(m)
+
     for team in teams:
         if pit_filtered_teams is not None and team.team_number not in pit_filtered_teams:
             continue
-        if models.Team_Match_Data.objects.filter(team_number=team.team_number, event=comp_code, quantifier=quantifier).exists():
-            stats = fetch_team_match_averages(team.team_number, comp_code, quantifier,
-                                              exclude_zeros=exclude_zeros, excluded_ids=excluded_ids)
-            if stats.get('match_count', 0) < min_matches:
-                continue
-            stats['totalPass']     = round((stats.get('autoPass', 0) or 0) + (stats.get('telePass', 0) or 0), 3)
-            stats['totalShooting'] = round((stats.get('autoScore', 0) or 0) + (stats.get('teleScore', 0) or 0), 3)
-            stats['totalTotal']    = round((stats.get('totalShooting', 0) or 0) + (stats.get('totalPass', 0) or 0), 3)
-            team_averages[team.team_number] = stats
+        team_matches = matches_by_team.get(team.team_number)
+        if not team_matches:
+            continue
+        stats = _compute_team_averages(team_matches, config, exclude_zeros)
+        if not stats or stats.get('match_count', 0) < min_matches:
+            continue
+        stats['totalPass']     = round((stats.get('autoPass', 0) or 0) + (stats.get('telePass', 0) or 0), 3)
+        stats['totalShooting'] = round((stats.get('autoScore', 0) or 0) + (stats.get('teleScore', 0) or 0), 3)
+        stats['totalTotal']    = round((stats.get('totalShooting', 0) or 0) + (stats.get('totalPass', 0) or 0), 3)
+        team_averages[team.team_number] = stats
 
     team_averages = dict(sorted(team_averages.items(), key=lambda x: x[1].get(sort_by, 0), reverse=True))
 
@@ -346,6 +358,50 @@ def dashboard(request):
         'config_metrics': config.get('metrics', []),
         'config_metrics_json': json.dumps(config.get('metrics', []))
     })
+
+def _compute_team_averages(team_match_data_list, config, exclude_zeros=True):
+    """Compute averages from a pre-fetched list of matches (no DB calls)."""
+    if exclude_zeros:
+        team_match_data_list = [
+            m for m in team_match_data_list
+            if m.data and any(float(v) != 0 for v in m.data.values() if isinstance(v, (int, float)))
+        ]
+    if not team_match_data_list:
+        return {}
+
+    result = {'match_count': len(team_match_data_list)}
+
+    for field in ('driverRanking', 'defenseRanking', 'autoLeave'):
+        values = [getattr(m, field, 0) for m in team_match_data_list if getattr(m, field, 0) > 0]
+        result[field] = round(sum(values) / len(values), 3) if values else 0
+
+    for metric in config['metrics']:
+        key = metric['key']
+        aggregation = metric.get('aggregation', 'avg')
+        legacy_keys = metric.get('legacy_keys', [])
+        values = []
+        for match in team_match_data_list:
+            value = match.data.get(key)
+            if value is None:
+                for lk in legacy_keys:
+                    value = match.data.get(lk)
+                    if value is not None:
+                        break
+            if value is not None:
+                values.append(float(value))
+        if values:
+            if aggregation == 'avg':
+                result[key] = round(sum(values) / len(values), 3)
+            elif aggregation == 'sum':
+                result[key] = round(sum(values), 3)
+            elif aggregation == 'percent':
+                result[key] = round((sum(values) / len(values)) * 100, 1)
+        else:
+            result[key] = 0
+
+    result['start_pos'] = team_match_data_list[0].start_pos if team_match_data_list else 0
+    return result
+
 
 def fetch_team_match_averages(team_number, comp_code, quantifier, exclude_zeros=True, excluded_ids=None):
     """Dynamic calculation of team averages based on game_config.json with legacy key support"""
