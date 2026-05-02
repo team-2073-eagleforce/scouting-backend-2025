@@ -42,7 +42,6 @@ client_config = {
 }
 
 
-@rate_limit(max_calls=10, period_seconds=60)
 def authorize(request):
     # If user is already authenticated, redirect to home
     if request.session.get('email'):
@@ -73,7 +72,6 @@ def authorize(request):
     return render(request, 'authenticate/login.html')
 
 
-@rate_limit(max_calls=10, period_seconds=60)
 def oauth2callback(request):
     # Verify OAuth state to prevent login CSRF
     expected_state = request.session.get('oauth_state')
