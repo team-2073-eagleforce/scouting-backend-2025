@@ -523,6 +523,8 @@ function confirmClearPitData() {
     // Toggle on button click
     document.querySelectorAll('.hide-match-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
+            if (btn.disabled) return;
+            btn.disabled = true;
             var matchId = parseInt(btn.dataset.matchId, 10);
             var row = btn.closest('tr');
 
@@ -553,8 +555,10 @@ function confirmClearPitData() {
                     nowExcluded ? 'warning' : 'success',
                     2000
                 );
+                btn.disabled = false;
             })
             .catch(function () {
+                btn.disabled = false;
                 alert('Failed to update match visibility. Please try again.');
             });
         });
