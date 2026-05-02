@@ -72,6 +72,7 @@ def team_page(request, team_number):
         'comp_code': comp_code,
         'config_metrics': config.get('metrics', []),
         'excluded_match_ids_json': json.dumps(list(excluded_ids)),
+        'excluded_count': len(excluded_ids),
     }
 
     if comp_code:

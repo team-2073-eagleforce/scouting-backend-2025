@@ -85,7 +85,14 @@
 </div>
 {% endif %}
 
-<div class="section-heading">Match History</div>
+<div class="section-heading" style="display:flex;align-items:center;justify-content:space-between;">
+    Match History
+    {% if excluded_count > 0 %}
+    <span style="font-size:0.78rem;font-weight:600;color:var(--accent);background:color-mix(in srgb, var(--accent) 10%, var(--bg-elevated));padding:3px 10px;border-radius:6px;border:1px solid color-mix(in srgb, var(--accent) 25%, var(--border));">
+        {{ excluded_count }} match{{ excluded_count|pluralize:"es" }} hidden from rankings
+    </span>
+    {% endif %}
+</div>
 <div class="table-responsive">
     <table class="table table-bordered table-sm theme-table" id="match_data">
         <thead>
@@ -528,7 +535,10 @@ function confirmClearPitData() {
                 },
                 body: JSON.stringify({ match_id: matchId }),
             })
-            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                if (!r.ok) throw new Error('Server returned ' + r.status);
+                return r.json();
+            })
             .then(function (res) {
                 var nowExcluded = res.status === 'excluded';
                 applyHiddenState(row, nowExcluded);
@@ -537,6 +547,12 @@ function confirmClearPitData() {
                 } else {
                     excludedIds.delete(matchId);
                 }
+                // Show feedback and reload to reflect changes
+                window.showToast(
+                    nowExcluded ? 'Match hidden from rankings averages' : 'Match restored to rankings averages',
+                    nowExcluded ? 'warning' : 'success',
+                    2000
+                );
             })
             .catch(function () {
                 alert('Failed to update match visibility. Please try again.');
